@@ -830,7 +830,7 @@ class DynamixelIO:
                                                   read_bytes)
         
             if status_packet.error != 0:
-                raise DynamixelMotorError(status_packet)
+                raise DynamixelMotorError(instruction_packet.motor_id, status_packet)
             
             return status_packet
     
