@@ -12,7 +12,8 @@ import pypot.dynamixel
 
 
 
-timeout = 1
+timeout = 0.03
+ids_range = 0, 100
 
 if __name__ == '__main__':
     ports = pypot.dynamixel.get_available_ports()
@@ -26,7 +27,13 @@ if __name__ == '__main__':
     
     print 'Connexion established :', dxl_io
     
-    motor_ids = dxl_io.scan(range(25))
+    print 'Scanning motors ids between {} and {}'.format(ids_range[0], ids_range[1])
+
+    motor_ids = dxl_io.scan(range(ids_range[0],ids_range[1]))
+    if len(motor_ids) == 0:
+        print 'No motors found. Exiting.'
+        exit(0)
+        
     print len(motor_ids), 'motors found:', motor_ids
     
     print 'Model'
