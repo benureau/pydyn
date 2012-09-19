@@ -1,6 +1,32 @@
 import math
 
+from protocol import DXL_MODEL_NUMBER
+
 # for details, see http://support.robotis.com/en/product/dynamixel/
+
+# MARK : EEPROM conversions
+
+def raw_to_model(value):
+    return DXL_MODEL_NUMBER[value]
+    
+def raw_to_baudrate(value):
+    return 2000000/(value+1)
+
+def raw_to_return_delay_time(value):
+    """Return the return delay time in micro seconds"""
+    return 2*self.data[5]
+        
+def raw_to_temperature(value):
+    """Return the temperature in degree celsius"""
+    return value    
+
+def raw_to_voltage(value):
+    """Return the voltage in volt"""
+    return value/10
+
+def raw_to_torque(value):
+    """Return the voltage in volt"""
+    return 100*value/1023
 
 # MARK : Unit conversions
 

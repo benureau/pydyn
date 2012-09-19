@@ -27,15 +27,23 @@ class DynamixelController(threading.Thread):
         pos = self.io.get_position(motor.id)
         motor.current_position = motor.goal_position = pos
 
-    def discover_motors(self, motor_ids):
+    def discover_motors(self, motor_ids, load_eeprom = True):
         found_ids = self.io.scan(motor_ids)
         for m_id in found_ids:
-            self.motors.append(motor.DynamixelMotor(m_id))
+            eeprom_data = None
+            if load_eeprom:
+                eeprom_data = self.read_eeprom(m_id)                
+            m = motor.DynamixelMotor(m_id, eeprom_data = eeprom_data)
+            self.motors.append(m)
             #TODO: check for double motors        
         [self._configure_motor(m) for m in self.motors]
         
         return self.motors
 
+    def read_eeprom(self, motor_id):
+        return self.io.read(motor_id, 0, 19)
+        
+        
     def start_sync(self):
         self.start()
 
@@ -50,7 +58,6 @@ class DynamixelController(threading.Thread):
 
     def run(self):
         while True:
-            print 'bla'
             start = time.time()
             if self.type == 'USB2AX':
                 positions = self.io.get_sync_positions([m.id for m in self.motors])

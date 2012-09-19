@@ -116,6 +116,17 @@ class DynamixelIO:
             """
         return filter(self.ping, ids)
     
+    def read(self, motor_id, address, size):
+        """Read data from a motor
+        
+            :param address  where to read data in the memory.  
+            :param size     how much from adress.  
+            :return: list of integers with asked size
+        """
+        packet = DynamixelInstructionPacket(motor_id, 'READ_DATA', (address, size))
+        status_packet = self._send_packet(packet)
+                
+        return status_packet.parameters
     
     def get_model(self, motor_id):
         """

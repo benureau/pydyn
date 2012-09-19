@@ -1,17 +1,19 @@
-
+import eeprom
+import protocol
 
 class DynamixelMotor(object):
     """ """
-    def __init__(self, m_id, model = None, name = '', angle_limits=None, original_pos=None):
-        self.id = m_id
-        self.model = model
+    def __init__(self, m_id, eeprom_data = None):
+        self._id = m_id
         
-        self.name = name
-        self.angle_limits = angle_limits
-        self.current_position = original_pos
-        self.current_speed = None
-        self.current_load = None
-        self.goal_position = original_pos
+        self.eeprom = None
+        if eeprom_data is not None:
+            self.eeprom = eeprom.Eeprom.from_raw_data(eeprom_data)
+        
+        self.current_position = None
+        self.current_speed    = None
+        self.current_load     = None
+        self.goal_position    = None
 
         # if flag is True, the controller needs to change other values
         # than the position, speed or load.
@@ -27,6 +29,63 @@ class DynamixelMotor(object):
         self._compliant = [False, None, None]
 
         self.properties = [self._compliant]
+         
+    # MARK EEPROM properties
+
+    @property
+    def id(self):
+        if self.eeprom is None:
+            return self._id
+        else:
+            return self.eeprom.id
+
+    @property
+    def model(self):
+        return self.eeprom.model
+        
+    @property
+    def version(self):
+        return self.eeprom.firmware
+    
+    @property
+    def baudrate(self):
+        return conversions.raw_to_baudrate(self.eeprom.data[4])
+    
+    @property
+    def return_delay_time(self):
+        return conversions.raw_to_return_delay_time(self.eeprom.data[5])
+    
+    @property
+    def cw_angle_limit(self):
+        return conversions.position_to_angle(self.eeprom.data[6], self.model)
+        
+    @property
+    def ccw_angle_limit(self):
+        return conversions.position_to_angle(self.eeprom.data[8], self.model)
+    
+    @property
+    def max_temp(self):
+        return conversions.raw_to_temperature(self.eeprom.data[11])
+    
+    @property
+    def min_voltage(self):
+        return conversions.raw_to_voltage(self.eeprom.data[12])
+    
+    @property
+    def max_voltage(self):
+        return conversions.raw_to_voltage(self.eeprom.data[13])
+    
+    @property
+    def max_torque(self):
+        return conversions.raw_to_torque(self.eeprom.data[14])
+    
+    @property
+    def return_status(self):
+        return self.eeprom.data[16]
+
+
+
+    # MARK RAM properties
 
     @property 
     def compliant(self):
