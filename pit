@@ -1,0 +1,235 @@
+#!/usr/bin/env python
+
+"""
+pit : python issue tracker.
+
+pit is a simple issue tracker written in python
+"""
+
+import sys, os
+import shutil
+import ConfigParser
+
+# Searching for the pit dir
+
+pitdir = None
+
+def find_pitdir():
+    global pitdir
+    curdir = os.path.abspath(os.getcwd())
+    while curdir != '':
+        if os.path.exists(curdir + '/.pit') and os.path.isdir(curdir + '/.pit'):
+            pitdir = curdir + '/.pit'
+            curdir = ''
+        if curdir == '/':
+            curdir = ''
+        else:
+            curdir = os.path.split(curdir)[0]
+    
+    if pitdir is None:
+        print 'No pit repo found in this directory or in any parent directory.'
+        exit(0)
+
+# Reading Writing issues
+
+config = ConfigParser.ConfigParser()
+
+def issue_file(n):
+    return pitdir + '/pit{:04d}'.format(n)
+
+def read_issue(n):
+    
+    f = issue_file(n)
+    if os.path.exists(f):
+        config.read(f)
+        return config
+    else:
+        return None
+
+def setup_issue(n, title, t):
+    issue = ConfigParser.ConfigParser()
+    issue.add_section('header')
+    issue.set('header', 'title', title)
+    issue.set('header', 'id', str(n))
+    issue.set('header', 'status', 'open')
+    issue.set('header', 'type', t)
+    issue.add_section('discussion')
+    issue.set('discussion', 'desc', '# enter your description here')
+    return issue
+
+# Displaying
+
+bold    = '\033[1m'
+end     = '\033[0m'
+
+black   = '\033[0;30m'
+red     = '\033[0;31m'
+green   = '\033[0;32m'
+yellow  = '\033[0;33m'
+blue    = '\033[0;34m'
+purple  = '\033[0;35m'
+cyan    = '\033[0;36m'
+grey    = '\033[0;37m'
+
+# Bold
+bblack  = '\033[1;30m'
+bred    = '\033[1;31m'
+bgreen  = '\033[1;32m'
+byellow = '\033[1;33m'     
+bblue   = '\033[1;34m'
+bpurple = '\033[1;35m'
+bcyan   = '\033[1;36m'
+bgrey   = '\033[1;37m'
+
+format_type = {'t': bblue+'t'+end,
+               'b': bred+'b'+end,
+               'f': bpurple+'f'+end}
+format_status = {'open'   :    red+' open '+end,
+                 'closed' :  green+'closed'+end}
+
+def oneline(issue):
+    """Formating in one line an issue on one line."""
+    uid    = issue.getint('header', 'id')
+    status = issue.get('header', 'status')
+    typ    = issue.get('header', 'type')
+    title  = issue.get('header', 'title')
+    return '{:s}{:04d} {:s} {:s}[{:s}{:s}]{:s}    {:s}'.format(grey, uid, format_type[typ[:1]], grey, format_status[status], grey, end, title)
+
+def show_issues(filtered_status):
+    """show issue filtered by status"""
+    n = 1
+    issue = read_issue(n)
+    while issue != None:
+        status = config.get('header', 'status')
+        if filtered_status is None or status in filtered_status:  
+            print oneline(issue)
+        n += 1
+        issue = read_issue(n)
+
+
+# Commands
+
+def init_cmd():
+    """Create a .pit directory"""
+    pitdir = os.getcwd() + '/.pit'
+    print "initializing pit in %s" % (pitdir,)
+    if not os.path.exists(pitdir):
+        os.makedirs(pitdir)
+
+def add_cmd(title):
+    """Create a new issue"""
+    # finding type
+    t = None
+    while t not in set(['b', 'f', 't', '', 'bug', 'feature', 'task']):
+        print "bug (b, default), feature (f) or task (t) ? : ",
+        sys.stdout.flush()
+        t = raw_input()
+    if t == '':
+        t = 'b'
+    extend = {'b':'bug', 'f':'feature', 't':'task'}
+    if t in extend:
+        t = extend[t]
+    # finding id
+    
+    n = 1
+    while os.path.exists(issue_file(n)):
+        n += 1
+    issue = setup_issue(n, title, t)
+    try:
+       with open(issue_file(n), 'w') as f: 
+           issue.write(f)
+    except IOError as e:
+       print 'IOError : impossible to write on issue file {:s}'.format(issue_file(n))
+       print 'Verify file permissions'
+    print oneline(issue)
+    
+
+def close_cmd(n):
+    """Close issue n"""
+    issue = read_issue(n)
+    status = config.get('header', 'status')
+    if status == 'closed':
+        print "warning: issue {:d} already closed".format(n)
+    else:
+        config.set('header','status','closed')
+        try:
+           with open(issue_file(n), 'w') as f: 
+               config.write(f)
+        except IOError as e:
+           print 'IOError : impossible to write on issue file {:s}'.format(issue_file(n))
+           print 'Verify file permissions'
+
+def open_cmd():
+    """Show opened issues"""
+    show_issues(['open'])
+
+def closed_cmd():
+    """Show closed issues"""
+    show_issues(['closed'])
+
+def all_cmd():
+    """Show closed issues"""
+    show_issues(None)
+
+def install_cmd():
+    
+    """Install command on the system"""
+    print __file__
+    default = '/usr/local/bin'
+    print "Folder to install the pit command [{:s}] : ".format(default),
+    sys.stdout.flush()
+    path = raw_input()
+    if path == '':
+        path = default
+        
+    if not os.path.exists(path):
+        print "error: {:s} does not exist. Installation aborted.".format(path)
+    else:
+        if os.path.exists(path+'/pit'):
+            if os.path.samefile(path+'/pit', __file__):
+                return
+        shutil.copy(__file__, path)
+
+# Handling command line arguments
+
+usage = ("pit, python issue tracker\n"
+      + "usage: pit cmd [arg]\n"
+      + "commands:\n"
+      + '  init         creates the .pit folder\n'
+      + '  install      install the pit command on the system\n'
+      + '  add "title"  add an issue\n'
+      + '  close n      close issue n\n'
+      + '  open         show open issues.\n'
+      + '  closed       show closed issues.\n'
+      + '  all          show all issues.\n'
+      )
+
+if len(sys.argv) == 1 or len(sys.argv) > 3:
+    print usage
+    
+cmd = sys.argv[1]
+if cmd not in ['init', 'install']:
+    find_pitdir()
+
+if len(sys.argv) == 2:
+    if cmd not in ['init', 'open', 'install', 'closed', 'all']:
+        print usage
+    elif cmd == 'init':
+        init_cmd()
+    elif cmd == 'install':
+        install_cmd()
+    elif cmd == 'open':
+        open_cmd()
+    elif cmd == 'closed':
+        closed_cmd()
+    elif cmd == 'all':
+        all_cmd()
+if len(sys.argv) == 3:
+    if cmd not in ['add', 'close']:
+        print usage
+    elif cmd == 'add':
+        title = sys.argv[2]        
+        add_cmd(title)
+    elif cmd == 'close':
+        n = int(sys.argv[2])
+        close_cmd(n)

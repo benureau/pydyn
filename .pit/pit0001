@@ -1,0 +1,9 @@
+[header]
+title = Make eeprom lockable
+id = 1
+status = open
+type = feature
+
+[discussion]
+desc = # enter your description here
+

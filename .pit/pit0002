@@ -1,0 +1,9 @@
+[header]
+title = Make eeprom editable
+id = 2
+status = open
+type = task
+
+[discussion]
+desc = # enter your description here
+

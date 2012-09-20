@@ -1,0 +1,9 @@
+[header]
+title = Remove constant value in Motor (use protocol)
+id = 3
+status = open
+type = bug
+
+[discussion]
+desc = # enter your description here
+
