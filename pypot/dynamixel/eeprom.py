@@ -46,17 +46,21 @@ class Eeprom(object):
 
     
     def __len__(self):
-        return len(data)
+        return len(self.data)
 
 
     # MARK  Printing methods
 
     def __repr__(self):
-        return "EEPROM({})".format(", ".join("%s%i%s:%s%4i%s" % (color.cyan, i, color.cyan, color.red, v, color.end) for i, v in enumerate(self.data) if v is not None))
+        return "EEPROM({})".format(", ".join(
+            "%s%i%s:%s%4i%s" % (color.cyan, i, color.cyan, color.red, v, color.end)
+            for i, v in enumerate(self.data) if v is not None
+            ))
 
     @staticmethod
     def overhead_desc():
-        return '        model    firm      id    baud   delay   cwang  ccwang  maxtemp  mintemp  maxvolt  minvolt  maxtorq   status      led shutdown'
+        return '        model    firm      id    baud   delay   cwang  ccwang'\
+         '  maxtemp  mintemp  maxvolt  minvolt  maxtorq   status      led shutdown'
 
     def long_desc(self):
         """This print the EEPROM values in of the motor

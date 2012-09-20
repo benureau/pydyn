@@ -1,5 +1,3 @@
-import math
-
 from protocol import DXL_MODEL_NUMBER
 
 # for details, see http://support.robotis.com/en/product/dynamixel/
@@ -14,7 +12,7 @@ def raw_to_baudrate(value):
 
 def raw_to_return_delay_time(value):
     """Return the return delay time in micro seconds"""
-    return 2*self.data[5]
+    return 2 * value
         
 def raw_to_temperature(value):
     """Return the temperature in degree celsius"""
@@ -112,5 +110,3 @@ def integer_to_two_bytes(value):
 
 def two_bytes_to_integer(value):
     return int(value[0] + (value[1] << 8))
-
-

@@ -1,11 +1,12 @@
 import eeprom
-import protocol
+import conversions
+
 
 class DynamixelMotor(object):
     """ """
     def __init__(self, m_id, eeprom_data = None):
         self._id = m_id
-        
+
         self.eeprom = None
         if eeprom_data is not None:
             self.eeprom = eeprom.Eeprom.from_raw_data(eeprom_data)
@@ -82,7 +83,6 @@ class DynamixelMotor(object):
     @property
     def return_status(self):
         return self.eeprom.data[16]
-
 
 
     # MARK RAM properties
