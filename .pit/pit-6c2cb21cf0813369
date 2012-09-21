@@ -1,6 +1,6 @@
 [header]
 title = Make eeprom lockable
-id = 1
+id = 6c2cb21cf081336911e7e5ef425b6735dd0cad55
 status = open
 type = feature
 
