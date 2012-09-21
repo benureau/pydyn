@@ -10,10 +10,13 @@ class DynamixelMotor(object):
         if eeprom_data is not None:
             self.eeprom = eeprom.Eeprom.from_raw_data(eeprom_data)
         
-        self.current_position = None
-        self.current_speed    = None
-        self.current_load     = None
-        self.goal_position    = None
+        self._current_position = None
+        self._current_speed    = None
+        self._current_load     = None
+        
+        self.goal_position     = None
+        self.moving_speed      = None
+        self.torque_limit      = 100.0
 
         # if flag is True, the controller needs to change other values
         # than the position, speed or load.
@@ -29,6 +32,9 @@ class DynamixelMotor(object):
         self._compliant = [False, None, None]
 
         self.properties = [self._compliant]
+
+    def __repr__(self):
+        return 'M{}'.format(self.id)
          
     # MARK EEPROM properties
 
@@ -87,6 +93,34 @@ class DynamixelMotor(object):
 
     # MARK RAM properties
 
+    @property
+    def current_position(self):
+        return self._current_position
+
+    @property
+    def current_speed(self):
+        return self._current_speed
+
+    @property
+    def current_load(self):
+        return self._current_load
+
+    @property
+    def position(self):
+        return self._current_position
+
+    @position.setter
+    def position(self, val):
+        self.goal_position = val
+
+    @property
+    def speed(self):
+        return self._current_speed
+        
+    @speed.setter
+    def speed(self, val):
+        self.moving_speed = val
+    
     @property 
     def compliant(self):
         return self._compliant[2]
@@ -97,6 +131,3 @@ class DynamixelMotor(object):
         if val != self._compliant[2]:
             self._compliant[0] = True
             self.flag = True
-     
-    def __repr__(self):
-        return 'M{}'.format(self.id)

@@ -1,7 +1,7 @@
 [header]
-title = configure motor properly at start
-id = fbf19fa1e320a89e6285cc252d69111fe71b3966
-status = closed
+title = stop controller while adding motors
+id = 933ec869fa9a7fedae54f4bb4699e50d85e90fad
+status = open
 type = bug
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com

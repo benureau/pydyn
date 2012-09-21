@@ -290,15 +290,16 @@ class DynamixelIO:
             :type id_pos_speed_torque_tuples: list of (motor id, position, speed, torque)
             
             """
-        motor_models = [self._lazy_get_model(mid) for mid in motor_ids]
         
-        ids, pos, speed, torque = zip(*id_pos_speed_torque_tuples)
+        motor_ids, pos, speed, torque = zip(*id_pos_speed_torque_tuples)
+        
+        motor_models = [self._lazy_get_model(mid) for mid in motor_ids]
         
         pos = [degree_to_position(rad, model) for rad, model in zip(pos, motor_models)]
         speed = map(rpm_to_speed, speed)
         torque = map(percent_to_torque_limit, torque)
         
-        self._send_sync_write_packet('GOAL_POS_SPEED_TORQUE', zip(ids, pos, speed, torque))
+        self._send_sync_write_packet('GOAL_POS_SPEED_TORQUE', zip(motor_ids, pos, speed, torque))
     
     
     
@@ -725,7 +726,7 @@ class DynamixelIO:
     
     
     def get_torque_limit(self, motor_id):
-        return self._send_read_packet(motor_id, 'TORQUE_LIMIT')
+        return torque_limit_to_percent(self._send_read_packet(motor_id, 'TORQUE_LIMIT'))
     
     def set_torque_limit(self, motor_id, torque_limit):
         self._send_write_packet(motor_id, 'TORQUE_LIMIT', torque_limit)

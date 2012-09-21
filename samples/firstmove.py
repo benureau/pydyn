@@ -10,6 +10,9 @@ import pypot.robot.robot
 robot = pypot.robot.robot.SimpleRobot(motor_range = [91, 96])
 
 print robot.motor_pos(96)
+print robot.motors[96].speed
+robot.motors[96].speed = 20.0
+#print robot.motors[96].speed = 20.0
 robot.motors[96].compliant = False
 
 while True:
