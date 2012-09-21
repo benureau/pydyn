@@ -15,10 +15,12 @@ print motor.speed
 #print robot.motors[96].speed = 20.0
 motor.compliant = False
 
-while True:
-    robot.goto(96, 299, max_speed = 150)
-    print motor.goal_position
-    time.sleep(2.5)
-    robot.goto(96, 0, max_speed = 150)
-    print motor.goal_position
-    time.sleep(2.5)
+# robot.goto(96, 299, max_speed = 150)
+# print motor.goal_position
+# time.sleep(2.5)
+# robot.goto(96, 1, max_speed = 150)
+# print motor.goal_position
+# time.sleep(2.5)
+
+motion = robot.sinus(96, 150, 40, period = 2.0, duration = 10, max_speed = 200)
+motion.join()

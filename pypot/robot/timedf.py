@@ -1,3 +1,5 @@
+import math
+
 class TimedFunction:
     """Abstract class for functions called by the motion controller.
     """
@@ -9,16 +11,20 @@ class TimedFunction:
         # By default TimedFunction are never finished
         return False
 
-
 class Sinus(TimedFunction):
 
-    def __init__(self, freq, phase):
-        self.omega = 2. * math.pi * freq
-        self.phi = phase
+    def __init__(self, period, amplitude, v_shift = 150.0, phase = 0.0, duration = float('inf')):
+        self.omega = 2. * math.pi / period
+        self.phi   = phase
+        self.a     = amplitude
+        self.b     = v_shift
+        self.duration = duration
 
     def get_value(self, t):
-        return math.sinus(self.omega * t + self.phi)
+        return min(299, max(1, self.a*math.sin(self.omega * t + self.phi) + self.b))
 
+    def has_finished(self, t):
+        return t > self.duration
 
 class LinearGoto(TimedFunction):
     """Implements a goal moving linearly from a given start to a given stop

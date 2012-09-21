@@ -17,26 +17,26 @@ class SimpleRobot(object):
             self.motors[m.id] = m
         self.motions = []
         
-    def goto(self, motor_id, pos, max_speed = 90.0):
+    def goto(self, motor_id, pos, max_speed = 200.0):
         """Order a straigh motion to goal position with a maximum speed.
         
         :note This is not handled through a motion controller, but as a 
               one-shot manipulation of the motor variables
         
         :param pos       in degrees.
-        :param max_speed in degree/s. Value over 180 are not recommended.
+        :param max_speed in degree/s. Value over 500 are not recommended.
         """
         print pos, max_speed
         motor = self.ctrl.motormap[motor_id]
         motor.goal_position = pos
         motor.speed = max_speed/6
         
-    def linear(self, motor_id, pos, duration = None, max_speed = 90.0):
+    def linear(self, motor_id, pos, duration = None, max_speed = 200.0):
         """Order a linear motion for the position.
         
         :param pos       in degrees.
         :param duration  in s
-        :param max_speed in degree/s. Value over 180 are not recommended.
+        :param max_speed in degree/s. Value over 500 are not recommended.
         """
         
         motor = self.ctrl.motormap[motor_id]
@@ -52,7 +52,21 @@ class SimpleRobot(object):
         self.motions.append(motion)
         
         return motion
-    
-    def motor_pos(self, motor_id):
+
+    def sinus(self, motor_id, center_pos, amplitude, period = 1.0, duration = float('inf'), max_speed = 200.0):
+        """Order a linear motion for the position.
+        
+        :param pos       in degrees.
+        :param duration  in s
+        :param max_speed in degree/s. Value over 500 are not recommended.
+        """
+        
         motor = self.ctrl.motormap[motor_id]
-        return motor.current_position
+        motor.speed = max_speed/6
+        
+        tf = timedf.Sinus(period, amplitude, center_pos, duration)
+        motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
+        motion.start()
+        self.motions.append(motion)
+        
+        return motion
