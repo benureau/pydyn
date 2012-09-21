@@ -1,0 +1,11 @@
+[header]
+title = default speed in io to degree per second
+id = 0305ec596578be49b465b37246690bdb02f2bc6b
+status = open
+type = bug
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[discussion]
+desc = # enter your description here
+

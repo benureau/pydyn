@@ -9,17 +9,16 @@ import pypot.robot.robot
 
 robot = pypot.robot.robot.SimpleRobot(motor_range = [91, 96])
 
-print robot.motor_pos(96)
-print robot.motors[96].speed
-robot.motors[96].speed = 20.0
+motor = robot.motors[96]
+
+print motor.speed
 #print robot.motors[96].speed = 20.0
-robot.motors[96].compliant = False
+motor.compliant = False
 
 while True:
-    motion = robot.goto(96, 300, 0.5)
-    motion.join()
-    time.sleep(0.5)
-    motion = robot.goto(96, 0, 1.0)
-    motion.join()
-    time.sleep(0.5)
-
+    robot.goto(96, 299, max_speed = 150)
+    print motor.goal_position
+    time.sleep(2.5)
+    robot.goto(96, 0, max_speed = 150)
+    print motor.goal_position
+    time.sleep(2.5)

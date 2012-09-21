@@ -99,7 +99,6 @@ def load_to_percent(load):
 
 
 def percent_to_torque_limit(percent):
-    print percent
     if not (0 <= percent <= 100):
         raise ValueError('Percent must be in [0, 100]')
     
