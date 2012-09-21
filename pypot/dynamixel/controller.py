@@ -21,11 +21,17 @@ class DynamixelController(threading.Thread):
         self.type = connection_type
         self.io = io.DynamixelIO(port, timeout = 0.05)
         self.motors = []
+        self.motormap = {}
         
     def _configure_motor(self, motor):
         # TODO: check EEPROM from a file
-        pos = self.io.get_position(motor.id)
-        motor.current_position = motor.goal_position = pos
+        position, speed, load = self.io.get_position_speed_load(motor.id)
+        motor._current_position = motor.goal_position = position 
+        motor._current_speed    = motor.moving_speed  = speed 
+        motor._current_load     = load
+        motor.torque_limit      = self.io.get_torque_limit(motor.id)
+        
+        motor._compliant[1] = not self.io.is_torque_enabled(motor.id)
 
     def discover_motors(self, motor_ids, load_eeprom = True):
         found_ids = self.io.scan(motor_ids)
@@ -35,6 +41,7 @@ class DynamixelController(threading.Thread):
                 eeprom_data = self.read_eeprom(m_id)                
             m = motor.DynamixelMotor(m_id, eeprom_data = eeprom_data)
             self.motors.append(m)
+            self.motormap[m.id] = m
             #TODO: check for double motors        
         [self._configure_motor(m) for m in self.motors]
         
@@ -66,21 +73,21 @@ class DynamixelController(threading.Thread):
 
             elif self.type == 'USB2DXL':
                 for m in self.motors:
-                    m.current_position, m.current_speed, m.current_load = self.io.get_position_speed_load(m.id)
+                    m._current_position, m._current_speed, m._current_load = self.io.get_position_speed_load(m.id)
 
                     # if flag, then something needs changing. 
                     if m.flag:
                         self._set_properties(m)
                         m.flag = False
                     
-            sync_pos = []
+            sync_pst = []
             for m in self.motors:
-                if not m.compliant:
-                    sync_pos.append((m.id, m.goal_position))
-            if len(sync_pos) > 0:
-                self.io.set_sync_positions(sync_pos)
+                if m.compliant is not None and not m.compliant:
+                    sync_pst.append((m.id, m.goal_position, m.moving_speed, m.torque_limit))
+            if len(sync_pst) > 0:
+                self.io.set_sync_positions_speeds_torque_limits(sync_pst)
+            
             end = time.time()
-
             dt = 0.020 - (end - start)
             if dt > 0:
                 time.sleep(dt)

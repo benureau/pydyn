@@ -1,0 +1,11 @@
+[header]
+title = stop controller while adding motors
+id = 933ec869fa9a7fedae54f4bb4699e50d85e90fad
+status = open
+type = bug
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[discussion]
+desc = # enter your description here
+

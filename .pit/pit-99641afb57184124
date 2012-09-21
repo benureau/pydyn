@@ -1,0 +1,11 @@
+[header]
+title = load ram at start
+id = 99641afb5718412450e75d714f55c7ebef0b7844
+status = open
+type = feature
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[discussion]
+desc = # enter your description here
+

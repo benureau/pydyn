@@ -102,6 +102,13 @@ def percent_to_torque_limit(percent):
     
     return int(percent * 10.23)
 
+def torque_limit_to_percent(torque):
+    if not (0 <= torque <= 1023):
+        raise ValueError('Torque must be in [0, 1023]')
+
+    return int(torque/10.23)
+
+
 
 # MARK: - Byte conversions
 

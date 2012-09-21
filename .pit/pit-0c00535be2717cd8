@@ -1,0 +1,11 @@
+[header]
+title = all motor become non compliant with firstmove.py
+id = 0c00535be2717cd8a1365d71a5fdc2ad0f4b2505
+status = closed
+type = bug
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[discussion]
+desc = # enter your description here
+

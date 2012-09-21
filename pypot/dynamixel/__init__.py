@@ -25,7 +25,7 @@ def get_available_ports():
 
     raise NotImplementedError('Unknown operating system: %s' % (op_system))
 
-def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = 0.05):
+def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = 0.02):
     """
         Return a controller outfitted with all motor found.
     """
@@ -46,11 +46,11 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
         print '  Connexion established :', ctrl.io
     
     if motor_range is None:
-        motor_range = 0, 100
+        motor_range = 0, 253
     if verbose:
         print '  Scanning motors ids between {} and {}'.format(motor_range[0], motor_range[-1])
     
-    motors = ctrl.discover_motors(range(motor_range[0],motor_range[-1]))
+    motors = ctrl.discover_motors(range(motor_range[0],motor_range[-1]+1))
     if len(motors) == 0:
         print '  No motors found.'
         print 'Error. Exiting.'
