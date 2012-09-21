@@ -1,5 +1,5 @@
 import eeprom
-import protocol
+import conversions
 
 class DynamixelMotor(object):
     """ """

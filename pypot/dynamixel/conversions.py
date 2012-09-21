@@ -14,7 +14,7 @@ def raw_to_baudrate(value):
 
 def raw_to_return_delay_time(value):
     """Return the return delay time in micro seconds"""
-    return 2*self.data[5]
+    return 2*value
         
 def raw_to_temperature(value):
     """Return the temperature in degree celsius"""

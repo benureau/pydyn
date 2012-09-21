@@ -1,11 +1,3 @@
-import threading
-import math
-
-
-class MotionController(threading.Thread):
-    pass
-
-
 class TimedFunction:
     """Abstract class for functions called by the motion controller.
     """
@@ -18,7 +10,7 @@ class TimedFunction:
         return False
 
 
-def Sinus(TimedFunction):
+class Sinus(TimedFunction):
 
     def __init__(self, freq, phase):
         self.omega = 2. * math.pi * freq
@@ -28,14 +20,11 @@ def Sinus(TimedFunction):
         return math.sinus(self.omega * t + self.phi)
 
 
-def LinearGoto(TimedFunction):
+class LinearGoto(TimedFunction):
     """Implements a goal moving linearly from a given start to a given stop
     position.
 
-    Params
-    ------
-    start, stop
-    duration: in s
+    :param start, stop, duration  in s
     """
 
     def __init__(self, start, stop, duration):
@@ -48,3 +37,17 @@ def LinearGoto(TimedFunction):
 
     def has_finished(self, t):
         return t > self.duration
+        
+class SumTimeFunction(TimedFunction):
+    """Sum of two time functions.
+    """
+
+    def __init__(self, tf1, tf2):
+        self.tf1 = tf1
+        self.tf2 = tf2
+
+    def get_value(self, t):
+        return self.tf1.get_value(t) + self.tf2.get_value(t)
+
+    def has_finished(self, t):
+        return self.tf1.has_finished(t) and self.tf2.has_finished(t)

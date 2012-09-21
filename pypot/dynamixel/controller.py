@@ -21,11 +21,12 @@ class DynamixelController(threading.Thread):
         self.type = connection_type
         self.io = io.DynamixelIO(port, timeout = 0.05)
         self.motors = []
+        self.motormap = {}
         
     def _configure_motor(self, motor):
         # TODO: check EEPROM from a file
-        pos = self.io.get_position(motor.id)
-        motor.current_position = motor.goal_position = pos
+        motor.current_position = motor.goal_position = self.io.get_position(motor.id)
+        motor._compliant[1] = not self.io.is_torque_enabled(motor.id)
 
     def discover_motors(self, motor_ids, load_eeprom = True):
         found_ids = self.io.scan(motor_ids)
@@ -35,6 +36,7 @@ class DynamixelController(threading.Thread):
                 eeprom_data = self.read_eeprom(m_id)                
             m = motor.DynamixelMotor(m_id, eeprom_data = eeprom_data)
             self.motors.append(m)
+            self.motormap[m.id] = m
             #TODO: check for double motors        
         [self._configure_motor(m) for m in self.motors]
         
@@ -75,12 +77,12 @@ class DynamixelController(threading.Thread):
                     
             sync_pos = []
             for m in self.motors:
-                if not m.compliant:
+                if m.compliant is not None and not m.compliant:
                     sync_pos.append((m.id, m.goal_position))
             if len(sync_pos) > 0:
                 self.io.set_sync_positions(sync_pos)
+            
             end = time.time()
-
             dt = 0.020 - (end - start)
             if dt > 0:
                 time.sleep(dt)
