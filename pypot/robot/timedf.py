@@ -1,6 +1,14 @@
 import math
 
-class TimedFunction:
+"""
+TimedFunctions computes the next values of the motor variables in a motion.
+Although they might have access to motor instances, they should only read their
+attribute, and not change them in any way.
+"""
+
+    # Abstract base classes
+
+class TimedFunction(object):
     """Abstract class for functions called by the motion controller.
     """
 
@@ -10,6 +18,27 @@ class TimedFunction:
     def has_finished(self, t):
         # By default TimedFunction are never finished
         return False
+
+class TimedTripleFunction(object):
+    """Abstract class for functions called by the motion controller.
+        Return position, speed and max torque at every step
+    """
+
+    def get_value(self, elapsed_time):
+        """"Compute the value of position, and maximum speed and torque the motor 
+            should adopt given the elapsed time
+            
+            :return  3-length tuple with position, speed, and time.
+                     If one of those value is None, if won't be updated on the motor
+        """
+        return None, None, None
+
+    def has_finished(self, t):
+        # By default TimedFunction are never finished
+        return False
+
+
+    # Concrete instances
 
 class Sinus(TimedFunction):
 
@@ -57,3 +86,5 @@ class SumTimeFunction(TimedFunction):
 
     def has_finished(self, t):
         return self.tf1.has_finished(t) and self.tf2.has_finished(t)
+        
+    
