@@ -26,14 +26,20 @@ class PoseMotionController(threading.Thread):
         self.tf    = tf
         self.freq  = freq
         
+    def update(self, elapsed):
+        """Update motor values"""
+        goalpos = self.tf.get_value(elapsed)
+        self.motor.goal_position = goalpos
+        
+        
     def run(self):
         self._zero = time.time()
         while self._alive:
             t1 = time.time()
             elapsed = t1 - self._zero
-        
-            goalpos = self.tf.get_value(elapsed)
-            self.motor.goal_position = goalpos
+            
+            self.update(elapsed)
+            
             if self.tf.has_finished(elapsed):
                 self._alive = False
                 break;
@@ -72,3 +78,14 @@ class PoseMotionController(threading.Thread):
             self._zero = time.time() - self._suspendtime
             self._suspendlock.release()            
 
+class DualMotionController(PoseMotionController):
+    """Class for pose and speed motion controller."""
+    
+    def __init__(self, motor, tf, freq = 10):
+        PoseMotionController.__init__(self, motor, tf, freq = freq)
+        
+    def update(self, elapsed):
+        goalpos, maxspeed = self.tf.get_value(elapsed)
+        self.motor.goal_position = goalpos
+        self.motor.moving_speed  = maxspeed
+        
