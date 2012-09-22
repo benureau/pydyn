@@ -41,7 +41,7 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     port = ports[0]
     if verbose:
         print '  Try to connect on ', port
-    ctrl = DynamixelController(port, connection_type, timeout = 0.05)
+    ctrl = DynamixelController(port, connection_type, timeout = timeout)
     if verbose:
         print '  Connexion established :', ctrl.io
     

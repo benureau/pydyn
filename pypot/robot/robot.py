@@ -7,10 +7,10 @@ from ..import dynamixel
 class SimpleRobot(object):
     """A simple robot with only one controller"""
 
-    def __init__(self, controller=None, motor_range = range(1, 253)):
+    def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03):
         self.ctrl = controller
         if self.ctrl is None:
-            self.ctrl = dynamixel.create_controller(verbose=True, motor_range =  motor_range)
+            self.ctrl = dynamixel.create_controller(verbose=True, motor_range =  motor_range, timeout = timeout)
         
         self.motors = {}
         for m in self.ctrl.motors:

@@ -19,7 +19,7 @@ class DynamixelController(threading.Thread):
             raise ValueError('Unknown controller type: %s' % (connection_type))
 
         self.type = connection_type
-        self.io = io.DynamixelIO(port, timeout = 0.05)
+        self.io = io.DynamixelIO(port, timeout = timeout)
         self.motors = []
         self.motormap = {}
         
@@ -73,12 +73,15 @@ class DynamixelController(threading.Thread):
 
             elif self.type == 'USB2DXL':
                 for m in self.motors:
-                    m._current_position, m._current_speed, m._current_load = self.io.get_position_speed_load(m.id)
-
-                    # if flag, then something needs changing. 
-                    if m.flag:
-                        self._set_properties(m)
-                        m.flag = False
+                    try:
+                        m._current_position, m._current_speed, m._current_load = self.io.get_position_speed_load(m.id)
+                        
+                        # if flag, then something needs changing. 
+                        if m.flag:
+                            self._set_properties(m)
+                            m.flag = False
+                    except io.DynamixelCommunicationError:
+                        print "warning: communication error on motor {}".format(m.id)
                     
             sync_pst = []
             for m in self.motors:
