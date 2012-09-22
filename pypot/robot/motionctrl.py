@@ -78,14 +78,15 @@ class PoseMotionController(threading.Thread):
             self._zero = time.time() - self._suspendtime
             self._suspendlock.release()            
 
-class DualMotionController(PoseMotionController):
-    """Class for pose and speed motion controller."""
+class PoseSpeedTorqueController(PoseMotionController):
+    """Class for pose, speed and torque motion controller."""
     
-    def __init__(self, motor, tf, freq = 10):
-        PoseMotionController.__init__(self, motor, tf, freq = freq)
+    def __init__(self, motor, tripletf, freq = 10):
+        PoseMotionController.__init__(self, motor, tripletf, freq = freq)
         
     def update(self, elapsed):
-        goalpos, maxspeed = self.tf.get_value(elapsed)
+        goalpos, maxspeed, torquelim = self.tf.get_value(elapsed)
         self.motor.goal_position = goalpos
         self.motor.moving_speed  = maxspeed
+        self.motor.torque_lim    = torquelim
         
