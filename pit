@@ -12,6 +12,7 @@ import ConfigParser
 from hashlib import sha1
 import StringIO
 import subprocess
+import datetime
 
 # Searching for the pit dir
 
@@ -52,7 +53,6 @@ def get_author():
         mail   = subprocess.check_output(['git','config', '--get', 'user.email'])
         author = author.strip('\n')
         mail   = mail.strip('\n')
-        print author, mail
         return author, mail
     except OSError, subprocess.CalledProcessError:
         return 'anonymous', 'unknow'
@@ -90,6 +90,7 @@ def setup_issue(digest, title, t):
     issue.set('header', 'type', t)
     issue.set('header', 'author', author)
     issue.set('header', 'mail', mail)
+    issue.add_section('eventlog')
     issue.add_section('discussion')
     issue.set('discussion', 'desc', '# enter your description here')
     return issue
@@ -168,15 +169,23 @@ def add_cmd(title):
     if t in extend:
         t = extend[t]
 
-    # finding id    
+    # finding the digest    
     issue = setup_issue('', title, t)
     s = StringIO.StringIO()
     issue.write(s)
     digest = sha1digest(s.getvalue())
-    
+
+    # creating the issue values
     filepath = issue_file(digest)
-    assert not os.path.exists(filepath)
+    if os.path.exists(filepath):
+        print '{}error{}: an issue by this name already exists; exiting.'.format(red, end)
+        exit(1)
     issue.set('header', 'id', digest)
+    author, mail = get_author()
+    now = datetime.datetime.utcnow()
+    issue.set('eventlog', 'openned[0]', 'openned the {} at {}(UCT) by {}'.format(now.date().isoformat(), now.time().strftime("%H:%M"), author))
+    
+    # writing the issue on file
     try:
        with open(filepath, 'w') as f: 
            issue.write(f)
@@ -191,9 +200,19 @@ def close_cmd(digest):
     status = config.get('header', 'status')
     digest = config.get('header', 'id')[:sha1_length]
     if status == 'closed':
-        print "warning: issue {:d} already closed".format(digest)
+        print "{}warning{}: issue {}{}{} already closed".format(red, end, bold, digest, end)
     else:
         config.set('header','status','closed')
+        now = datetime.datetime.utcnow()
+        
+        author, mail = get_author()
+        try:
+            issue.add_section('eventlog')
+        except DuplicateSectionError:
+            pass
+        config.set('eventlog', 
+                   'closed[{}]'.format(len(config.options('eventlog'))), 
+                   'closed the {} at {}(UCT) by {}'.format(now.date().isoformat(), now.time().strftime("%H:%M"), author))
         try:
            with open(issue_file(digest), 'w') as f: 
                config.write(f)
@@ -333,3 +352,4 @@ if len(sys.argv) == 3:
     elif cmd == 'close':
         digest = sys.argv[2]
         close_cmd(digest)
+      
