@@ -1,13 +1,14 @@
 [header]
 title = use thread.get_ident() in motion representation
 id = 20c5c75373f6af6cb2e6915a96371e5318584172
-status = open
+status = closed
 type = bug
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
 
 [eventlog]
 openned[0] = openned the 2012-09-23 at 20:02(UCT) by Fabien Benureau
+closed[1] = closed the 2012-09-23 at 22:12(UCT) by Fabien Benureau
 
 [discussion]
 desc = # enter your description here
