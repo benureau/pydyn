@@ -25,6 +25,9 @@ class DynamixelController(threading.Thread):
         self.motors = []
         self.motormap = {}
 
+        self._pinglock = threading.Lock() # when discovering motors
+        self._ctrllock = threading.Lock() # when running as usual
+
     def _configure_motor(self, motor):
         # TODO: check EEPROM from a file
         position, speed, load = self.io.get_position_speed_load(motor.id)
@@ -36,6 +39,9 @@ class DynamixelController(threading.Thread):
         motor._compliant[1] = not self.io.is_torque_enabled(motor.id)
 
     def discover_motors(self, motor_ids, load_eeprom = True, verbose = False):
+        self._pinglock.acquire()
+        self._ctrllock.acquire()
+        
         found_ids = []
         for m_id in motor_ids:
             if verbose:
@@ -44,6 +50,9 @@ class DynamixelController(threading.Thread):
                 sys.stdout.flush()
             if self.io.ping(m_id):
                 found_ids.append(m_id)
+
+        self._pinglock.release()
+        self._ctrllock.release()
 
         return found_ids
 
@@ -78,6 +87,11 @@ class DynamixelController(threading.Thread):
 
     def run(self):
         while True:
+            
+            self._pinglock.acquire()
+            self._ctrllock.acquire()
+            self._pinglock.release()
+            
             start = time.time()
             if self.type == 'USB2AX':
                 positions = self.io.get_sync_positions([m.id for m in self.motors])
@@ -106,6 +120,8 @@ class DynamixelController(threading.Thread):
                     sync_pst.append((m.id, m.goal_position, m.moving_speed, m.torque_limit))
             if len(sync_pst) > 0:
                 self.io.set_sync_positions_speeds_torque_limits(sync_pst)
+
+            self._ctrllock.release()
 
             end = time.time()
             dt = 0.020 - (end - start)
