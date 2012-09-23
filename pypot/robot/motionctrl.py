@@ -86,7 +86,10 @@ class PoseSpeedTorqueController(PoseMotionController):
         
     def update(self, elapsed):
         goalpos, maxspeed, torquelim = self.tf.get_value(elapsed)
-        self.motor.goal_position = goalpos
-        self.motor.moving_speed  = maxspeed
-        self.motor.torque_lim    = torquelim
+        if goalpos is not None:
+            self.motor.goal_position = goalpos
+        if maxspeed is not None:
+            self.motor.moving_speed  = maxspeed
+        if torquelim is not None:
+            self.motor.torque_lim    = torquelim
         
