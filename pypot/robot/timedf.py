@@ -1,5 +1,3 @@
-import math
-
 """
 TimedFunctions computes the next values of the motor variables in a motion.
 Although they might have access to motor instances, they should only read their
@@ -39,67 +37,9 @@ class TimedTripleFunction(object):
         return False
 
 
-    # Concrete instances
-
-class Sinus(TimedFunction):
-
-    def __init__(self, period, amplitude, v_shift = 150.0, phase = 0.0, duration = float('inf')):
-        self.omega = 2. * math.pi / period
-        self.phi   = phase
-        self.a     = amplitude
-        self.b     = v_shift
-        self.duration = duration
-
-    def get_value(self, t):
-        return min(299, max(1, self.a*math.sin(self.omega * t + self.phi) + self.b))
-
-    def has_finished(self, t):
-        return t > self.duration
-
-
-class DualSinus(TimedTripleFunction):
-    """A sinus function that also controls max speed"""
-
-    def __init__(self, motor, period, amplitude, v_shift = 150.0, phase = 0.0, duration = float('inf')):
-        self.motor = motor
-        self.omega = 2. * math.pi / period
-        self.phi   = phase
-        self.a     = amplitude
-        self.b     = v_shift
-        self.duration = duration
-        self._lastt   = 0.0
-        self._lastpos = 0.0
-
-    def get_value(self, t):
-        position = min(299, max(1, self.a*math.sin(self.omega * t + self.phi) + self.b))
-        #print "%.0f" % (abs(position-self.motor.position)/(t - self._lastt)/20,)
-        speed = abs(20*math.sin(self.omega * t + self.phi))
-        self._lastt = t
-        return position, speed, None
-
-    def has_finished(self, t):
-        return t > self.duration
-
-
-class LinearGoto(TimedFunction):
-    """Implements a goal moving linearly from a given start to a given stop
-    position.
-
-    :param start, stop, duration  in s
-    """
-
-    def __init__(self, start, stop, duration):
-        self.start = start
-        self.length = stop - start
-        self.duration = float(duration)
-
-    def get_value(self, t):
-        return self.start + min(max(0, t / self.duration), 1) * self.length
-
-    def has_finished(self, t):
-        return t > self.duration
+    # Compositions
         
-class SumTimeFunction(TimedFunction):
+class SumTimedFunction(TimedFunction):
     """Sum of two time functions.
     """
 
@@ -112,5 +52,31 @@ class SumTimeFunction(TimedFunction):
 
     def has_finished(self, t):
         return self.tf1.has_finished(t) and self.tf2.has_finished(t)
+
+
+class SumTripleTimedFunction(TimedTripleFunction):
+    """Sum of two triple time functions.
+        Position are added. The first function values override the one of the 
+        second function, if they are not None.
+    """
+
+    def __init__(self, tf1, tf2):
+        self.tf1 = tf1
+        self.tf2 = tf2
+
+    @staticmethod
+    def _nonezero(x):
+        if x is None:
+            return 0.0
+        return x
         
-    
+    def get_value(self, t):
+        pos1, speed1, torque1 =  self.tf1.get_value(t)
+        pos2, speed2, torque2 =  self.tf2.get_value(t)
+        pos = self._nonezero(pos1) + self._nonezero(pos2)
+        speed = pos1 if pos1 is not None else pos2 
+        torque = torque1 if torque1 is not None else torque2 
+        return pos, speed, torque
+
+    def has_finished(self, t):
+        return self.tf1.has_finished(t) and self.tf2.has_finished(t)

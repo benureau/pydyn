@@ -4,11 +4,10 @@ sys.path.insert(0, (os.path.join(os.getcwd(), '..')))
 
 import pypot
 import pypot.robot
-import pypot.robot.robot
 
-robot = pypot.robot.robot.SimpleRobot(motor_range = [91, 96], timeout = 0.02)
+robot = pypot.robot.SimpleRobot(motor_range = [91, 96], timeout = 0.02)
 
-motor = robot.motors[94]
+motor = robot.m_by_id[94]
 
 print motor.speed
 #print robot.motors[96].speed = 20.0

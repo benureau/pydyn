@@ -1,6 +1,7 @@
 
 import motionctrl
-import timedf
+import tfsingle
+import tftriple
 
 from ..import dynamixel
 
@@ -148,7 +149,7 @@ class SimpleRobot(object):
         print pos, max_speed
         motor = self.m_by_id[motor_id]
         motor.goal_position = pos
-        motor.speed = max_speed/6
+        motor.speed = max_speed
 
     def linear(self, motor_id, pos, duration = None, max_speed = 200.0):
         """Order a linear motion for the position.
@@ -159,13 +160,13 @@ class SimpleRobot(object):
         """
 
         motor = self.m_by_id[motor_id]
-        motor.speed = max_speed/6
+        motor.speed = max_speed
 
         startpos = motor.current_position
         if duration is None:
             duration = abs(pos - startpos)/max_speed
 
-        tf = timedf.LinearGoto(motor.current_position, pos, duration)
+        tf = tfsingle.LinearGoto(motor.current_position, pos, duration)
         motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
         motion.start()
         self.motions.append(motion)
@@ -181,9 +182,9 @@ class SimpleRobot(object):
         """
 
         motor = self.m_by_id[motor_id]
-        motor.speed = max_speed/6
+        motor.speed = max_speed
 
-        tf = timedf.Sinus(period, amplitude, center_pos, duration)
+        tf = tfsingle.Sinus(period, amplitude, center_pos, duration)
         motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
         motion.start()
         self.motions.append(motion)
@@ -200,7 +201,7 @@ class SimpleRobot(object):
 
         motor = self.m_by_id[motor_id]
 
-        tf = timedf.DualSinus(motor, period, amplitude, center_pos, duration)
+        tf = tftriple.DualSinus(motor, period, amplitude, center_pos, duration)
         motion = motionctrl.PoseSpeedTorqueController(motor, tf, freq = 30)
         motion.start()
         self.motions.append(motion)
