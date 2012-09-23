@@ -57,8 +57,6 @@ class SimpleRobot(object):
 
         If only one value is provided, set all motor to the same value.
         Else, expect an iterable of length superior to the number of motors
-
-        note:: Be careful at specifying a reasonable motor speed
         """
         if hasattr(p, '__iter__'):
             assert len(p) >= len(self.motors)
@@ -80,8 +78,6 @@ class SimpleRobot(object):
 
         If only one value is provided, set all motor to the same value.
         Else, expect an iterable of length superior to the number of motors
-
-        note:: Be careful at specifying a reasonable motor speed
         """
         if hasattr(v, '__iter__'):
             assert len(v) >= len(self.motors)
@@ -103,8 +99,6 @@ class SimpleRobot(object):
     
         If only one value is provided, set all motor to the same value.
         Else, expect an iterable of length superior to the number of motors
-    
-        note:: Be careful at specifying a reasonable motor speed
         """
         if hasattr(v, '__iter__'):
             assert len(v) >= len(self.motors)
@@ -113,6 +107,32 @@ class SimpleRobot(object):
         else:
             for m_i in self.motors:
                 m_i.torque_limit = v
+
+    # stop, suspend, resume
+
+    def stop(self):
+        """Stop all motions"""
+        for motion in self.motions:
+            if motion.is_alive():            
+                motion.stop()
+        self.motions = []
+        
+    def suspend(self):
+        """Suspend all motions"""
+        for motion in self.motions:
+            if motion.is_alive():            
+                motion.suspend()
+        self._clean_up()
+
+    def resume(self):
+        """Resume all motions"""
+        for motion in self.motions:
+            if motion.is_alive():            
+                motion.resume()
+
+    def _clean_up(self):
+        """Clean-up dead motions"""
+        self.motions = [motion for motion in self.motions if motion.is_alive()]
 
     # motion
 
@@ -186,3 +206,4 @@ class SimpleRobot(object):
         self.motions.append(motion)
 
         return motion
+
