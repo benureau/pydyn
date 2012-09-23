@@ -85,12 +85,36 @@ class SimpleRobot(object):
         """
         if hasattr(v, '__iter__'):
             assert len(v) >= len(self.motors)
-            for m_i, p_i in zip(self.motors, v):
+            for m_i, v_i in zip(self.motors, v):
                 m_i.compliant = v_i
         else:
             for m_i in self.motors:
                 m_i.compliant = v
 
+    # torque
+    
+    @property
+    def torque(self):
+        return tuple(m.torque_limit for m in self.motors)
+    
+    @compliant.setter
+    def torque(self, v):
+        """Enable or disable compliance.
+    
+        If only one value is provided, set all motor to the same value.
+        Else, expect an iterable of length superior to the number of motors
+    
+        note:: Be careful at specifying a reasonable motor speed
+        """
+        if hasattr(v, '__iter__'):
+            assert len(v) >= len(self.motors)
+            for m_i, v_i in zip(self.motors, v):
+                m_i.torque = v_i
+        else:
+            for m_i in self.motors:
+                m_i.torque_limit = v
+
+    # motion
 
     def goto(self, motor_id, pos, max_speed = 200.0):
         """Order a straigh motion to goal position with a maximum speed.
