@@ -21,5 +21,6 @@ motor.compliant = False
 # print motor.goal_position
 # time.sleep(2.5)
 
-motion = robot.sinus(94, 150, 40, period = 2.0, duration = 10, max_speed = 100)
+motion = robot.sinus2(94, 150, 40, period = 2.0, duration = 10)
+#motion = robot.sinus(94, 150, 40, period = 2.0, duration = 10)
 motion.join()
