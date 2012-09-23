@@ -52,26 +52,25 @@ def degree_to_position(degree, motor_model):
     
     return int((degree / max_deg) * max_pos)
 
-SPEED_TO_RPM = 0.114
-RPM_MAX = 117.0
+SPEED_TO_DEGREE_PER_SECOND = 0.019
+SPEED_MAX = 702.0 # in degree per second
 
-def speed_to_rpm(speed):
+def speed_to_degree_per_second(speed):
     if not (0 <= speed <= 2047):
         raise ValueError('Speed must be in [0, 2047]')
     
-    
     direction = ((speed >> 10) * 2) - 1
     
-    rpm = (speed % 1024) * SPEED_TO_RPM
+    rpm = (speed % 1024) * SPEED_TO_DEGREE_PER_SECOND
     
     return direction * rpm
 
 
-def rpm_to_speed(rpm):
-    if not (-RPM_MAX <= rpm < RPM_MAX):
-        raise ValueError('Rpm must be in [%d, %d[' % (int(-RPM_MAX), int(RPM_MAX)))
+def degree_per_second_to_speed(rpm):
+    if not (-SPEED_MAX <= rpm < SPEED_MAX):
+        raise ValueError('Rpm must be in [%d, %d[' % (int(-SPEED_MAX), int(SPEED_MAX)))
 	    
-    speed = 1024 * (abs(rpm) / RPM_MAX)
+    speed = 1024 * (abs(rpm) / SPEED_MAX)
     
     if rpm > 0:
         speed += 1024
