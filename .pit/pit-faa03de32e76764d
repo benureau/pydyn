@@ -1,0 +1,14 @@
+[header]
+title = monitoring log
+id = faa03de32e76764dd34f00a17447557828c49ab2
+status = open
+type = task
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[eventlog]
+openned[0] = openned the 2012-09-23 at 12:17(UCT) by Fabien Benureau
+
+[discussion]
+desc = # enter your description here
+

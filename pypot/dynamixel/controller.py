@@ -74,7 +74,11 @@ class DynamixelController(threading.Thread):
             elif self.type == 'USB2DXL':
                 for m in self.motors:
                     try:
-                        m._current_position, m._current_speed, m._current_load = self.io.get_position_speed_load(m.id)
+                        try:
+                            position, speed, load = self.io.get_position_speed_load(m.id)
+                            m._current_position, m._current_speed, m._current_load = position, speed, load
+                        except ValueError as ve:
+                            print 'warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0])
                         
                         # if flag, then something needs changing. 
                         if m.flag:
