@@ -131,6 +131,13 @@ class SimpleRobot(object):
             if motion.is_alive():            
                 motion.resume()
 
+    def join(self):
+        """Wait for all motion to finish"""
+        self._clean_up()
+        for motion in self.motions:
+            if motion.is_alive():            
+                motion.join()
+
     def _clean_up(self):
         """Clean-up dead motions"""
         self.motions = [motion for motion in self.motions if motion.is_alive()]

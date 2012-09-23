@@ -1,13 +1,14 @@
 [header]
 title = robot.joint()
 id = 5c73a8eef2d7892590ed1dfd5df1b1c81d4facee
-status = open
+status = closed
 type = feature
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
 
 [eventlog]
 openned[0] = openned the 2012-09-23 at 17:11(UCT) by Fabien Benureau
+closed[1] = closed the 2012-09-23 at 23:43(UCT) by Fabien Benureau
 
 [discussion]
 desc = # enter your description here
