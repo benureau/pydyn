@@ -5,12 +5,14 @@ import pypot.dynamixel as dyn
 
 ctrl = dyn.create_controller(verbose = True, motor_range = [91, 96])
 
-print 'Making motor compliant'
+print '\nMaking motor compliant... ',
+sys.stdout.flush()
+
 for m in ctrl.motors:
     m.compliant = True
-print 'Done'
 
 time.sleep(0.5)
+print 'done'
 
 for m in ctrl.motors:
-    print m.id, m.compliant
+    print "{} compliant : {}".format(m, m.compliant)
