@@ -69,8 +69,8 @@ def speed_to_rpm(speed):
 
 def rpm_to_speed(rpm):
     if not (-RPM_MAX <= rpm < RPM_MAX):
-        raise ValueError('Rpm must be in [%d, %d]' % (int(-RPM_MAX), int(RPM_MAX)))
-    
+        raise ValueError('Rpm must be in [%d, %d[' % (int(-RPM_MAX), int(RPM_MAX)))
+	    
     speed = 1024 * (abs(rpm) / RPM_MAX)
     
     if rpm > 0:
