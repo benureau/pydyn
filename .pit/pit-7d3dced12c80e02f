@@ -1,9 +1,12 @@
 [header]
 title = Remove constant value in Motor (use protocol)
 id = 7d3dced12c80e02f002641249b666bcb30e89f06
-status = open
+status = closed
 type = bug
 
 [discussion]
 desc = # enter your description here
+
+[eventlog]
+closed[0] = closed the 2012-09-23 at 23:39(UCT) by Fabien Benureau
 

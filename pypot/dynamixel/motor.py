@@ -1,5 +1,6 @@
 import eeprom
 import conversions
+from protocol
 
 class DynamixelMotor(object):
     """ """
@@ -55,39 +56,39 @@ class DynamixelMotor(object):
     
     @property
     def baudrate(self):
-        return conversions.raw_to_baudrate(self.eeprom.data[4])
+        return conversions.raw_to_baudrate(self.eeprom.data[protocol.DXL_BAUD_RATE])
     
     @property
     def return_delay_time(self):
-        return conversions.raw_to_return_delay_time(self.eeprom.data[5])
+        return conversions.raw_to_return_delay_time(self.eeprom.data[protocol.DXL_RETURN_DELAY_TIME])
     
     @property
     def cw_angle_limit(self):
-        return conversions.position_to_angle(self.eeprom.data[6], self.model)
+        return conversions.position_to_angle(self.eeprom.data[protocol.DXL_CW_ANGLE_LIMIT], self.model)
         
     @property
     def ccw_angle_limit(self):
-        return conversions.position_to_angle(self.eeprom.data[8], self.model)
+        return conversions.position_to_angle(self.eeprom.data[protocol.DXL_CCW_ANGLE_LIMIT], self.model)
     
     @property
     def max_temp(self):
-        return conversions.raw_to_temperature(self.eeprom.data[11])
+        return conversions.raw_to_temperature(self.eeprom.data[protocol.DXL_HIGEST_LIMIT_TEMPERATURE])
     
     @property
     def min_voltage(self):
-        return conversions.raw_to_voltage(self.eeprom.data[12])
+        return conversions.raw_to_voltage(self.eeprom.data[protocol.DXL_LOWEST_LIMIT_VOLTAGE])
     
     @property
     def max_voltage(self):
-        return conversions.raw_to_voltage(self.eeprom.data[13])
+        return conversions.raw_to_voltage(self.eeprom.data[protocol.DXL_HIGEST_LIMIT_VOLTAGE])
     
     @property
     def max_torque(self):
-        return conversions.raw_to_torque(self.eeprom.data[14])
+        return conversions.raw_to_torque(self.eeprom.data[protocol.DXL_MAX_TORQUE])
     
     @property
     def return_status(self):
-        return self.eeprom.data[16]
+        return self.eeprom.data[protocol.DXL_STATUS_RETURN_LEVELS]
 
 
     # MARK RAM properties
