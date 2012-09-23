@@ -1,0 +1,14 @@
+[header]
+title = add forward model to pystem
+id = f86d80945fc82f306f955e40b66d09f856582800
+status = open
+type = task
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[eventlog]
+openned[0] = openned the 2012-09-23 at 22:15(UCT) by Fabien Benureau
+
+[discussion]
+desc = # enter your description here
+

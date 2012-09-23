@@ -1,0 +1,14 @@
+[header]
+title = make TimedTripleFunction out of one or several TimedFunction
+id = 7e28ed92bb92e6fd39197f63831a7d89a3cb9a32
+status = open
+type = feature
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[eventlog]
+openned[0] = openned the 2012-09-23 at 22:16(UCT) by Fabien Benureau
+
+[discussion]
+desc = # enter your description here
+

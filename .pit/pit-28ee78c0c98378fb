@@ -1,0 +1,14 @@
+[header]
+title = port all old pystem scripts
+id = 28ee78c0c98378fb0d5e4337046e3430059a3791
+status = open
+type = task
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[eventlog]
+openned[0] = openned the 2012-09-23 at 22:14(UCT) by Fabien Benureau
+
+[discussion]
+desc = # enter your description here
+
