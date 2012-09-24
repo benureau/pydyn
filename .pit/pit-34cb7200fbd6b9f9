@@ -1,0 +1,14 @@
+[header]
+title = design an general test
+id = 34cb7200fbd6b9f987057ce359c4ceb457f036bb
+status = open
+type = task
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+
+[eventlog]
+openned[0] = openned the 2012-09-24 at 00:20(UCT) by Fabien Benureau
+
+[discussion]
+desc = # enter your description here
+

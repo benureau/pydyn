@@ -22,6 +22,9 @@ class SimpleRobot(object):
             self.m_by_id[m.id] = m
         self.motions = []
 
+    def __repr__(self):
+        """Representation of the stem, with motor id and position"""
+        return 'Robot({})'.format(', '.join("M%d:%0.f" % (m.id, m.position) for m in self.motors))
 
     # position
 
