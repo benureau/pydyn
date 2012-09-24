@@ -24,3 +24,7 @@ class DualSinus(timedf.TimedTripleFunction):
 
     def has_finished(self, t):
         return t > self.duration
+
+class Still(timedf.TimedTripleFunction):
+    """Stabilize the motor"""
+    pass

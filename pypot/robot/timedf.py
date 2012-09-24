@@ -17,6 +17,7 @@ class TimedFunction(object):
         # By default TimedFunction are never finished
         return False
 
+
 class TimedTripleFunction(object):
     """Abstract class for functions called by the motion controller.
         Return position, speed and max torque at every step

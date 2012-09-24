@@ -84,7 +84,8 @@ class DynamixelController(threading.Thread):
             self.io._set_torque_enable(motor.id, not desired)
             motor._compliant[0] = False
             motor._compliant[2] = not self.io.is_torque_enabled(motor.id)
-
+        m.flag = False
+        
     def run(self):
         while True:
             
@@ -110,7 +111,7 @@ class DynamixelController(threading.Thread):
                         # if flag, then something needs changing.
                         if m.flag:
                             self._set_properties(m)
-                            m.flag = False
+                            
                     except io.DynamixelCommunicationError:
                         print "warning: communication error on motor {}".format(m.id)
 
