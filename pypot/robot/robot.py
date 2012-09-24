@@ -144,19 +144,28 @@ class SimpleRobot(object):
 
     # motion
 
-    def goto(self, motor_id, pos, max_speed = 200.0):
+    def goto(self, motor_id, pos, max_speed = 200.0, duration = float('inf')):
         """Order a straigh motion to goal position with a maximum speed.
-
-        :note This is not handled through a motion controller, but as a
-              one-shot manipulation of the motor variables
 
         :param pos       in degrees.
         :param max_speed in degree/s. Value over 500 are not recommended.
+        :param duration  when to stop the motion
         """
         print pos, max_speed
         motor = self.m_by_id[motor_id]
         motor.goal_position = pos
         motor.speed = max_speed
+        
+        motor = self.m_by_id[motor_id]
+        motor.speed = max_speed
+                
+        tf = tfsingle.Constant(pos, duration)
+        motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
+        motion.start()
+        self.motions.append(motion)
+        
+        return motion
+
 
     def linear(self, motor_id, pos, duration = None, max_speed = 200.0):
         """Order a linear motion for the position.

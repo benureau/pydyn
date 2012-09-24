@@ -2,22 +2,22 @@ import math
 
 import timedf
 
-# Concrete instances
+class Constant(timedf.TimedFunction):
+    """Implements a constant timed function of specific duration.
 
-class Sinus(timedf.TimedFunction):
+    :param start, stop, duration  in s
+    """
 
-    def __init__(self, period, amplitude, v_shift = 150.0, phase = 0.0, duration = float('inf')):
-        self.omega = 2. * math.pi / period
-        self.phi   = phase
-        self.a     = amplitude
-        self.b     = v_shift
+    def __init__(self, target, duration = float('inf')):
+        self.target = target
         self.duration = duration
-
+        
     def get_value(self, t):
-        return self.a*math.sin(self.omega * t + self.phi) + self.b
+        return self.target
 
     def has_finished(self, t):
         return t > self.duration
+
 
 class LinearGoto(timedf.TimedFunction):
     """Implements a goal moving linearly from a given start to a given stop
@@ -36,3 +36,20 @@ class LinearGoto(timedf.TimedFunction):
 
     def has_finished(self, t):
         return t > self.duration
+        
+
+class Sinus(timedf.TimedFunction):
+
+    def __init__(self, period, amplitude, v_shift = 150.0, phase = 0.0, duration = float('inf')):
+        self.omega = 2. * math.pi / period
+        self.phi   = phase
+        self.a     = amplitude
+        self.b     = v_shift
+        self.duration = duration
+
+    def get_value(self, t):
+        return self.a*math.sin(self.omega * t + self.phi) + self.b
+
+    def has_finished(self, t):
+        return t > self.duration
+

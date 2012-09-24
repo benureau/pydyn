@@ -1,11 +1,14 @@
 [header]
 title = motion for goto() method with constant time function
 id = 88854baf44d1b1e97462b707144aa531d98239d8
-status = open
+status = closed
 type = feature
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
 
 [discussion]
 desc = # enter your description here
+
+[eventlog]
+closed[0] = closed the 2012-09-24 at 00:16(UCT) by Fabien Benureau
 
