@@ -208,7 +208,7 @@ def close_cmd(digest):
         author, mail = get_author()
         try:
             issue.add_section('eventlog')
-        except DuplicateSectionError:
+        except ConfigParser.DuplicateSectionError:
             pass
         config.set('eventlog', 
                    'closed[{}]'.format(len(config.options('eventlog'))), 
