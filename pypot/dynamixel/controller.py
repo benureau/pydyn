@@ -84,7 +84,7 @@ class DynamixelController(threading.Thread):
             self.io._set_torque_enable(motor.id, not desired)
             motor._compliant[0] = False
             motor._compliant[2] = not self.io.is_torque_enabled(motor.id)
-        m.flag = False
+        motor.flag = False
         
     def run(self):
         while True:
