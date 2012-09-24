@@ -29,11 +29,11 @@ class SimpleRobot(object):
     # position
 
     @property
-    def pos(self):
+    def pose(self):
         return tuple(m.position for m in self.motors)
 
-    @pos.setter
-    def pos(self, p):
+    @pose.setter
+    def pose(self, p):
         """Set target position.
 
         If only one value is provided, set all motor to the same value.
@@ -121,11 +121,17 @@ class SimpleRobot(object):
                 motion.stop()
         self.motions = []
         
-    def suspend(self):
-        """Suspend all motions"""
+    def suspend(self, still = True):
+        """Suspend all motions
+        
+        :param still  if True, the robot motor stop immediately.
+        """
         for motion in self.motions:
             if motion.is_alive():            
                 motion.suspend()
+        if still:
+            for m in self.motors:
+                m.stop()
         self._clean_up()
 
     def resume(self):
@@ -147,6 +153,13 @@ class SimpleRobot(object):
 
     # motion
 
+    @staticmethod
+    def _prepare(motor_ids, values):
+        """Translate motor_ids and value into two lists"""
+        if not hasattr(values, '__iter__'):
+            value = len(motor_ids)*[values]
+        return motor_ids, values
+    
     def goto(self, motor_id, pos, max_speed = 200.0, duration = float('inf')):
         """Order a straigh motion to goal position with a maximum speed.
 
@@ -154,11 +167,6 @@ class SimpleRobot(object):
         :param max_speed in degree/s. Value over 500 are not recommended.
         :param duration  when to stop the motion
         """
-        print pos, max_speed
-        motor = self.m_by_id[motor_id]
-        motor.goal_position = pos
-        motor.speed = max_speed
-        
         motor = self.m_by_id[motor_id]
         motor.speed = max_speed
                 
@@ -169,28 +177,36 @@ class SimpleRobot(object):
         
         return motion
 
-
-    def linear(self, motor_id, pos, duration = None, max_speed = 200.0):
+    def linear(self, pos, motor_ids = None, duration = None, max_speed = None):
         """Order a linear motion for the position.
 
-        :param pos       in degrees.
-        :param duration  in s
-        :param max_speed in degree/s. Value over 500 are not recommended.
+        :param pos        in degrees. If motor_ids is an iterable, an iterable is also accepted
+        :param motor_ids  motor ids. If None, considers all motors of the robot.
+        :param duration   in s. If None, it is automatically computed
+        :param max_speed  in degree/s. Value over 500 are not recommended. If None, no effect.
+        
+        :return list of motions created if motor_ids is iterable, a single motion otherwise.
         """
+        motor_ids = motor_ids or [m.id for m in self.motors]
+        motor_ids, pos = self._prepare(motor_ids, pos)    
+        motions_created = []
+        
+        for motor_id in motor_ids:
+            motor = self.m_by_id[motor_id]
+            if max_speed is not None:
+                motor.speed = max_speed
+    
+            startpos = motor.current_position
+            if duration is None:
+                duration = abs(pos - startpos)/motor.moving_speed
+    
+            tf = tfsingle.LinearGoto(motor.current_position, pos, duration)
+            motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
+            motion.start()
+            motions_created.append(motion)
+            self.motions.append(motion)
 
-        motor = self.m_by_id[motor_id]
-        motor.speed = max_speed
-
-        startpos = motor.current_position
-        if duration is None:
-            duration = abs(pos - startpos)/max_speed
-
-        tf = tfsingle.LinearGoto(motor.current_position, pos, duration)
-        motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
-        motion.start()
-        self.motions.append(motion)
-
-        return motion
+        return motions_created
 
     def sinus(self, motor_id, center_pos, amplitude, period = 1.0, duration = float('inf'), max_speed = 200.0):
         """Order a sinus motion around a position.
