@@ -20,6 +20,7 @@ class Robot(object):
         for m in self._ctrl.motors:
             self.motors.append(m)
             self.m_by_id[m.id] = m
+        self.motors.sort()
         self.motions = []
 
     def __repr__(self):
@@ -160,22 +161,28 @@ class Robot(object):
             value = len(motor_ids)*[values]
         return motor_ids, values
     
-    def goto(self, motor_id, pos, max_speed = 200.0, duration = float('inf')):
+    def goto(self, pos, motor_ids = None, max_speed = 200.0, duration = float('inf')):
         """Order a straigh motion to goal position with a maximum speed.
 
         :param pos       in degrees.
         :param max_speed in degree/s. Value over 500 are not recommended.
         :param duration  when to stop the motion
         """
-        motor = self.m_by_id[motor_id]
-        motor.speed = max_speed
-                
-        tf = tfsingle.Constant(pos, duration)
-        motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
-        motion.start()
-        self.motions.append(motion)
+        motor_ids = motor_ids or [m.id for m in self.motors]
+        motor_ids, pos = self._prepare(motor_ids, pos)
+        motions_created = []
         
-        return motion
+        for pos_i, motor_id in zip(pos, motor_ids):
+            motor = self.m_by_id[motor_id]
+            motor.speed = max_speed
+                    
+            tf = tfsingle.Constant(pos_i, duration)
+            motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
+            motion.start()
+            self.motions.append(motion)
+            motions_created.append(motion)
+        
+        return motions_created
 
     def linear(self, pos, motor_ids = None, duration = None, max_speed = None):
         """Order a linear motion for the position.
@@ -191,20 +198,20 @@ class Robot(object):
         motor_ids, pos = self._prepare(motor_ids, pos)    
         motions_created = []
         
-        for motor_id in motor_ids:
+        for pos_i, motor_id in zip(pos, motor_ids):
             motor = self.m_by_id[motor_id]
             if max_speed is not None:
                 motor.speed = max_speed
     
             startpos = motor.current_position
             if duration is None:
-                duration = abs(pos - startpos)/motor.moving_speed
+                duration = abs(pos_i - startpos)/motor.moving_speed
     
-            tf = tfsingle.LinearGoto(motor.current_position, pos, duration)
+            tf = tfsingle.LinearGoto(motor.current_position, pos_i, duration)
             motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
             motion.start()
-            motions_created.append(motion)
             self.motions.append(motion)
+            motions_created.append(motion)
 
         return motions_created
 

@@ -37,6 +37,9 @@ class DynamixelMotor(object):
     def __repr__(self):
         return 'M{}'.format(self.id)
          
+    def __le__(self, other):
+        return self.id < other.id
+         
     # MARK EEPROM properties
 
     @property
