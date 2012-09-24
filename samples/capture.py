@@ -1,5 +1,5 @@
-import os, sys, time
-sys.path.insert(0, (os.path.join(os.getcwd(), '..')))
+import debugenv
+import time
 
 import pypot
 import pypot.robot

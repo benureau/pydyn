@@ -1,6 +1,6 @@
-import os, sys, time
-sys.path.append(os.path.join(os.getcwd(), '..'))
+import debugenv
 
+import sys, time
 import pypot.dynamixel as dyn
 
 ctrl = dyn.create_controller(verbose = True, motor_range = [91, 96])
