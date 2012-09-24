@@ -5,7 +5,7 @@ import tftriple
 
 from ..import dynamixel
 
-class SimpleRobot(object):
+class Robot(object):
     """A simple robot with only one controller"""
 
     def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03):

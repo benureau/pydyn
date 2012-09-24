@@ -1,1 +1,1 @@
-from robot import SimpleRobot
+from robot import Robot
