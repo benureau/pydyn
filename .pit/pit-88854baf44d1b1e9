@@ -5,10 +5,11 @@ status = closed
 type = feature
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
+date = 2012-09-24 at 00:16 UCT
 
 [discussion]
 desc = # enter your description here
 
 [eventlog]
-closed[0] = closed the 2012-09-24 at 00:16(UCT) by Fabien Benureau
+closed[0] = closed the 2012-09-24 at 00:16 UCT by Fabien Benureau
 

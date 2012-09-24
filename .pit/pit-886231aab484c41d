@@ -5,10 +5,11 @@ status = closed
 type = bug
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
+date = 2012-09-23 at 17:14 UCT
 
 [eventlog]
-openned[0] = openned the 2012-09-23 at 17:14(UCT) by Fabien Benureau
-closed[1] = closed the 2012-09-23 at 17:54(UCT) by Fabien Benureau
+opened[0] = opened the 2012-09-23 at 17:14 UCT by Fabien Benureau
+closed[1] = closed the 2012-09-23 at 17:54 UCT by Fabien Benureau
 
 [discussion]
 desc = # enter your description here

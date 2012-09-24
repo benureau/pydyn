@@ -5,9 +5,10 @@ status = open
 type = task
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
+date = 2012-09-24 at 00:20 UCT
 
 [eventlog]
-openned[0] = openned the 2012-09-24 at 00:20(UCT) by Fabien Benureau
+opened[0] = opened the 2012-09-24 at 00:20 UCT by Fabien Benureau
 
 [discussion]
 desc = # enter your description here
