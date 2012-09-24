@@ -1,6 +1,6 @@
 import eeprom
 import conversions
-from protocol
+import protocol
 
 class DynamixelMotor(object):
     """ """
