@@ -14,7 +14,7 @@ class PoseMotionController(threading.Thread):
         threading.Thread.__init__(self)
         
         self.daemon = True # don't block main program
-        self.name = 'posemotion-{}'.format(thread.get_ident())
+        self.name = 'posemotion-{}'.format(self.ident)
     
         self._alive = True # change to false to kill the motion
         self._suspended = False
