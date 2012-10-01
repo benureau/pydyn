@@ -27,7 +27,7 @@ def get_available_ports():
 
     raise NotImplementedError('Unknown operating system: %s' % (op_system))
 
-def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = 0.02):
+def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = 0.02, start = True):
     """
         Return a controller outfitted with all motor found.
     """
@@ -76,6 +76,7 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
         print '  [{} OK {}] Models : {}'.format(color.green, color.end, 
                 ', '.join(['{}{}{}'.format(color.bold, m.model, color.end) for m in motors]))
 
-    ctrl.start_sync()
+    if start:
+        ctrl.start_sync()
     
     return ctrl
