@@ -72,11 +72,11 @@ class DynamixelMotor(object):
     
     @property
     def cw_angle_limit(self):
-        return conversions.position_to_angle(self.eeprom.data[protocol.DXL_CW_ANGLE_LIMIT], self.model)
+        return conversions.position_to_degree(self.eeprom.data[protocol.DXL_CW_ANGLE_LIMIT], self.model)
         
     @property
     def ccw_angle_limit(self):
-        return conversions.position_to_angle(self.eeprom.data[protocol.DXL_CCW_ANGLE_LIMIT], self.model)
+        return conversions.position_to_degree(self.eeprom.data[protocol.DXL_CCW_ANGLE_LIMIT], self.model)
     
     @property
     def max_temp(self):

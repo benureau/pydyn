@@ -1,7 +1,7 @@
 [header]
 title = motion auto terminating on target
 id = 8033f7a7194c37c7e1cbd2ba2e6f02e5801f68d3
-status = open
+status = closed
 type = feature
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
@@ -9,6 +9,7 @@ date = 2012-09-24 at 00:20 UCT
 
 [eventlog]
 openned[0] = openned the 2012-09-24 at 00:20 UCT by Fabien Benureau
+closed[1] = closed the 2012-10-01 at 12:49(UCT) by Fabien Benureau
 
 [discussion]
 desc = # enter your description here

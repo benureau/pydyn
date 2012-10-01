@@ -1,7 +1,7 @@
 [header]
 title = robot's motions should accept multiple motors
 id = a5ad9cb277adcbb49fc73d7632fdcf9ea4439167
-status = open
+status = closed
 type = feature
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
@@ -9,6 +9,7 @@ date = 2012-09-24 at 09:07 UCT
 
 [eventlog]
 opened[0] = opened the 2012-09-24 at 09:07 UCT by Fabien Benureau
+closed[1] = closed the 2012-10-01 at 12:48(UCT) by Fabien Benureau
 
 [discussion]
 desc = # enter your description here
