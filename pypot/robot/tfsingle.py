@@ -11,12 +11,33 @@ class Constant(timedf.TimedFunction):
     def __init__(self, target, duration = float('inf')):
         self.target = target
         self.duration = duration
-        
+
     def get_value(self, t):
         return self.target
 
     def has_finished(self, t):
         return t > self.duration
+
+
+class AutoGoto(timedf.TimedFunction):
+    """Implements a function that stop when arrived within a margin of error of a position
+
+    :param start, stop, duration  in s
+    """
+
+    def __init__(self, motor, target, margin = 0.3):
+        self.motor = motor
+        self.target = target
+        self.margin = abs(margin)
+
+    def get_value(self, t):
+        return self.target
+
+    def has_finished(self, t):
+        print self.motor.id, self.motor.position - self.target
+        if abs(self.motor.position - self.target) <= self.margin:
+            return True
+        return False
 
 
 class LinearGoto(timedf.TimedFunction):
@@ -36,7 +57,7 @@ class LinearGoto(timedf.TimedFunction):
 
     def has_finished(self, t):
         return t > self.duration
-        
+
 
 class Sinus(timedf.TimedFunction):
 

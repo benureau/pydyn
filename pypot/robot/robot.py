@@ -161,12 +161,13 @@ class Robot(object):
             value = len(motor_ids)*[values]
         return motor_ids, values
     
-    def goto(self, pos, motor_ids = None, max_speed = 200.0, duration = float('inf')):
+    def goto(self, pos, motor_ids = None, margin = 0.2, max_speed = 200.0):
         """Order a straigh motion to goal position with a maximum speed.
 
         :param pos       in degrees.
+        :param margin    in degrees. Once the motors position is within the margin
+                         of the target position, the motion will stop.
         :param max_speed in degree/s. Value over 500 are not recommended.
-        :param duration  when to stop the motion
         """
         motor_ids = motor_ids or [m.id for m in self.motors]
         motor_ids, pos = self._prepare(motor_ids, pos)
@@ -176,7 +177,7 @@ class Robot(object):
             motor = self.m_by_id[motor_id]
             motor.speed = max_speed
                     
-            tf = tfsingle.Constant(pos_i, duration)
+            tf = tfsingle.AutoGoto(motor, pos_i, margin)
             motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
             motion.start()
             self.motions.append(motion)
