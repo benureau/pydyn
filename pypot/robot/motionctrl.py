@@ -43,8 +43,10 @@ class PoseMotionController(threading.Thread):
             if self.tf.has_finished(elapsed):
                 self._alive = False
                 break;
-                       
-            time.sleep(1.0 / self.freq - (time.time() - t1))
+               
+            delay = 1.0 / self.freq - (time.time() - t1)        
+            if delay > 0:
+                time.sleep(delay)
 
             self._suspendlock.acquire()
             self._suspendlock.release()         
