@@ -44,6 +44,12 @@ class DynamixelMotor(object):
             return  0
         else:
             return  1
+
+    def eeprom_repr(self):
+        if self.eeprom is None:
+            return 'No eeprom loaded'
+        else:
+            return self.eeprom.long_desc()
          
     # MARK EEPROM properties
 
