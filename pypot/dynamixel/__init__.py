@@ -55,12 +55,11 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     motor_ids = ctrl.discover_motors(range(motor_range[0],motor_range[-1]+1), verbose = verbose)
     if verbose:
         print '  [{} OK {}] Scanning motor ids between {} and {}             '.format(color.green,
-                color.end, motor_ids[0], motor_ids[-1])
+                color.end, motor_range[0], motor_range[-1])
 
     if len(motor_ids) == 0:
-        print '  [{}FAIL{}] No motor found. Verify connections, power, USB dongle state.'.format(color.red,
-        color.end, motor_ids[0], motor_ids[-1])
-        print 'Error; exiting.'
+        print '  [{}FAIL{}] No motor found. Verify connections, power, USB dongle state, scan range.'.format(color.red,
+        color.end)
         exit(0)
     else:
         if verbose:

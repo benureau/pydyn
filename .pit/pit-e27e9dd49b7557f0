@@ -1,0 +1,15 @@
+[header]
+title = motion that stops when not moving anymore
+id = e27e9dd49b7557f0cd5aa0be784800a13373db0b
+status = open
+type = feature
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+date = 2012-10-03 at 08:55 UCT
+
+[eventlog]
+opened[0] = opened the 2012-10-03 at 08:55 UCT by Fabien Benureau
+
+[discussion]
+desc = # enter your description here
+
