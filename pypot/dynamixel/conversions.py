@@ -55,7 +55,7 @@ def degree_to_position(degree, motor_model):
 SPEED_TO_DEGREE_PER_SECOND = 0.019
 SPEED_MAX = 702.0 # in degree per second
 
-def speed_to_degree_per_second(speed):
+def speed_to_dps(speed):
     if not (0 <= speed <= 2047):
         raise ValueError('Speed must be in [0, 2047]')
     
@@ -66,7 +66,7 @@ def speed_to_degree_per_second(speed):
     return direction * rpm
 
 
-def degree_per_second_to_speed(rpm):
+def dps_to_speed(rpm):
     if not (-SPEED_MAX <= rpm < SPEED_MAX):
         raise ValueError('Rpm must be in [%d, %d[' % (int(-SPEED_MAX), int(SPEED_MAX)))
 	    
@@ -107,6 +107,54 @@ def torque_limit_to_percent(torque):
 
     return int(torque/10.23)
 
+# MARK: - Gain conversions
+
+MAX_P_GAIN = 254.0 / 8.0
+MAX_I_GAIN = 254.0 * 1000.0 / 2048.0
+MAX_D_GAIN = 254.0 * 4.0 / 1000.0
+
+def bytes_to_gains(gains):
+    """
+        Return real values of PID gains according to
+        http://support.robotis.com/en/images/product/dynamixel/mx_series/
+
+        Kp = P_Gains / 8
+        Ki = I_Gains * 1000 / 2048
+        Kd = D_Gains * 4 / 1000
+
+        """
+    if not len(gains) == 3 :
+        raise ValueError('Gains should have 3 values')
+    if ((min(gains) < 0) or (max(gains) > 254)):
+        raise ValueError('Gains values must be in [0,254]')
+
+    return list( numpy.array(gains) * numpy.array([0.004, 1000.0 / 2048, 0.125]) )
+
+def gains_to_bytes(gains):
+
+    if not len(gains) == 3 :
+        raise ValueError('Gains should have 3 values')
+
+    if not ([0.0, 0.0, 0.0] < gains < [MAX_D_GAIN, MAX_I_GAIN, MAX_P_GAIN]):
+        raise ValueError('Gains values must be in [0, 0 ,0] and [%f, %f, %f]' % (MAX_D_GAIN, MAX_I_GAIN, MAX_P_GAIN))
+
+    gains = list( numpy.array(gains) * numpy.array([250, 2.048, 8.0]) )
+    return [int(floatvalues) for floatvalues in gains]
+
+# MARK: - Alarm conversions
+
+def byte_to_alarms(alarm_code):
+    if not (0 <= alarm_code <= 255):
+        raise ValueError('alarm code must be in [0, 255]')
+
+    byte = numpy.unpackbits(numpy.asarray(alarm_code, dtype=numpy.uint8))
+    return tuple(numpy.array(DXL_ALARMS)[byte == 1])
+
+def alarms_to_byte(alarms):
+    b = 0
+    for a in alarms:
+        b += 2 ** (7 - DXL_ALARMS.index(a))
+    return b
 
 
 # MARK: - Byte conversions
