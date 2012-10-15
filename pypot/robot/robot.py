@@ -158,7 +158,10 @@ class Robot(object):
     def _prepare(motor_ids, values):
         """Translate motor_ids and value into two lists"""
         if not hasattr(values, '__iter__'):
-            value = len(motor_ids)*[values]
+            if not hasattr(motor_ids, '__iter__'):
+                return [motor_ids], [values]
+            else:
+                return motor_ids, len(motor_ids)*[values]
         return motor_ids, values
     
     def goto(self, pos, motor_ids = None, margin = 0.2, max_speed = 200.0):
@@ -184,6 +187,23 @@ class Robot(object):
             motions_created.append(motion)
         
         return motions_created
+
+    def constantspeed(self, speeds, motor_ids = None, duration = float('inf')):
+        motor_ids = motor_ids or [m.id for m in self.motors]
+        motor_ids, speeds = self._prepare(motor_ids, speeds)
+        motions_created = []
+        
+        for speed_i, motor_id in zip(speeds, motor_ids):
+            motor = self.m_by_id[motor_id]
+            
+            tf = tfsingle.Constant(speed_i, duration)
+            motion = motionctrl.SpeedController(motor, tf, freq = 30)
+            motion.start()
+            self.motions.append(motion)
+            motions_created.append(motion)
+        
+        return motions_created
+        
 
     def linear(self, pos, motor_ids = None, duration = None, max_speed = None):
         """Order a linear motion for the position.
