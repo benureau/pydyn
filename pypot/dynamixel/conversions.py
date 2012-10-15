@@ -28,10 +28,7 @@ def raw_to_torque(value):
 
 # MARK : Unit conversions
 
-position_range = {
-    'MX' : (4096.0, 360.0),
-    '*' : (1024.0, 300.0)
-}
+
 
 def position_to_degree(position, motor_model):
     model = 'MX' if motor_model.startswith('MX') else '*'
