@@ -129,12 +129,14 @@ class DynamixelIO:
         return filter(self.ping, ids)
         
     def read(self, motor_id, address, size):
-        """Read data from a motor
+        """
+            Read data from a motor
         
             :param address  where to read data in the memory.  
             :param size     how much from adress.  
             :return: list of integers with asked size
-        """
+            
+            """
         packet = DynamixelInstructionPacket(motor_id, 'READ_DATA', (address, size))
         status_packet = self._send_packet(packet)
         return status_packet.parameters
@@ -161,8 +163,8 @@ class DynamixelIO:
             angle_limits = self._motor_angle_limits[motor_id]
         else:
             model = 'MX' if self._lazy_get_model(motor_id).startswith('MX') else '*'
-            angle_limits = (-position_range[model][1] / 2,
-                            position_range[model][1] / 2)
+            angle_limits = (position_range[model][0],
+                            position_range[model][1])
                 
         self.set_angle_limits(motor_id, *angle_limits)
 
@@ -175,7 +177,9 @@ class DynamixelIO:
             angle_limits = (-position_range[model][1] / 2,
                             -position_range[model][1] / 2)
         
-            if tuple(self.get_angle_limits(motor_id)) == angle_limits:
+            print self.get_angle_limits(motor_id)
+            print angle_limits
+            if tuple(self.get_angle_limits(motor_id)) == (0.0, 0.0):
                 self._motor_modes[motor_id] = 'WHEEL'
         
         return self._motor_modes[motor_id]

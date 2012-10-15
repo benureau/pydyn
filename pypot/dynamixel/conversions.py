@@ -57,7 +57,7 @@ SPEED_MAX = 702.0 # in degree per second
 
 def speed_to_dps(speed):
     if not (0 <= speed <= 2047):
-        raise ValueError('Speed must be in [0, 2047]')
+        raise ValueError('speed must be in [0, 2047], but is {}'.format(speed))
     
     direction = ((speed >> 10) * 2) - 1
     
