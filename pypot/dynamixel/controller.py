@@ -112,7 +112,8 @@ class DynamixelController(threading.Thread):
                         if m.flag:
                             self._set_properties(m)
                             
-                    except io.DynamixelCommunicationError:
+                    except io.DynamixelCommunicationError as e:
+                        print e
                         print "warning: communication error on motor {}".format(m.id)
 
             sync_pst = []

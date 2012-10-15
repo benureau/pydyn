@@ -308,6 +308,12 @@ class DynamixelStatusPacket(DynamixelPacket):
         
         return status_packet
     
+                
+    def to_bytes(self):
+        return self.header.to_bytes() + \
+            array.array('B', [self.error] + self.parameters + [self.checksum]).tostring()
+
+    
     
     def _compute_checksum(self):
         return 255 - ((self.motor_id + self.length + self.error + sum(self.parameters)) % 256)
