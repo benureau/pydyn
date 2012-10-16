@@ -134,7 +134,7 @@ class Memory(object):
         return self._memory_data[index]
         
     def __setitem__(self, index, val):
-        self.__memory_data[index] = val
+        self.__memory_data[index] = int(val)
         
     def long_desc(self):
         s = '\n'.join('{:2i}: {:4i}'.format(address, value) 

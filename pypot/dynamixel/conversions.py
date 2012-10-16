@@ -1,11 +1,15 @@
-from protocol import DXL_MODEL_NUMBER
-
 # for details, see http://support.robotis.com/en/product/dynamixel/
 
-# MARK : EEPROM conversions
+def checkbounds(name, lower, upper, val):
+    if not lower <= val <= upper:
+        raise ValueError('{} should be in the [{}, {}] range but is {}'.format(name, lower, upper, val))
 
-def raw_to_model(value):
-    return DXL_MODEL_NUMBER[value]
+def checkoneof(name, collection, val):
+    if not val in collection:
+        raise ValueError('{} should be in {} but is {}'.format(name, collection, val))
+
+
+# MARK : EEPROM conversions
     
 def raw_to_baudrate(value):
     return 2000000/(value+1)
@@ -14,21 +18,131 @@ def raw_to_return_delay_time(value):
     """Return the return delay time in micro seconds"""
     return 2 * value
         
-def raw_to_temperature(value):
-    """Return the temperature in degree celsius"""
-    return value    
 
-def raw_to_voltage(value):
+
+
+
+# MARK Baudrate
+
+def raw2_baudrate_axrx(value):
+    checkbounds('baudrate', 0, 254, value)
+    return 2000000.0/(value + 1)
+
+def baudrate_axrx_2raw(value):
+    return int(2000000.0/value - 1)
+
+baudrate_mx = {
+    250 : 2250000,
+    251 : 2500000,
+    252 : 3000000,
+}
+mx_baudrate = {
+    2250000 : 250,
+    2500000 : 251,
+    3000000 : 252,
+}
+
+def raw2_baudrate_mx(value):
+    checkbounds('baudrate', 0, 254, value)
+    try:
+        return baudrate_mx[value]
+    except KeyError:
+        return 2000000.0/(value + 1)
+
+def baudrate_mx_2raw(value):
+    try:
+        return max_baudrate[int(value)]
+    except KeyError:
+        return int(2000000.0/value - 1)
+
+
+# MARK Return delay time
+        
+def return_delay_time_2raw(value):
+    """in microseconds"""
+    checkbounds('return delay time', 0, 508, value)
+    return int(value/2)
+
+def raw2_return_delay_time(value):
+    """in microseconds"""
+    checkbounds('return delay time', 0, 254, value)
+    return 2*value
+
+
+# MARK Voltage
+
+def voltage_2raw(value):
     """Return the voltage in volt"""
-    return value/10
+    checkbounds('voltage', 0, 25.5, value)
+    return int(10.0*value)
 
-def raw_to_torque(value):
+def raw2_voltage(value):
     """Return the voltage in volt"""
-    return 100*value/1023
+    checkbounds('voltage', 0, 255, value)
+    return value/10.0
 
-# MARK : Unit conversions
+
+# MARK Torque
+
+def raw2_torque(value):
+    """Return the voltage in volt"""
+    checkbounds('torque', 0, 1023, value)
+    return 100*value/1023.0
+
+def torque_2raw(value):
+    """Return the voltage in volt"""
+    checkbounds('torque', 0, 100, value)
+    return int(value/100*1023)
+
+# MARK : RAM conversions
+
+# MARK Position
+
+def raw2_deg1024(raw):
+        
+def deg1024_2raw(deg):    
 
 
+def raw2_deg4096(deg):
+
+def deg4096_2raw(raw):    
+
+
+# MARK Speed
+
+speedratio = {
+    'AX': 0.111,
+    'RX': 0.111,
+    'MX': 0.11445,
+}
+
+def raw2_positivedps(raw, modelclass):
+    """
+        Raw to degree per second for speed
+        raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
+        (AX and RX)        
+        """
+    checkbounds('positive speed', 0, 1023, raw)
+    return raw*6*speedratio[modelclass]
+
+def raw2_dps(raw):
+    """
+        Raw to degree per second for CW/CCW speed
+        
+        Robotis manual :
+            If a value is in the rage of 0~1023 then the motor rotates to the CCW direction.
+            If a value is in the rage of 1024~2047 then the motor rotates to the CW direction.
+            The 10th bit becomes the direction bit to control the direction; 0 and 1024 are equal.
+        
+        a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
+        
+        """
+    checkbounds('cw/ccw speed', 0, 2047, raw)
+    direction = ((speed >> 10) * 2) - 1
+    speed = raw2_positivedps(raw)
+    
+    return direction * speed
+    
 
 def position_to_degree(position, motor_model):
     model = 'MX' if motor_model.startswith('MX') else '*'
