@@ -30,11 +30,11 @@ DXL_CONTROLS = {
     'STATUS_RETURN_LEVEL':       {'address': 0x10, '# data': 1, 'size': 1},
     'ALARM_LED':                 {'address': 0x11, '# data': 1, 'size': 1},
     'ALARM_SHUTDOWN':            {'address': 0x12, '# data': 1, 'size': 1},
-	
+
     # RAM
     'TORQUE_ENABLE':             {'address': 0x18, '# data': 1, 'size': 1},
     'LED':                       {'address': 0x19, '# data': 1, 'size': 1},
-    
+
     # MX series
     'D_GAIN':                    {'address': 0x1A, '# data': 1, 'size': 1},
     'I_GAIN':                    {'address': 0x1B, '# data': 1, 'size': 1},
@@ -47,12 +47,12 @@ DXL_CONTROLS = {
     'CW_COMPLIANCE_SLOPE':       {'address': 0x1C, '# data': 1, 'size': 1},
     'CCW_COMPLIANCE_SLOPE':      {'address': 0x1D, '# data': 1, 'size': 1},
     'COMPLIANCE_SLOPES':         {'address': 0x1C, '# data': 2, 'size': 1},
-    
+
     'GOAL_POSITION':             {'address': 0x1E, '# data': 1, 'size': 2},
     'MOVING_SPEED':              {'address': 0x20, '# data': 1, 'size': 2},
     'TORQUE_LIMIT':              {'address': 0x22, '# data': 1, 'size': 2},
     'GOAL_POS_SPEED_TORQUE':     {'address': 0x1E, '# data': 3, 'size': 2},
-    
+
     'PRESENT_POSITION':          {'address': 0x24, '# data': 1, 'size': 2},
     'PRESENT_POS_SPEED_LOAD':    {'address': 0x24, '# data': 3, 'size': 2},
     'PRESENT_SPEED':             {'address': 0x26, '# data': 1, 'size': 2},
@@ -63,7 +63,7 @@ DXL_CONTROLS = {
     'MOVING':                    {'address': 0x2E, '# data': 1, 'size': 1},
     'LOCK':                      {'address': 0x2F, '# data': 1, 'size': 1},
     'PUNCH':                     {'address': 0x30, '# data': 1, 'size': 2},
-    
+
     'SENSED_CURRENT':            {'address': 0x38, '# data': 1, 'size': 2}, # EX only
     'CURRENT':                   {'address': 0x44, '# data': 1, 'size': 2}, # MX64 and MX106
 }
@@ -139,12 +139,12 @@ DXL_MODEL_NUMBER = {
     12: 'AX-12',
     18: 'AX-18',
     44: 'AX-12W',
-	
+
     10: 'RX-10',
     24: 'RX-24F',
     28: 'RX-28',
     64: 'RX-64',
-	
+
     29: 'MX-28',
     54: 'MX-64',
     320: 'MX-106',
