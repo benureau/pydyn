@@ -91,12 +91,18 @@ class DynamixelMotor(object):
     # Defining virtual methods to convert speed
     # Supporting new motors idiosyncrasies should be easy
 
-    def raw2_dps(self, raw):
+    def raw2_movingdps(self, raw):
         raise NotImplementedError
 
-    def dps_2raw(self, dps):
+    def movingdps_2raw(self, dps):
         raise NotImplementedError
 
+
+    # MARK Mode
+    
+    @property
+    def mode(self):
+        return self.mmem.mode
 
     # MARK EEPROM properties
 
@@ -124,7 +130,6 @@ class DynamixelMotor(object):
     @property
     def version(self):
         return self.mmem.firmware
-
 
     # MARK Baudrate
 
@@ -402,7 +407,7 @@ class DynamixelMotor(object):
 
     @property
     def moving_speed(self):
-        return self.raw2_dps(self.moving_speed_raw)
+        return self.raw2_movingdps(self.moving_speed_raw)
 
     @property
     def moving_speed_raw(self):
@@ -410,7 +415,7 @@ class DynamixelMotor(object):
 
     @moving_speed.setter
     def moving_speed(self, val):
-        self.moving_speed_raw = self.dps_2raw(val, self.modelclass)
+        self.moving_speed_raw = self.movingdps_2raw(val)
 
     @moving_speed_raw.setter
     def moving_speed_raw(self, val):
@@ -458,7 +463,7 @@ class DynamixelMotor(object):
 
     @property
     def present_speed(self):
-        return self.raw2_dps(self.present_speed_raw) # different model have different unit conversions scheme.
+        return conv.raw2_cwccwdps(self.present_speed_raw, self.modelclass)
 
     @property
     def present_speed_raw(self):
@@ -588,17 +593,17 @@ class AXRXMotor(DynamixelMotor):
 
     # MARK Conversion methods
 
-    def raw_2dps(self, raw):
+    def raw2_movingdps(self, raw):
         if self.mode == 'wheel':
             return conv.raw2_torquespeed(raw)
         else:
-            return conv.raw2_dps(raw, self.modelclass)
+            return conv.raw2_movingdps(raw, self.modelclass)
 
-    def dps_2raw(self, dps):
+    def movingdps_2raw(self, dps):
         if self.mode == 'wheel':
             return conv.torquespeed_2raw(dps)
         else:
-            return conv.dps_2raw(dps, self.modelclasss)
+            return conv.movingdps_2raw(dps, self.modelclass)
 
 
     # MARK Compliance margin
@@ -680,11 +685,11 @@ class MXMotor(DynamixelMotor):
 
     # MARK Conversion methods
 
-    def raw_2dps(self, raw):
-        return conv.raw2_dps(raw, self.modelclass)
+    def raw2_movingdps(self, raw):
+        return conv.raw2_movingdps(raw, self.modelclass)
 
-    def dps_2raw(self, dps):
-        return conv.dps_2raw(dps, self.modelclasss)
+    def movingdps_2raw(self, dps):
+        return conv.movingdps_2raw(dps, self.modelclass)
 
 
 

@@ -4,7 +4,7 @@ import time
 import pypot
 import pypot.robot
 
-robot = pypot.robot.SimpleRobot(motor_range = [91, 96], timeout = 0.02)
+robot = pypot.robot.Robot(motor_range = [91, 96], timeout = 0.02)
 
 motor = robot.m_by_id[94]
 

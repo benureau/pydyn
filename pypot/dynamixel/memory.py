@@ -62,7 +62,7 @@ class DynamixelMemory(object):
 
         mode_test = (self._memory_data[protocol.DXL_CW_ANGLE_LIMIT] ==
                      self._memory_data[protocol.DXL_CCW_ANGLE_LIMIT] == 0)
-        self.mode       = 'wheel' if mode_test else 'joint'
+        self.mode = 'wheel' if mode_test else 'joint'
 
 
     def _process_raw_eeprom(self, rep):

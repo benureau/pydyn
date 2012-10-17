@@ -9,6 +9,12 @@ def checkbounds(name, lower, upper, val):
     if not lower <= val <= upper:
         raise ValueError('{} should be in the [{}, {}] range but is {}'.format(name, lower, upper, val))
 
+def checkbounds_warning(name, lower, upper, val):
+    legal_val = max(lower, min(upper, val))
+    if legal_val != val:
+        raise Warning('{} should be in the [{}, {}] range but is {}'.format(name, lower, upper, val))
+    return legal_val
+
 def checkbounds_mode(name, lower, upper, val, mode):
     if not lower <= val <= upper:
         raise ValueError('in {} mode, {} should be in the [{}, {}] range but is {}'.format(mode, name, lower, upper, val))
@@ -109,18 +115,20 @@ def torque_2raw(value):
 
 def raw2_deg(raw, modelclass):
     max_pos, max_deg = limits.position_range[modelclass]
-    return (position / max_pos) * max_deg
+    checkbounds('position raw', 0, max_pos, raw)
+    return (raw / max_pos) * max_deg
 
 def deg_2raw(deg, modelclass):
     max_pos, max_deg = limits.position_range[modelclass]
-    return int((position / max_deg) * max_pos)
+    checkbounds('position', 0, max_deg, deg)
+    return int((deg / max_deg) * max_pos)
 
 # MARK Speed
 
 speedratio = {
-    'AX': 0.111,
-    'RX': 0.111,
-    'MX': 0.11445,
+    'AX': 6*0.111,
+    'RX': 6*0.111,
+    'MX': 6*0.11445,
 }
 
 def raw2_positivedps(raw, modelclass):
@@ -130,9 +138,19 @@ def raw2_positivedps(raw, modelclass):
         (AX and RX)
         """
     checkbounds('positive speed raw', 0, 1023, raw)
-    return raw*6*speedratio[modelclass]
+    return raw*speedratio[modelclass]
 
-def raw2_dps(raw):
+def movingdps_2raw(dps, modelclass):
+    """
+        Degree per second for speed to raw value
+        raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
+        (AX and RX)
+        """
+    max_speed = 1023*speedratio[modelclass]
+    checkbounds('positive speed', 0, max_speed, dps)
+    return int(dps/speedratio[modelclass])
+
+def raw2_cwccwdps(raw, modelclass):
     """
         Raw to degree per second for CW/CCW speed
 
@@ -145,11 +163,30 @@ def raw2_dps(raw):
 
         """
     checkbounds('cw/ccw speed raw', 0, 2047, raw)
-    direction = ((speed >> 10) * 2) - 1
-    speed = raw2_positivedps(raw)
+    direction = ((raw >> 10) * 2) - 1
+    speed = raw2_positivedps(raw, modelclass)
 
     return direction * speed
 
+def cwccwdps_2raw(dps, modelclass):
+    """
+        degree per second for CW/CCW speed to raw value
+
+        Robotis manual :
+            If a value is in the rage of 0~1023 then the motor rotates to the CCW direction.
+            If a value is in the rage of 1024~2047 then the motor rotates to the CW direction.
+            The 10th bit becomes the direction bit to control the direction; 0 and 1024 are equal.
+
+        a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
+
+        """
+    max_speed = 1023*speedratio[modelclass]
+    checkbounds('cw/ccw speed', -max_speed, max_speed, dps)
+
+    if dps > 0:
+        return int(1024 + abs(dps)/speedratio[modelclass])
+    else:
+        return int(abs(dps)/speedratio[modelclass])
 
 # MARK Load
 
@@ -162,7 +199,6 @@ def raw2_load(value):
 
 def load_2raw(value):
     checkbounds('load', -100, 100, value)
-
 
     if value > 0:
         return int(1024 + 1023*abs(value)/100.0)
@@ -238,10 +274,4 @@ def name2_alarm_code(value):
     """value is a integer representing a single alarmcode"""
     return protocol.DXL_ALARMS.index(value)
     
-# MARK: - Byte conversions
 
-def integer_to_two_bytes(value):
-    return (int(value % 256), int(value >> 8))
-
-def two_bytes_to_integer(value):
-    return int(value[0] + (value[1] << 8))

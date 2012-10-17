@@ -11,6 +11,15 @@ import packet
 import limits
 import memory
 
+# MARK: - Byte conversions
+
+def integer_to_two_bytes(value):
+    return (int(value % 256), int(value >> 8))
+
+def two_bytes_to_integer(value):
+    return int(value[0] + (value[1] << 8))
+    
+
 class DynamixelIO:
     """
         This class handles the low-level communication with robotis motors.
@@ -366,7 +375,7 @@ class DynamixelIO:
 
         self._send_sync_write_packet('GOAL_POS_SPEED_TORQUE', id_pos_speed_torque_tuples)
 
-        for motor_id, pos, speed, torque in zip(id_pos_speed_torque_tuples):
+        for motor_id, pos, speed, torque in id_pos_speed_torque_tuples:
             mmem = self.motormems[motor_id]
             mmem[protocol.DXL_GOAL_POSITION] = pos
             mmem[protocol.DXL_MOVING_SPEED]  = speed

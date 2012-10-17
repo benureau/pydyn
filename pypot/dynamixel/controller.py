@@ -186,9 +186,9 @@ class DynamixelController(threading.Thread):
         for m, pst_requests in zip(self.motors, all_pst_requests):
             if not m.compliant and len(pst_requests) > 0:
                 sync_pst.append((m.id,
-                                 pst_request.get('GOAL_POSITION', m.goal_position_raw),
-                                 pst_request.get('MOVING_SPEED', m.moving_speed_raw),
-                                 pst_request.get('TORQUE_LIMIT', m.torque_limit_raw)))
+                                 pst_requests.get('GOAL_POSITION', m.goal_position_raw),
+                                 pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
+                                 pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
 
         if len(sync_pst) > 0:
             self.io.set_sync_positions_speeds_torque_limits(sync_pst)
