@@ -159,7 +159,7 @@ DXL_GAINS                     = REG_ADDRESS('GAINS')
 DXL_VOLTAGE_LIMITS            = REG_ADDRESS('VOLTAGE_LIMITS')
 
 
-DXL_MODEL_NUMBER = {
+DXL_MODELS = {
     12: 'AX-12',
     18: 'AX-18',
     44: 'AX-12W',

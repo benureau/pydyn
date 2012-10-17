@@ -1,3 +1,6 @@
+import threading
+import collections
+ 
 import conversions as conv
 import protocol
 
@@ -16,13 +19,13 @@ class DynamixelMotor(object):
         Note that this class should not be instanciated, but only its child (AXMotor, RXMotor, MXMotor), since some methods are not implemented.
 
         """
-    def __init__(self, m_id, memory):
+    def __init__(self, memory):
 
         self.mmem = memory
 
         # this dictionary collect write or read request on part of non standart
         # memory (not pos, speed, load (read) or torque lim, moving speed goal pos (write))
-        self.requests = collection.OrderedDict()
+        self.requests = collections.OrderedDict()
         # the dictionary is protected by a semaphore since both Motor and
         # Controller access and modify it. But the semaphore should only be acquired for
         # the duration of atomic actions on the dictionary, and not, for instance, the

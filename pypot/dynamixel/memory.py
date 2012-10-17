@@ -50,14 +50,15 @@ class DynamixelMemory(object):
 
     def update(self):
         """Update precalculated values"""
-        self.firmware   = self._memory_data[2]
         self.id         = self._memory_data[3]
 
         try:
-            self.model      = protocol.DXL_MODEL_NUMBER[self._memory_data[0]]
+            self.model      = protocol.DXL_MODELS[self._memory_data[protocol.DXL_MODEL_NUMBER]]
             self.modelclass = self.model[:2]
         except KeyError:
             raise DynamixelUnsupportedMotorError(motor_id, model_number)
+
+        self.status_return_level = self._memory_data[protocol.DXL_STATUS_RETURN_LEVEL]
 
         mode_test = (self._memory_data[protocol.DXL_CW_ANGLE_LIMIT] ==
                      self._memory_data[protocol.DXL_CCW_ANGLE_LIMIT] == 0)

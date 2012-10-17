@@ -117,7 +117,7 @@ class DynamixelIO:
         if not (0 <= motor_id <= 253):
             raise ValueError('Motor id must be in [0, 253]!')
 
-        ping_packet = DynamixelPingPacket(motor_id)
+        ping_packet = packet.DynamixelPingPacket(motor_id)
 
         try:
             self._send_packet(ping_packet)
@@ -147,8 +147,8 @@ class DynamixelIO:
             :return: list of integers with asked size
 
             """
-        packet = DynamixelInstructionPacket(motor_id, 'READ_DATA', (address, size))
-        status_packet = self._send_packet(packet)
+        ipacket = packet.DynamixelInstructionPacket(motor_id, 'READ_DATA', (address, size))
+        status_packet = self._send_packet(ipacket)
         return status_packet.parameters
 
     def create(self, ids, cache_ram = True):
