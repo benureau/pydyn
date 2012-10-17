@@ -164,7 +164,7 @@ def raw2_cwccwdps(raw, modelclass):
         """
     checkbounds('cw/ccw speed raw', 0, 2047, raw)
     direction = ((raw >> 10) * 2) - 1
-    speed = raw2_positivedps(raw, modelclass)
+    speed = raw2_positivedps(raw % 1024, modelclass)
 
     return direction * speed
 
