@@ -124,15 +124,12 @@ class DynamixelController(threading.Thread):
 
         if self.type == 'USB2AX':
             positions = self.io.get_sync_positions([m.id for m in self.motors])
-            for i in range(len(positions)):
-                self.motors[i].current_position = positions[i]
 
         elif self.type == 'USB2DXL':
             for m in self.motors:
                 try:
                     try:
-                        position, speed, load = self.io.get_position_speed_load(m.id)
-                        m._current_position, m._current_speed, m._current_load = position, speed, load
+                        self.io.get_position_speed_load(m.id)
                     except ValueError as ve:
                         print 'warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0])
 
@@ -213,7 +210,7 @@ class DynamixelController(threading.Thread):
             start = time.time()
 
             # reading present position, present speed, present load
-
+            self._reading_present_posspeedload()
 
             # Dividing requests
             all_pst_requests, all_other_requests = self._divide_requests()

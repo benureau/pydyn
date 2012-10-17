@@ -816,8 +816,8 @@ class DynamixelIO:
                                                             mmem.model)
 
         compliance_margins = self._send_read_packet(motor_id, 'COMPLIANCE_MARGINS')
-        mmem[DXL_CW_COMPLIANCE_MARGIN] = compliance_margins[0]
-        mmem[DXL_CCW_COMPLIANCE_MARGIN] = compliance_margins[1]
+        mmem[protocol.DXL_CW_COMPLIANCE_MARGIN] = compliance_margins[0]
+        mmem[protocol.DXL_CCW_COMPLIANCE_MARGIN] = compliance_margins[1]
 
     def set_compliance_margins(self, motor_id,
                                clockwise_margin, counterclockwise_margin):
@@ -844,8 +844,8 @@ class DynamixelIO:
         self._send_write_packet(motor_id, 'COMPLIANCE_MARGINS',
                                 (clockwise_margin, counterclockwise_margin))
 
-        mmem[DXL_CW_COMPLIANCE_MARGIN] = clockwise_margin
-        mmem[DXL_CCW_COMPLIANCE_MARGIN] = counterclockwise_margin
+        mmem[protocol.DXL_CW_COMPLIANCE_MARGIN] = clockwise_margin
+        mmem[protocol.DXL_CCW_COMPLIANCE_MARGIN] = counterclockwise_margin
 
     def get_compliance_slopes(self, motor_id):
         """
@@ -872,8 +872,8 @@ class DynamixelIO:
 
         clockwise_slope, counterclockwise_slope = self._send_read_packet(motor_id, 'COMPLIANCE_SLOPES')
 
-        mmem[DXL_CW_COMPLIANCE_SLOPE] = clockwise_margin
-        mmem[DXL_CCW_COMPLIANCE_SLOPE] = counterclockwise_margin
+        mmem[protocol.DXL_CW_COMPLIANCE_SLOPE] = clockwise_margin
+        mmem[protocol.DXL_CCW_COMPLIANCE_SLOPE] = counterclockwise_margin
 
     def set_compliance_slopes(self, motor_id,
                               clockwise_slope, counterclockwise_slope):
@@ -901,21 +901,21 @@ class DynamixelIO:
         self._send_write_packet(motor_id, 'COMPLIANCE_SLOPES',
                                 (clockwise_slope, counterclockwise_slope))
 
-        mmem[DXL_CW_COMPLIANCE_SLOPE] = clockwise_slope
-        mmem[DXL_CCW_COMPLIANCE_SLOPE] = counterclockwise_slope
+        mmem[protocol.DXL_CW_COMPLIANCE_SLOPE] = clockwise_slope
+        mmem[protocol.DXL_CCW_COMPLIANCE_SLOPE] = counterclockwise_slope
 
 
     def get_current_position(self, motor_id):
         """ Get the current position of the specified motor. """
         pos = self._send_read_packet(motor_id, 'PRESENT_POSITION')
 
-        self.motormems[motor_id][DXL_PRESENT_POSITION] = pos
+        self.motormems[motor_id][protocol.DXL_PRESENT_POSITION] = pos
 
     def get_goal_position(self, motor_id):
         """ Get the goal position of the specified motor. """
         pos = self._send_read_packet(motor_id, 'GOAL_POSITION')
 
-        self.motormems[motor_id][DXL_GOAL_POSITION] = pos
+        self.motormems[motor_id][protocol.DXL_GOAL_POSITION] = pos
 
     get_position = get_current_position
 
@@ -923,7 +923,7 @@ class DynamixelIO:
         """ Sets the position of the specified motor. """
         self._send_write_packet(motor_id, 'GOAL_POSITION', position)
 
-        self.motormems[motor_id][DXL_GOAL_POSITION] = pos
+        self.motormems[motor_id][protocol.DXL_GOAL_POSITION] = pos
 
     set_position = set_goal_position
 
@@ -931,7 +931,7 @@ class DynamixelIO:
         """ Returns the speed (positive values correspond to clockwise) of the specified motor. """
         speed = self._send_read_packet(motor_id, 'PRESENT_SPEED')
 
-        self.motormems[motor_id][DXL_PRESENT_SPEED] = speed
+        self.motormems[motor_id][protocol.DXL_PRESENT_SPEED] = speed
 
     def set_speed(self, motor_id, speed):
         """ Sets the speed (positive values correspond to clockwise) of the specified motor. """
@@ -941,7 +941,7 @@ class DynamixelIO:
 
         self._send_write_packet(motor_id, 'MOVING_SPEED', speed)
 
-        self.motormems[motor_id][DXL_PRESENT_SPEED] = speed
+        self.motormems[motor_id][protocol.DXL_PRESENT_SPEED] = speed
 
 
     def get_torque_limit(self, motor_id):
@@ -952,59 +952,59 @@ class DynamixelIO:
         """
         torque_limit = self._send_read_packet(motor_id, 'TORQUE_LIMIT')
 
-        self.motormems[motor_id][DXL_TORQUE_LIMIT] = torque_limit
+        self.motormems[motor_id][protocol.DXL_TORQUE_LIMIT] = torque_limit
 
     def set_torque_limit(self, motor_id, torque_limit):
         self._send_write_packet(motor_id, 'TORQUE_LIMIT', torque_limit)
 
-        self.motormems[motor_id][DXL_TORQUE_LIMIT] = torque_limit
+        self.motormems[motor_id][protocol.DXL_TORQUE_LIMIT] = torque_limit
 
 
     def get_load(self, motor_id):
         """ Get the internal load in percent of the specified motor. """
         self._send_read_packet(motor_id, 'PRESENT_LOAD')
 
-        self.motormems[motor_id][DXL_PRESENT_LOAD]     = load
+        self.motormems[motor_id][protocol.DXL_PRESENT_LOAD]     = load
 
     def get_position_speed_load(self, motor_id):
         """ Get the position, speed and internal load of the specified motor """
         pos, speed, load = self._send_read_packet(motor_id, 'PRESENT_POS_SPEED_LOAD')
 
         mmem = self.motormems[motor_id]
-        self.mmem[DXL_PRESENT_POSITION] = pos
-        self.mmem[DXL_PRESENT_SPEED]    = speed
-        self.mmem[DXL_PRESENT_LOAD]     = load
+        mmem[protocol.DXL_PRESENT_POSITION] = pos
+        mmem[protocol.DXL_PRESENT_SPEED]    = speed
+        mmem[protocol.DXL_PRESENT_LOAD]     = load
 
 
     def get_voltage(self, motor_id):
         """ Get the current voltage supplied (in Volt). """
         voltage = self._send_read_packet(motor_id, 'PRESENT_VOLTAGE')
 
-        self.motormems[motor_id][DXL_PRESENT_VOLTAGE] = voltage
+        self.motormems[motor_id][protocol.DXL_PRESENT_VOLTAGE] = voltage
 
 
     def get_temperature(self, motor_id):
         """ Returns the internal temperature of the specified motor (in Celsius). """
         temp = self._send_read_packet(motor_id, 'PRESENT_TEMPERATURE')
 
-        self.motormems[motor_id][DXL_PRESENT_TEMPERATURE] = temp
+        self.motormems[motor_id][protocol.DXL_PRESENT_TEMPERATURE] = temp
 
     def get_registred(self, motor_id): # TODO: ca fait quoi ?
         registered = self._send_read_packet(motor_id, 'REGISTERED')
 
-        self.motormems[motor_id][DXL_REGISTERED] = moving
+        self.motormems[motor_id][protocol.DXL_REGISTERED] = moving
 
     def get_moving(self, motor_id):
         """ Checks if the motor is moving (whether goal position has been reached). """
         moving = self._send_read_packet(motor_id, 'MOVING')
 
-        self.motormems[motor_id][DXL_MOVING] = moving
+        self.motormems[motor_id][protocol.DXL_MOVING] = moving
 
     def get_lock(self, motor_id):
         """ Checks if the EEPROM area can be modified. """
         lock = self._send_read_packet(motor_id, 'LOCK')
 
-        self.motormems[motor_id][DXL_LOCK] = lock
+        self.motormems[motor_id][protocol.DXL_LOCK] = lock
 
     def lock_eeprom(self, motor_id):
         """ Prevents the modification of the EEPROM area.
@@ -1014,7 +1014,7 @@ class DynamixelIO:
         """
         self._send_write_packet(motor_id, 'LOCK', 1)
 
-        self.motormems[motor_id][DXL_LOCK] = 1
+        self.motormems[motor_id][protocol.DXL_LOCK] = 1
 
     def unlock_eeprom(self, motor_id):
         """
@@ -1023,18 +1023,18 @@ class DynamixelIO:
         raise DeprecationWarning('to unlock the eeprom, you should cycle power')
         self._send_write_packet(motor_id, 'LOCK', 0)
 
-        self.motormems[motor_id][DXL_LOCK] = 0
+        self.motormems[motor_id][protocol.DXL_LOCK] = 0
 
     def get_punch(self, motor_id):
         punch = self._send_read_packet(motor_id, 'PUNCH')
 
-        self.motormems[motor_id][DXL_PUNCH] = punch
+        self.motormems[motor_id][protocol.DXL_PUNCH] = punch
 
 
     def set_punch(self, motor_id, punch):
         self._send_write_packet(motor_id, 'PUNCH', punch)
 
-        self.motormems[motor_id][DXL_PUNCH] = punch
+        self.motormems[motor_id][protocol.DXL_PUNCH] = punch
 
     # def get_sensed_current(self, motor_id):
     #     motor_model = self._lazy_get_model(motor_id)
@@ -1139,8 +1139,8 @@ class DynamixelIO:
         if self.motormems[motor_id].status_return_level == 0:
             raise IOError('Try to get a value from motor with a level of status return of 0')
 
-        packet = packet.DynamixelReadDataPacket(motor_id, control_name)
-        status_packet = self._send_packet(packet)
+        read_packet = packet.DynamixelReadDataPacket(motor_id, control_name)
+        status_packet = self._send_packet(read_packet)
 
         if status_packet:
             return self._decode_data(status_packet.parameters,
@@ -1166,8 +1166,8 @@ class DynamixelIO:
                 packet sent from the motors.
 
             """
-        packet = packet.DynamixelSyncReadDataPacket(motor_ids, control_name)
-        status_packet = self._send_packet(packet)
+        read_packet = packet.DynamixelSyncReadDataPacket(motor_ids, control_name)
+        status_packet = self._send_packet(read_packet)
 
         answer = reshape_list(status_packet.parameters, protocol.REG_LENGTH(control_name))
 
