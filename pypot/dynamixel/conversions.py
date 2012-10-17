@@ -18,7 +18,7 @@ def checkoneof(name, collection, val):
 # MARK Baudrate
 
 def raw2_baudrate_axrx(value):
-    checkbounds('baudrate', 0, 254, value)
+    checkbounds('baudrate raw', 0, 254, value)
     return 2000000.0/(value + 1)
 
 def baudrate_axrx_2raw(value):
@@ -36,7 +36,7 @@ mx_baudrate = {
 }
 
 def raw2_baudrate_mx(value):
-    checkbounds('baudrate', 0, 254, value)
+    checkbounds('baudrate raw', 0, 254, value)
     try:
         return baudrate_mx[value]
     except KeyError:
@@ -70,7 +70,7 @@ def return_delay_time_2raw(value):
 
 def raw2_return_delay_time(value):
     """in microseconds"""
-    checkbounds('return delay time', 0, 254, value)
+    checkbounds('return delay time raw', 0, 254, value)
     return 2*value
 
 
@@ -83,7 +83,7 @@ def voltage_2raw(value):
 
 def raw2_voltage(value):
     """Return the voltage in volt"""
-    checkbounds('voltage', 0, 255, value)
+    checkbounds('voltage raw', 0, 255, value)
     return value/10.0
 
 
@@ -96,7 +96,7 @@ def raw2_torque(value):
 
 def torque_2raw(value):
     """Return the voltage in volt"""
-    checkbounds('torque', 0, 100, value)
+    checkbounds('torque raw', 0, 100, value)
     return int(value/100*1023)
 
 
@@ -126,7 +126,7 @@ def raw2_positivedps(raw, modelclass):
         raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
         (AX and RX)
         """
-    checkbounds('positive speed', 0, 1023, raw)
+    checkbounds('positive speed raw', 0, 1023, raw)
     return raw*6*speedratio[modelclass]
 
 def raw2_dps(raw):
@@ -141,7 +141,7 @@ def raw2_dps(raw):
         a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
 
         """
-    checkbounds('cw/ccw speed', 0, 2047, raw)
+    checkbounds('cw/ccw speed raw', 0, 2047, raw)
     direction = ((speed >> 10) * 2) - 1
     speed = raw2_positivedps(raw)
 
@@ -152,7 +152,7 @@ def raw2_dps(raw):
 
 def raw2_load(value):
     """return the load into signed torque percent"""
-    checkbounds('load', 0, 2047, value)
+    checkbounds('load raw', 0, 2047, value)
     direction = ((value >> 10) * 2) - 1
 
     return direction * raw2_torque(value % 1024)
