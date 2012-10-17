@@ -138,34 +138,9 @@ class DynamixelIO:
         return filter(self.ping, ids)
 
 
-    def create(self, ids, cache_ram = True):
-        """
-            Load the motor memory.
-
-            :param list ids, the ids to create.
-            :return: instances of DynamixelMemory
-
-            .. warning:: we assume ids have been checked by a previous ping.
-            .. note:: if a memory already exist, it is recreated anyway.
-            """
-        created = []
-        for motor_id in ids:
-            raw_eeprom = self.read(motor_id, 0, 24)
-            m = memory.DynamixelMemory(raw_eeprom)
-            if cache_ram:
-                raw_ram = self.read(motor_id, 24, 26)
-                if m.modelclass = 'MX':
-                    raw_ram += self.read(motor_id, 68, 2)
-                m.cache_ram(raw_ram)
-            created.append(m)
-            self.motormems[motor_id] = m
-
-        return created
-
-
     def read(self, motor_id, address, size):
         """
-            Read data from a motor
+            Read arbitrary data from a motor
 
             :param address  where to read data in the memory.
             :param size     how much from adress.
@@ -176,6 +151,51 @@ class DynamixelIO:
         status_packet = self._send_packet(packet)
         return status_packet.parameters
 
+    def create(self, ids, cache_ram = True):
+        """
+            Load the motor memory.
+    
+            :param list ids, the ids to create.
+            :return: instances of DynamixelMemory
+    
+            .. warning:: we assume ids have been checked by a previous ping.
+            .. note:: if a memory already exist, it is recreated anyway.
+            """
+        created = []
+        for motor_id in ids:
+            raw_eeprom = self.read(motor_id, 0, 24)
+            m = memory.DynamixelMemory(raw_eeprom)
+            if cache_ram:
+                raw_ram = self.read(motor_id, 24, 26)
+                if m.modelclass == 'MX':
+                    raw_ram += self.read(motor_id, 68, 2)
+                m.cache_ram(raw_ram)
+            created.append(m)
+            self.motormems[motor_id] = m
+    
+        return created
+
+
+    # MARK Parameter based read/write
+    
+    def set(self, motor_id, control_name, value):
+        """Send a write instruction to a motor regarding control_name"""
+        
+        self._send_write_packet(motor_id, control_name, value)
+        
+        self.motormems[motor_id][protocol.REG_ADDRESS(control_name)] = value
+        self.motormems[motor_id].update() # could be more selective, but this would be useless optimization.
+        
+    def get(self, motor_id, control_name):
+        """Send a read instruction to a motor regarding control_name"""
+        
+        value = self._send_read_packet(motor_id, control_name)
+        
+        self.motormems[motor_id][protocol.REG_ADDRESS(control_name)] = value
+        self.motormems[motor_id].update() # could be more selective, but this would be useless optimization.
+
+
+    # MARK Mode
 
     def set_to_wheel_mode(self, motor_id):
         """
@@ -321,7 +341,7 @@ class DynamixelIO:
 
             """
 
-        pos_speed_loads = self._send_sync_read_packet(motor_ids, 'PRESENT_POS_SPEED_LOAD'))
+        pos_speed_loads = self._send_sync_read_packet(motor_ids, 'PRESENT_POS_SPEED_LOAD')
 
         for motor_id, psl in zip(motor_ids, pos_speed_loads):
             pos, speed, load = psl
@@ -353,7 +373,7 @@ class DynamixelIO:
             mmem[protocol.DXL_TORQUE_LIMIT]  = torque
 
 
-    # MARK: - Dxl Motor EEPROM Access
+    # MARK - EEPROM Access
     # Those values should not be modified too often !!!
 
     def get_model(self, motor_id):
@@ -433,10 +453,6 @@ class DynamixelIO:
             :raises: ValueError if the return delay time is out of the specified range.
 
             """
-        # TODO
-        # if not (0 <= return_delay_time <= 508):
-        #     raise ValueError('the return delay time must be in [0, 508]')
-
         self._send_write_packet(motor_id, 'RETURN_DELAY_TIME', return_delay_time)
 
         self.motormems[motor_id][protocol.DXL_RETURN_DELAY_TIME] = return_delay_time
@@ -652,7 +668,7 @@ class DynamixelIO:
         """
             .. note:: if the EEPROM has been properly loaded, calling this function is a waste of a good serial packet.
             """
-        alarm_led = self._send_read_packet(motor_id, 'ALARM_LED'))
+        alarm_led = self._send_read_packet(motor_id, 'ALARM_LED')
 
         self.motormems[motor_id][protocol.DXL_ALARM_LED] = alarm_led
 
@@ -700,7 +716,7 @@ class DynamixelIO:
             Checks if the led is on for the specified motor.
 
             """
-        led = self._send_read_packet(motor_id, 'LED'))
+        led = self._send_read_packet(motor_id, 'LED')
         self.motormems[motor_id][protocol.DXL_LED] = led
 
     def set_led(self, motor_id, on):
@@ -888,7 +904,7 @@ class DynamixelIO:
 
     def get_goal_position(self, motor_id):
         """ Get the goal position of the specified motor. """
-        pos = self._send_read_packet(motor_id, 'GOAL_POSITION'))
+        pos = self._send_read_packet(motor_id, 'GOAL_POSITION')
 
         self.motormems[motor_id][DXL_GOAL_POSITION] = pos
 
@@ -960,10 +976,9 @@ class DynamixelIO:
 
     def get_temperature(self, motor_id):
         """ Returns the internal temperature of the specified motor (in Celsius). """
-        temp self._send_read_packet(motor_id, 'PRESENT_TEMPERATURE')
+        temp = self._send_read_packet(motor_id, 'PRESENT_TEMPERATURE')
 
         self.motormems[motor_id][DXL_PRESENT_TEMPERATURE] = temp
-
 
     def get_registred(self, motor_id): # TODO: ca fait quoi ?
         registered = self._send_read_packet(motor_id, 'REGISTERED')
