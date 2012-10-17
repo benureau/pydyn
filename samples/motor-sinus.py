@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.getcwd(), '..'))
 
 import pypot.dynamixel
 
-
+raise DeprecationError
 
 timeout = 0.03
 ids_range = 0, 100

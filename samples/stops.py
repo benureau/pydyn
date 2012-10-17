@@ -1,4 +1,4 @@
-import debugenv
+import debugenv # only to debug local (not installed) pypot version
 """An example to illustrate suspend, resume, stop and join methods."""
 
 import time

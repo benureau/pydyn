@@ -1,4 +1,4 @@
-import debugenv
+import debugenv # only to debug local (not installed) pypot version
 
 import sys, time
 import pypot.dynamixel as dyn
