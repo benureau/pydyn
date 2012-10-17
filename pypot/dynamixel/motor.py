@@ -352,31 +352,25 @@ class DynamixelMotor(object):
 
     @torque_enable.setter
     def torque_enable(self, val):
-        conv.checkoneof('compliant', [False, True, 0, 1], val)
-        self.requests['TORQUE_ENABLE'] = int(val)
+        self.torque_enable_raw = int(val)
 
     @torque_enable_raw.setter
     def torque_enable_raw(self, val):
-        self.torque_enable = val
+        conv.checkoneof('torque_enable', [0, 1], int(val))
+        self.requests['TORQUE_ENABLE'] = int(val)
 
 
-    # compliant is provided as a more intuitive alias of torque_enable
+    # compliant is a more intuive alternative for torque_enable
+    # Beware ! compliant == not torque_enable. (for this reason, compliant_raw
+    # does not exists)
 
     @property
     def compliant(self):
-        return self.torque_enable
-
-    @property
-    def compliant_raw(self):
-        return self.torque_enable_raw
+        return not self.torque_enable
 
     @compliant.setter
     def compliant(self, val):
-        self.torque_enable = val
-
-    @compliant_raw.setter
-    def compliant_raw(self, val):
-        self.torque_enable = val
+        self.torque_enable = not val
 
 
     # MARK goal_position
