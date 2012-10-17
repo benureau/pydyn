@@ -1,6 +1,8 @@
 import pypot
 import pypot.dynamixel as dyn
 
+raise DeprecationError
+
 ctrl = dyn.create_controller(verbose = True, motor_range = [1, 100], start = False)
 
 for m in ctrl.motors:

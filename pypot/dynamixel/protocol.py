@@ -11,6 +11,24 @@ DXL_INSTRUCTIONS = {
 
 DXL_BROADCAST = 0xFE
 
+DXL_ALARM = [
+    "Input Voltage Error",
+    "Angle Limit Error",
+    "Overheating Error",
+    "Range Error",
+    "Checksum Error",
+    "Overload Error",
+    "Instruction Error",
+]
+
+DXL_INPUT_VOLTAGE_ERROR = 0
+DXL_ANGLE_LIMIT_ERROR   = 1
+DXL_OVERHEATING_ERROR   = 2
+DXL_RANGE_ERROR         = 3
+DXL_CHECKSUM_ERROR      = 4
+DXL_OVERLOAD_ERROR      = 5
+DXL_INSTRUCTION_ERROR   = 6
+
 DXL_CONTROLS = {
     # EEPROM
     'MODEL_NUMBER':              {'address': 0x00, '# data': 1, 'size': 2},
@@ -20,41 +38,41 @@ DXL_CONTROLS = {
     'RETURN_DELAY_TIME':         {'address': 0x05, '# data': 1, 'size': 1},
     'CW_ANGLE_LIMIT':            {'address': 0x06, '# data': 1, 'size': 2},
     'CCW_ANGLE_LIMIT':           {'address': 0x08, '# data': 1, 'size': 2},
-    'ANGLE_LIMITS':              {'address': 0x06, '# data': 2, 'size': 2},
+    'ANGLE_LIMITS':              {'address': 0x06, '# data': 2, 'size': 2, 'components': ['CW_ANGLE_LIMIT', 'CCW_ANGLE_LIMIT']},
     'DRIVE_MODE':                {'address': 0x0A, '# data': 1, 'size': 1}, # EX only
     'HIGHEST_LIMIT_TEMPERATURE': {'address': 0x0B, '# data': 1, 'size': 1},
     'LOWEST_LIMIT_VOLTAGE':      {'address': 0x0C, '# data': 1, 'size': 1},
     'HIGHEST_LIMIT_VOLTAGE':     {'address': 0x0D, '# data': 1, 'size': 1},
-    'VOLTAGE_LIMITS':            {'address': 0x0C, '# data': 2, 'size': 1},
+    'VOLTAGE_LIMITS':            {'address': 0x0C, '# data': 2, 'size': 1, 'components': ['LOWEST_LIMIT_VOLTAGE', 'HIGHEST_LIMIT_VOLTAGE']},
     'MAX_TORQUE':                {'address': 0x0E, '# data': 1, 'size': 2},
     'STATUS_RETURN_LEVEL':       {'address': 0x10, '# data': 1, 'size': 1},
     'ALARM_LED':                 {'address': 0x11, '# data': 1, 'size': 1},
     'ALARM_SHUTDOWN':            {'address': 0x12, '# data': 1, 'size': 1},
-	
+
     # RAM
     'TORQUE_ENABLE':             {'address': 0x18, '# data': 1, 'size': 1},
     'LED':                       {'address': 0x19, '# data': 1, 'size': 1},
-    
+
     # MX series
     'D_GAIN':                    {'address': 0x1A, '# data': 1, 'size': 1},
     'I_GAIN':                    {'address': 0x1B, '# data': 1, 'size': 1},
     'P_GAIN':                    {'address': 0x1C, '# data': 1, 'size': 1},
-    'GAINS':                     {'address': 0x1A, '# data': 3, 'size': 1},
+    'GAINS':                     {'address': 0x1A, '# data': 3, 'size': 1, 'components': ['D_GAINS', 'I_GAINS', 'P_GAINS']},
     # AX RX series
     'CW_COMPLIANCE_MARGIN':      {'address': 0x1A, '# data': 1, 'size': 1},
     'CCW_COMPLIANCE_MARGIN':     {'address': 0x1B, '# data': 1, 'size': 1},
-    'COMPLIANCE_MARGINS':        {'address': 0x1A, '# data': 2, 'size': 1},
+    'COMPLIANCE_MARGINS':        {'address': 0x1A, '# data': 2, 'size': 1, 'components': ['CW_COMPLIANCE_MARGIN', 'CCW_COMPLIANCE_MARGIN']},
     'CW_COMPLIANCE_SLOPE':       {'address': 0x1C, '# data': 1, 'size': 1},
     'CCW_COMPLIANCE_SLOPE':      {'address': 0x1D, '# data': 1, 'size': 1},
-    'COMPLIANCE_SLOPES':         {'address': 0x1C, '# data': 2, 'size': 1},
-    
+    'COMPLIANCE_SLOPES':         {'address': 0x1C, '# data': 2, 'size': 1, 'components': ['CW_COMPLIANCE_SLOPE', 'CCW_COMPLIANCE_SLOPE']},
+
     'GOAL_POSITION':             {'address': 0x1E, '# data': 1, 'size': 2},
     'MOVING_SPEED':              {'address': 0x20, '# data': 1, 'size': 2},
     'TORQUE_LIMIT':              {'address': 0x22, '# data': 1, 'size': 2},
-    'GOAL_POS_SPEED_TORQUE':     {'address': 0x1E, '# data': 3, 'size': 2},
-    
+    'GOAL_POS_SPEED_TORQUE':     {'address': 0x1E, '# data': 3, 'size': 2, 'components': ['GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT']},
+
     'PRESENT_POSITION':          {'address': 0x24, '# data': 1, 'size': 2},
-    'PRESENT_POS_SPEED_LOAD':    {'address': 0x24, '# data': 3, 'size': 2},
+    'PRESENT_POS_SPEED_LOAD':    {'address': 0x24, '# data': 3, 'size': 2, 'components': ['PRESENT_POSITION', 'PRESENT_SPEED', 'PRESENT_LOAD']},
     'PRESENT_SPEED':             {'address': 0x26, '# data': 1, 'size': 2},
     'PRESENT_LOAD':              {'address': 0x28, '# data': 1, 'size': 2},
     'PRESENT_VOLTAGE':           {'address': 0x2A, '# data': 1, 'size': 1},
@@ -63,7 +81,7 @@ DXL_CONTROLS = {
     'MOVING':                    {'address': 0x2E, '# data': 1, 'size': 1},
     'LOCK':                      {'address': 0x2F, '# data': 1, 'size': 1},
     'PUNCH':                     {'address': 0x30, '# data': 1, 'size': 2},
-    
+
     'SENSED_CURRENT':            {'address': 0x38, '# data': 1, 'size': 2}, # EX only
     'CURRENT':                   {'address': 0x44, '# data': 1, 'size': 2}, # MX64 and MX106
 }
@@ -77,6 +95,12 @@ def REG_SIZE(control_name):
 def REG_LENGTH(control_name):
     return DXL_CONTROLS[control_name]['# data'] * REG_SIZE(control_name)
 
+def REG_DATA(control_name):
+    return DXL_CONTROLS[control_name]['# data']
+
+def REG_COMPONENTS(control_name):
+    return DXL_CONTROLS[control_name].get('components', None)
+
 
 # EEPROM
 DXL_MODEL_NUMBER              = REG_ADDRESS('MODEL_NUMBER')
@@ -84,13 +108,12 @@ DXL_VERSION                   = REG_ADDRESS('VERSION')
 DXL_ID                        = REG_ADDRESS('ID')
 DXL_BAUD_RATE                 = REG_ADDRESS('BAUD_RATE')
 DXL_RETURN_DELAY_TIME         = REG_ADDRESS('RETURN_DELAY_TIME')
-DXL_ANGLE_LIMITS              = REG_ADDRESS('ANGLE_LIMITS')
 DXL_CW_ANGLE_LIMIT            = REG_ADDRESS('CW_ANGLE_LIMIT')
 DXL_CCW_ANGLE_LIMIT           = REG_ADDRESS('CCW_ANGLE_LIMIT')
 DXL_DRIVE_MODE                = REG_ADDRESS('DRIVE_MODE')
 DXL_HIGHEST_LIMIT_TEMPERATURE = REG_ADDRESS('HIGHEST_LIMIT_TEMPERATURE')
 DXL_LOWEST_LIMIT_VOLTAGE      = REG_ADDRESS('LOWEST_LIMIT_VOLTAGE')
-DXL_VOLTAGE_LIMITS            = REG_ADDRESS('VOLTAGE_LIMITS')
+
 DXL_HIGHEST_LIMIT_VOLTAGE     = REG_ADDRESS('HIGHEST_LIMIT_VOLTAGE')
 DXL_MAX_TORQUE                = REG_ADDRESS('MAX_TORQUE')
 DXL_STATUS_RETURN_LEVEL       = REG_ADDRESS('STATUS_RETURN_LEVEL')
@@ -127,25 +150,28 @@ DXL_CURRENT                   = REG_ADDRESS('CURRENT')
 
 
 # RAM bundles
+DXL_ANGLE_LIMITS              = REG_ADDRESS('ANGLE_LIMITS')
 DXL_PRESENT_POS_SPEED_LOAD    = REG_ADDRESS('PRESENT_POS_SPEED_LOAD')
 DXL_GOAL_POS_SPEED_TORQUE     = REG_ADDRESS('GOAL_POS_SPEED_TORQUE')
 DXL_COMPLIANCE_SLOPES         = REG_ADDRESS('COMPLIANCE_SLOPES')
 DXL_COMPLIANCE_MARGINS        = REG_ADDRESS('COMPLIANCE_MARGINS')
 DXL_GAINS                     = REG_ADDRESS('GAINS')
+DXL_VOLTAGE_LIMITS            = REG_ADDRESS('VOLTAGE_LIMITS')
 
 
-
-DXL_MODEL_NUMBER = {
+DXL_MODELS = {
     12: 'AX-12',
     18: 'AX-18',
     44: 'AX-12W',
-	
+
     10: 'RX-10',
     24: 'RX-24F',
     28: 'RX-28',
     64: 'RX-64',
-	
+
     29: 'MX-28',
     54: 'MX-64',
     320: 'MX-106',
 }
+
+

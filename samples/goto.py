@@ -1,3 +1,5 @@
+import debugenv # only to debug local (not installed) pypot version
+
 import pypot
 import pypot.robot
 

@@ -1,4 +1,5 @@
-import debugenv
+import debugenv # only to debug local (not installed) pypot version
+
 import time
 
 import pypot

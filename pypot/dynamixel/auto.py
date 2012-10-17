@@ -68,7 +68,7 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     if verbose:
         print '  [{}LOAD{}] Loading EEPROMs and RAMs...\r'.format(color.iblue, color.end),
         sys.stdout.flush()
-    motors = ctrl.load_motors(motor_ids, load_eeprom = True)    
+    motors = ctrl.load_motors(motor_ids)    
     
     if verbose:
         print '  [{} OK {}] Loaded EEPROMs and RAMs     '.format(color.green, color.end)
@@ -76,6 +76,6 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
                 ', '.join(['{}{}{}'.format(color.bold, m.model, color.end) for m in motors]))
 
     if start:
-        ctrl.start_sync()
+        ctrl.start()
     
     return ctrl
