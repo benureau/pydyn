@@ -11,6 +11,24 @@ DXL_INSTRUCTIONS = {
 
 DXL_BROADCAST = 0xFE
 
+DXL_ALARM = [
+    "Input Voltage Error",
+    "Angle Limit Error",
+    "Overheating Error",
+    "Range Error",
+    "Checksum Error",
+    "Overload Error",
+    "Instruction Error",
+]
+
+DXL_INPUT_VOLTAGE_ERROR = 0
+DXL_ANGLE_LIMIT_ERROR   = 1
+DXL_OVERHEATING_ERROR   = 2
+DXL_RANGE_ERROR         = 3
+DXL_CHECKSUM_ERROR      = 4
+DXL_OVERLOAD_ERROR      = 5
+DXL_INSTRUCTION_ERROR   = 6
+
 DXL_CONTROLS = {
     # EEPROM
     'MODEL_NUMBER':              {'address': 0x00, '# data': 1, 'size': 2},
@@ -20,12 +38,12 @@ DXL_CONTROLS = {
     'RETURN_DELAY_TIME':         {'address': 0x05, '# data': 1, 'size': 1},
     'CW_ANGLE_LIMIT':            {'address': 0x06, '# data': 1, 'size': 2},
     'CCW_ANGLE_LIMIT':           {'address': 0x08, '# data': 1, 'size': 2},
-    'ANGLE_LIMITS':              {'address': 0x06, '# data': 2, 'size': 2},
+    'ANGLE_LIMITS':              {'address': 0x06, '# data': 2, 'size': 2, 'components': ['CW_ANGLE_LIMIT', 'CCW_ANGLE_LIMIT']},
     'DRIVE_MODE':                {'address': 0x0A, '# data': 1, 'size': 1}, # EX only
     'HIGHEST_LIMIT_TEMPERATURE': {'address': 0x0B, '# data': 1, 'size': 1},
     'LOWEST_LIMIT_VOLTAGE':      {'address': 0x0C, '# data': 1, 'size': 1},
     'HIGHEST_LIMIT_VOLTAGE':     {'address': 0x0D, '# data': 1, 'size': 1},
-    'VOLTAGE_LIMITS':            {'address': 0x0C, '# data': 2, 'size': 1},
+    'VOLTAGE_LIMITS':            {'address': 0x0C, '# data': 2, 'size': 1, 'components': ['LOWEST_LIMIT_VOLTAGE', 'HIGHEST_LIMIT_VOLTAGE']},
     'MAX_TORQUE':                {'address': 0x0E, '# data': 1, 'size': 2},
     'STATUS_RETURN_LEVEL':       {'address': 0x10, '# data': 1, 'size': 1},
     'ALARM_LED':                 {'address': 0x11, '# data': 1, 'size': 1},
@@ -39,22 +57,22 @@ DXL_CONTROLS = {
     'D_GAIN':                    {'address': 0x1A, '# data': 1, 'size': 1},
     'I_GAIN':                    {'address': 0x1B, '# data': 1, 'size': 1},
     'P_GAIN':                    {'address': 0x1C, '# data': 1, 'size': 1},
-    'GAINS':                     {'address': 0x1A, '# data': 3, 'size': 1},
+    'GAINS':                     {'address': 0x1A, '# data': 3, 'size': 1, 'components': ['D_GAINS', 'I_GAINS', 'P_GAINS']},
     # AX RX series
     'CW_COMPLIANCE_MARGIN':      {'address': 0x1A, '# data': 1, 'size': 1},
     'CCW_COMPLIANCE_MARGIN':     {'address': 0x1B, '# data': 1, 'size': 1},
-    'COMPLIANCE_MARGINS':        {'address': 0x1A, '# data': 2, 'size': 1},
+    'COMPLIANCE_MARGINS':        {'address': 0x1A, '# data': 2, 'size': 1, 'components': ['CW_COMPLIANCE_MARGIN', 'CCW_COMPLIANCE_MARGIN']},
     'CW_COMPLIANCE_SLOPE':       {'address': 0x1C, '# data': 1, 'size': 1},
     'CCW_COMPLIANCE_SLOPE':      {'address': 0x1D, '# data': 1, 'size': 1},
-    'COMPLIANCE_SLOPES':         {'address': 0x1C, '# data': 2, 'size': 1},
+    'COMPLIANCE_SLOPES':         {'address': 0x1C, '# data': 2, 'size': 1, 'components': ['CW_COMPLIANCE_SLOPE', 'CCW_COMPLIANCE_SLOPE']},
 
     'GOAL_POSITION':             {'address': 0x1E, '# data': 1, 'size': 2},
     'MOVING_SPEED':              {'address': 0x20, '# data': 1, 'size': 2},
     'TORQUE_LIMIT':              {'address': 0x22, '# data': 1, 'size': 2},
-    'GOAL_POS_SPEED_TORQUE':     {'address': 0x1E, '# data': 3, 'size': 2},
+    'GOAL_POS_SPEED_TORQUE':     {'address': 0x1E, '# data': 3, 'size': 2, 'components': ['GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT']},
 
     'PRESENT_POSITION':          {'address': 0x24, '# data': 1, 'size': 2},
-    'PRESENT_POS_SPEED_LOAD':    {'address': 0x24, '# data': 3, 'size': 2},
+    'PRESENT_POS_SPEED_LOAD':    {'address': 0x24, '# data': 3, 'size': 2, 'components': ['PRESENT_POSITION', 'PRESENT_SPEED', 'PRESENT_LOAD']},
     'PRESENT_SPEED':             {'address': 0x26, '# data': 1, 'size': 2},
     'PRESENT_LOAD':              {'address': 0x28, '# data': 1, 'size': 2},
     'PRESENT_VOLTAGE':           {'address': 0x2A, '# data': 1, 'size': 1},
@@ -76,6 +94,12 @@ def REG_SIZE(control_name):
 
 def REG_LENGTH(control_name):
     return DXL_CONTROLS[control_name]['# data'] * REG_SIZE(control_name)
+
+def REG_DATA(control_name):
+    return DXL_CONTROLS[control_name]['# data']
+
+def REG_COMPONENTS(control_name):
+    return DXL_CONTROLS[control_name].get('components', None)
 
 
 # EEPROM
@@ -149,3 +173,5 @@ DXL_MODEL_NUMBER = {
     54: 'MX-64',
     320: 'MX-106',
 }
+
+
