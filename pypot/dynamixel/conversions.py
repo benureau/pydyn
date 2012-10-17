@@ -1,4 +1,7 @@
+import numpy
+
 import limits
+import protocol
 
 # for details, see http://support.robotis.com/en/product/dynamixel/
 
@@ -204,20 +207,37 @@ def gains_2raw(gains):
 
 # MARK: - Alarm conversions
 
-def raw2_alarms(alarm_code):
-    if not (0 <= alarm_code <= 255):
-        raise ValueError('alarm code must be in [0, 255]')
+def raw2_alarm_codes(value):
+    """This unpack a single integer into a list of error code"""
+    checkbounds('alarm code raw', 0, 127, value)
 
-    byte = numpy.unpackbits(numpy.asarray(alarm_code, dtype=numpy.uint8))
-    return tuple(numpy.array(DXL_ALARMS)[byte == 1])
+    return numpy.unpackbits(numpy.asarray(value, dtype=numpy.uint8))
+    
+def raw2_alarm_names(value):
+    """This unpack a single integer into a list of error names"""
+    byte = raw2_alarm_codes(value)
+    return tuple(numpy.array(protocol.DXL_ALARMS)[byte == 1])
 
-def alarms_2raw(alarms):
+def alarm_name_2raw(value):
     b = 0
-    for a in alarms:
-        b += 2 ** (7 - DXL_ALARMS.index(a))
+    for a in value:
+        b += 2 ** (7 - protocol.DXL_ALARMS.index(a))
     return b
 
+def alarm_code_2raw(value):
+    b = 0
+    for c in value:
+        b += 2 ** c
+    return b
 
+def alarm_code_2name(value):
+    """value is a integer representing a single alarmcode"""
+    return protocol.DXL_ALARMS[value]
+
+def name2_alarm_code(value):
+    """value is a integer representing a single alarmcode"""
+    return protocol.DXL_ALARMS.index(value)
+    
 # MARK: - Byte conversions
 
 def integer_to_two_bytes(value):
