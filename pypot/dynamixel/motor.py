@@ -1,5 +1,7 @@
-import conv as conv
+import conversions as conv
 import protocol
+
+# TODO.
 
 class DynamixelMotor(object):
     """
@@ -45,17 +47,17 @@ class DynamixelMotor(object):
         'compliant'   : 'torque_enable',
         'voltage'     : 'present_voltage',
         'temperature' : 'present_temperature',
-        'position'    : 'present_position'
-        'speed'       : 'present_speed'
-        'load'        : 'present_load'
+        'position'    : 'present_position',
+        'speed'       : 'present_speed',
+        'load'        : 'present_load',
         'max_temp'    : 'highest_limit_temperature',
     }
 
     aliases_write = {
         'compliant'   : 'torque_enable',
         'voltage'     : 'present_voltage',
-        'position'    : 'goal_position'
-        'speed'       : 'moving_speed'
+        'position'    : 'goal_position',
+        'speed'       : 'moving_speed',
         'max_temp'    : 'highest_limit_temperature',
     }
 
@@ -131,11 +133,11 @@ class DynamixelMotor(object):
     def baudrate_raw(self):
         return self.mmem[protocol.DXL_BAUD_RATE]
 
-    @setter.baudrate
+    @baudrate.setter
     def baudrate(self, val):
         self.baudrate_raw = conv.baudrate_2raw(val, self.modelclass)
 
-    @setter.baudrate_raw
+    @baudrate_raw.setter
     def baudrate_raw(self, val):
         # usually, only value 1, 3, 4, 7, 9, 16, 34, 103, 207, (and 250, 251, 252 for MX) are used
         checkbounds('baudrate', 0, 254, val)
@@ -187,48 +189,47 @@ class DynamixelMotor(object):
         self.requests['CW_ANGLE_LIMIT'] = int(val)
         self.request_lock.release()
 
+    @property
+    def ccw_angle_limit(self):
+        return conv.raw2_deg(self.ccw_angle_limit_raw, self.modelclass)
 
-   @property
-   def ccw_angle_limit(self):
-       return conv.raw2_deg(self.ccw_angle_limit_raw, self.modelclass)
+    @property
+    def ccw_angle_limit_raw(self):
+        return self.mmem[protocol.DXL_CCW_ANGLE_LIMIT]
 
-   @property
-   def ccw_angle_limit_raw(self):
-       return self.mmem[protocol.DXL_CCW_ANGLE_LIMIT]
+    @ccw_angle_limit.setter
+    def ccw_angle_limit(self, val):
+        self.ccw_angle_limit_raw = self.deg_2raw(val)
 
-   @ccw_angle_limit.setter
-   def ccw_angle_limit(self, val):
-       self.ccw_angle_limit_raw = self.deg_2raw(val)
-
-   @ccw_angle_limit_raw.setter
-   def ccw_angle_limit_raw(self, val):
-       conv.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
-       self.request_lock.acquire()
-       self.requests['CCW_ANGLE_LIMIT'] = int(val)
-       self.request_lock.release()
+    @ccw_angle_limit_raw.setter
+    def ccw_angle_limit_raw(self, val):
+        conv.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
+        self.request_lock.acquire()
+        self.requests['CCW_ANGLE_LIMIT'] = int(val)
+        self.request_lock.release()
 
 
-   @property
-   def angle_limits(self):
-       return self.cw_angle_limit, self.ccw_angle_limit
+    @property
+    def angle_limits(self):
+        return self.cw_angle_limit, self.ccw_angle_limit
 
-   @property
-   def angle_limits_raw(self):
-       return self.cw_angle_limit_raw, self.ccw_angle_limit_raw
+    @property
+    def angle_limits_raw(self):
+        return self.cw_angle_limit_raw, self.ccw_angle_limit_raw
 
-   @angle_limits.setter
-   def angle_limits(self, val):
-       self.angle_limits_raw = self.deg_2raw(val[0]), self.deg_2raw(val[1])
+    @angle_limits.setter
+    def angle_limits(self, val):
+        self.angle_limits_raw = self.deg_2raw(val[0]), self.deg_2raw(val[1])
 
-   @angle_limits_raw.setter
-   def angle_limits_raw(self, val):
-       if int(val[0]) > int(val[1]):
-           raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], val[1]))
-       conv.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val[0]))
-       conv.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val[1]))
-       self.request_lock.acquire()
-       self.requests['CCW_ANGLE_LIMIT'] = int(val[0]), int(val[1])
-       self.request_lock.release()
+    @angle_limits_raw.setter
+    def angle_limits_raw(self, val):
+        if int(val[0]) > int(val[1]):
+            raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], val[1]))
+        conv.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val[0]))
+        conv.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val[1]))
+        self.request_lock.acquire()
+        self.requests['CCW_ANGLE_LIMIT'] = int(val[0]), int(val[1])
+        self.request_lock.release()
 
 
     # MARK Highest Limit Temperature
@@ -320,13 +321,12 @@ class DynamixelMotor(object):
     def return_status_level(self):
         return self.mmem.status_return_level
 
-    @return_status_level.setters
+    @return_status_level.setter
     def return_status_level(self, val):
         conv.checkoneof('compliant', [0, 1, 2], int(val))
         self.request_lock.acquire()
         self.requests['RETURN_STATUS_LEVEL'] = int(val)
         self.request_lock.release()
-
 
 
 
@@ -411,7 +411,7 @@ class DynamixelMotor(object):
 
     @moving_speed_raw.setter
     def moving_speed_raw(self, val):
-        if self.mode == 'wheel'
+        if self.mode == 'wheel':
             conv.checkbounds_mode('moving_speed', 0, 2047, int(val), self.mode)
         else:
             conv.checkbounds_mode('moving_speed', 0, 1023, int(val), self.mode)
@@ -581,7 +581,7 @@ class DynamixelMotor(object):
         self.requests['PUNCH'] = int(val)
         self.request_lock.release()
 
-class AXRXMotor(Motor):
+class AXRXMotor(DynamixelMotor):
 
     # MARK Conversion methods
 
@@ -666,8 +666,14 @@ class AXRXMotor(Motor):
         self.request_lock.release()
 
 
+class AXMotor(AXRXMotor):
+    pass
 
-class MXMotor(Motor):
+class RXMotor(AXRXMotor):
+    pass
+
+
+class MXMotor(DynamixelMotor):
 
     # MARK Conversion methods
 
