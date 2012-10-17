@@ -50,7 +50,7 @@ class DynamixelMemory(object):
 
     def update(self):
         """Update precalculated values"""
-        self.id         = self._memory_data[3]
+        self.id         = self._memory_data[protocol.DXL_ID]
 
         try:
             self.model      = protocol.DXL_MODELS[self._memory_data[protocol.DXL_MODEL_NUMBER]]
@@ -71,7 +71,7 @@ class DynamixelMemory(object):
         self._memory_data[0]  = rep[0] + (rep[1] << 8)
         self._memory_data[2]  = rep[2]
         self._memory_data[3]  = rep[3]
-        self._memory_data[3]  = rep[4]
+        self._memory_data[4]  = rep[4]
         self._memory_data[5]  = rep[5]
         self._memory_data[6]  = rep[6] + (rep[7] << 8)
         self._memory_data[8]  = rep[8] + (rep[9] << 8)
