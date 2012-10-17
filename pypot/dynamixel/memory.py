@@ -8,7 +8,7 @@ class DynamixelUnsupportedMotorError(Exception):
     def __str__(self):
         return 'Unsupported Motor with id: %d and model number: %d' % (self.motor_id, self.model_number)
 
-class Memory(object):
+class DynamixelMemory(object):
     """
         This class keeps the last known memory values of a motor.
 
@@ -31,9 +31,11 @@ class Memory(object):
 
         """
 
-    def __init__(self, raw_eeprom):
+    def __init__(self, raw_eeprom, raw_ram):
         """
             :param raw_eeprom  raw eeprom data, ie a list of 19 or 24 integers
+                               each between 0 and 255.
+            :param raw_ram     raw ram data, ie a list of 24 or 26 integers
                                each between 0 and 255.
 
             .. note:: AX series documents EEPROM up to the address 23, while
@@ -42,6 +44,7 @@ class Memory(object):
         """
         self._memory_data = [None]*70
         self._process_raw_eeprom(raw_eeprom)
+        self._process_raw_ram(raw_ram)
 
         self.update()
 
@@ -134,7 +137,14 @@ class Memory(object):
         return self._memory_data[index]
 
     def __setitem__(self, index, val):
-        self.__memory_data[index] = int(val)
+        """This methods accept single integers and iterables, in which case
+            there value are distributed to address consecutive of index.
+        """
+        if hasattr(val, '__iter__'):
+            for i, val_i in enumerate(val):
+                self._memory_data[index + i] = int(val_i)
+        else:
+            self._memory_data[index] = int(val)
 
     def long_desc(self):
         s = '\n'.join('{:2i}: {:4i}'.format(address, value)
