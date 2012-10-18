@@ -148,7 +148,7 @@ class DynamixelController(threading.Thread):
 
             Ideally, this function should treat all motor request in parallel.
             For the moment, it is limited to one motor at a time and only separate write
-            requests on goal_position, moving_speed and torque_limit from special requrest, 
+            requests on goal_position, moving_speed and torque_limit from special requrest,
             from the rest.
 
             :return  list of dictionary request
@@ -173,7 +173,7 @@ class DynamixelController(threading.Thread):
                 if request_name in DynamixelController.pst_set and value is not None:
                     pst_requests[request_name] = value
                 if request_name in DynamixelController.special_set:
-                    special_requests[request_name] = value                    
+                    special_requests[request_name] = value
                 else:
                     other_requests[request_name] = value
 
@@ -198,22 +198,23 @@ class DynamixelController(threading.Thread):
         if len(sync_pst) > 0:
             self.io.set_sync_positions_speeds_torque_limits(sync_pst)
 
-    def _handle_special_requests(self, motor_id, requests):    
+    def _handle_special_requests(self, all_special_requests):
         # handling the resquests
-        for request_name, value in requests.items():
-            if request_name == 'ID':
-                if value is None:
-                    self.io.get(motor_id, 'ID')
+        for motor_id, requests in zip(self.motors, all_special_requests):
+            for request_name, value in requests.items():
+                if request_name == 'ID':
+                    if value is None:
+                        self.io.get(motor_id, 'ID')
+                    else:
+                        self.io.change_id(motor_id, value)
+                if request_name == 'MODE':
+                    if value is None:
+                        self.io.get(motor_id, 'ANGLE_LIMITS')
+                    else:
+                        self.io.change_mode(motor_id, value)
+                    self.io.get(motor_id, request_name)
                 else:
-                    self.io.change_id(motor_id, value)
-            if request_name == 'MODE':
-                if value is None:
-                    self.io.get(motor_id, 'ANGLE_LIMITS')
-                else:
-                    self.io.change_mode(motor_id, value)
-                self.io.get(motor_id, request_name)
-            else:
-                raise NotImplementedError
+                    raise NotImplementedError
 
 
     def _handle_other_requests(self, motor_id, requests):
@@ -238,7 +239,7 @@ class DynamixelController(threading.Thread):
             self._reading_present_posspeedload()
 
             # Dividing requests
-            all_pst_requests, all_other_requests = self._divide_requests()
+            all_pst_requests, all_special_requests, all_other_requests = self._divide_requests()
 
             # Handling pst requests
             self._handle_all_pst_requests(all_pst_requests)
@@ -246,6 +247,9 @@ class DynamixelController(threading.Thread):
             # Handling other requests
             for m, other_requests in zip(self.motors, all_other_requests):
                 self._handle_other_requests(m.id, other_requests)
+
+            # Handling special requests
+            self._handle_special_requests(all_special_requests)
 
             self._ctrllock.release()
 
