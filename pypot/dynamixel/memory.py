@@ -134,6 +134,12 @@ class DynamixelMemory(object):
         if len(rram) >= 28:
             self._memory_data[24+26] = rram[26] + (rram[27] << 8)
 
+    def next_addr(self, addr):
+        if self._memory_data[addr+1] is None:
+            return addr + 2
+        else:
+            return addr + 1
+
     def __getitem__(self, index):
         return self._memory_data[index]
 
@@ -141,9 +147,11 @@ class DynamixelMemory(object):
         """This methods accept single integers and iterables, in which case
             there value are distributed to address consecutive of index.
         """
-        if hasattr(val, '__iter__'):
-            for i, val_i in enumerate(val):
-                self._memory_data[index + i] = int(val_i)
+        if hasattr(val, '__iter__'): 
+            addr = index
+            for val_i in val:
+                self._memory_data[addr] = int(val_i)
+                addr = self.next_addr(addr)
         else:
             self._memory_data[index] = int(val)
 
