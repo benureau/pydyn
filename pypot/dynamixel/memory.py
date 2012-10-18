@@ -64,6 +64,8 @@ class DynamixelMemory(object):
                      self._memory_data[protocol.DXL_CCW_ANGLE_LIMIT] == 0)
         self.mode = 'wheel' if mode_test else 'joint'
 
+        self.lock = bool(self._memory_data[protocol.DXL_LOCK])
+
 
     def _process_raw_eeprom(self, rep):
         """Return the eeprom data, with two bytes data properly computed"""

@@ -255,11 +255,11 @@ class DynamixelMotor(object):
 
     @property
     def highest_limit_temperature(self):
-        return self.mmem[protocol.DXL_HIGEST_LIMIT_TEMPERATURE]
+        return self.highest_limit_temperature_raw
 
     @property
     def highest_limit_temperature_raw(self):
-        return self.mmem[protocol.DXL_HIGEST_LIMIT_TEMPERATURE]
+        return self.mmem[protocol.DXL_HIGHEST_LIMIT_TEMPERATURE]
 
     @highest_limit_temperature.setter
     def highest_limit_temperature(self, val):
@@ -267,12 +267,58 @@ class DynamixelMotor(object):
 
     @highest_limit_temperature_raw.setter
     def highest_limit_temperature_raw(self, val):
-        raise Warning('Official documentation advise not to modify this value (lower or higher)')
-
+        
         limits.checkbounds('highest_limit_temperature', 10, 99, int(val))
         self.request_lock.acquire()
-        self.requests['HIGEST_LIMIT_TEMPERATURE'] = int(val)
+        self.requests['HIGHEST_LIMIT_TEMPERATURE'] = int(val)
         self.request_lock.release()
+
+
+    # MARK Highest Limit Voltage
+    
+    @property
+    def highest_limit_voltage(self):
+        return conv.raw2_voltage(self.highest_limit_voltage_raw)
+    
+    @property
+    def highest_limit_voltage_raw(self):
+        return self.mmem[protocol.DXL_HIGHEST_LIMIT_VOLTAGE]
+    
+    @highest_limit_voltage.setter
+    def highest_limit_voltage(self, val):
+        self.highest_voltage_raw = int(val)
+    
+    @highest_limit_voltage_raw.setter
+    def highest_limit_voltage_raw(self, val):
+        
+        limits.checkbounds('highest_limit_voltage', 10, 99, int(val))
+        self.request_lock.acquire()
+        self.requests['HIGHEST_LIMIT_VOLTAGE'] = int(val)
+        self.request_lock.release()
+
+
+    # MARK Lowest Limit Voltage
+    
+    @property
+    def lowest_limit_voltage(self):
+        return conv.raw2_voltage(self.lowest_limit_voltage_raw)
+    
+    @property
+    def lowest_limit_voltage_raw(self):
+        return self.mmem[protocol.DXL_LOWEST_LIMIT_VOLTAGE]
+    
+    @lowest_limit_voltage.setter
+    def lowest_limit_voltage(self, val):
+        self.lowest_voltage_raw = int(val)
+    
+    @lowest_limit_voltage_raw.setter
+    def lowest_limit_voltage_raw(self, val):
+        
+        limits.checkbounds('lowest_limit_voltage', 10, 99, int(val))
+        self.request_lock.acquire()
+        self.requests['LOWEST_LIMIT_VOLTAGE'] = int(val)
+        self.request_lock.release()
+
 
     # max_temp is provided as a conveniance alias
 
@@ -384,7 +430,30 @@ class DynamixelMotor(object):
         self.torque_enable = not val
 
 
-    # MARK goal_position
+    # MARK LED
+
+    @property
+    def led(self):
+        return bool(self.led_raw)
+
+    @property
+    def led_raw(self):
+        return self.mmem[protocol.DXL_LED]
+
+    @led.setter
+    def led(self, val):
+        self.led_raw = int(val)
+
+    @led_raw.setter
+    def led_raw(self, val):
+        """Changing the goal position will turn on torque_enable if off."""
+        limits.checkoneof('led', [0, 1], int(val))
+        self.request_lock.acquire()
+        self.requests['LED'] = int(val)
+        self.request_lock.release()
+
+
+    # MARK Goal position
 
     @property
     def goal_position(self):
@@ -562,6 +631,28 @@ class DynamixelMotor(object):
 
     # TODO MARK Registered
 
+    @property
+    def registered(self):
+        return bool(self.registered_raw)
+
+    @property
+    def registered_raw(self):
+        return self.mmem[protocol.DXL_REGISTERED]
+
+
+    # MARK Lock EEPROM
+
+    @property
+    def lock(self):
+        return bool(self.registered_raw)
+    
+    @property
+    def lock_raw(self):
+        return self.mmem[protocol.DXL_LOCK]
+    
+    # TODO Locking
+
+
     # MARK Moving
 
     @property
@@ -593,6 +684,7 @@ class DynamixelMotor(object):
         self.request_lock.acquire()
         self.requests['PUNCH'] = int(val)
         self.request_lock.release()
+
 
 class AXRXMotor(DynamixelMotor):
 
