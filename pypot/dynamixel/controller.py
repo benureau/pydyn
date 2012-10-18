@@ -95,6 +95,7 @@ class DynamixelController(threading.Thread):
         'AX' : motor.AXMotor,
         'RX' : motor.RXMotor,
         'MX' : motor.MXMotor,
+        'EX' : motor.EXMotor,
     }
 
     def create_motor(self, motor_id):

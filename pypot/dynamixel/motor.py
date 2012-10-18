@@ -5,8 +5,6 @@ import protocol
 import conversions as conv
 import limits 
 
-# TODO.
-
 class DynamixelMotor(object):
     """
         This class allows you to control and read the motor values transparently.
@@ -629,7 +627,7 @@ class DynamixelMotor(object):
         return self.present_voltage_raw
 
 
-    # TODO MARK Registered
+    # MARK Registered
 
     @property
     def registered(self):
@@ -686,7 +684,7 @@ class DynamixelMotor(object):
         self.request_lock.release()
 
 
-class AXRXMotor(DynamixelMotor):
+class AXRXEXMotor(DynamixelMotor):
 
     # MARK Conversion methods
 
@@ -777,6 +775,15 @@ class AXMotor(AXRXMotor):
 class RXMotor(AXRXMotor):
     pass
 
+class EXMotor(AXRXMotor):
+    
+    @property
+    def sensed_current(self):
+        return self.raw2_sensed_current(self.sensed_current_raw)
+    
+    @property
+    def sensed_current_raw(self):
+        return self.mmem[protocol.DXL_SENSED_CURRENT]
 
 class MXMotor(DynamixelMotor):
 

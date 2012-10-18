@@ -45,6 +45,7 @@ def baudrate_mx_2raw(value):
 baudrate_fun = {
     'AX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
     'RX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
+    'EX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
     'MX' : (raw2_baudrate_mx,   baudrate_mx_2raw),
 }
 
@@ -113,6 +114,7 @@ def deg_2raw(deg, modelclass):
 speedratio = {
     'AX': 6*0.111,
     'RX': 6*0.111,
+    'EX': 6*0.111,
     'MX': 6*0.11445,
 }
 
@@ -258,13 +260,13 @@ def raw2_alarm_names(value):
     byte = raw2_alarm_codes(value)
     return tuple(numpy.array(protocol.DXL_ALARMS)[byte == 1])
 
-def alarm_name_2raw(value):
+def alarm_names_2raw(value):
     b = 0
     for a in value:
         b += 2 ** (7 - protocol.DXL_ALARMS.index(a))
     return b
 
-def alarm_code_2raw(value):
+def alarm_codes_2raw(value):
     b = 0
     for c in value:
         b += 2 ** c
@@ -277,3 +279,26 @@ def alarm_code_2name(value):
 def name2_alarm_code(value):
     """value is a integer representing a single alarmcode"""
     return protocol.DXL_ALARMS.index(value)
+
+
+# MARK Current
+
+def current_2raw(value):
+    """in A"""
+    limits.checkbounds('current', -9.2115, 9.2115, value)
+    return int(value/0.0045 + 2048)
+    
+def raw2_current(value):
+    """in A"""
+    limits.checkbounds('current raw', 0, 4095, value)
+    return 0.0045 * (value - 2048)
+
+def sensed_current_2raw(value):
+    """in A - should not be useful (since you can't write sensed current)"""
+    limits.checkbounds('sensed current', -5.12, 5.11, value)
+    return int(value/0.01 + 512)
+
+def raw2_sensed_current(value):
+    """in A"""
+    limits.checkbounds('sensed current raw', 0, 1023, value)
+    return 0.01 * (value - 512)
