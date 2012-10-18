@@ -3,7 +3,7 @@ import collections
 
 import protocol
 import conversions as conv
-import limits 
+import limits
 
 class DynamixelMotor(object):
     """
@@ -265,7 +265,7 @@ class DynamixelMotor(object):
 
     @highest_limit_temperature_raw.setter
     def highest_limit_temperature_raw(self, val):
-        
+
         limits.checkbounds('highest_limit_temperature', 10, 99, int(val))
         self.request_lock.acquire()
         self.requests['HIGHEST_LIMIT_TEMPERATURE'] = int(val)
@@ -273,22 +273,22 @@ class DynamixelMotor(object):
 
 
     # MARK Highest Limit Voltage
-    
+
     @property
     def highest_limit_voltage(self):
         return conv.raw2_voltage(self.highest_limit_voltage_raw)
-    
+
     @property
     def highest_limit_voltage_raw(self):
         return self.mmem[protocol.DXL_HIGHEST_LIMIT_VOLTAGE]
-    
+
     @highest_limit_voltage.setter
     def highest_limit_voltage(self, val):
         self.highest_voltage_raw = int(val)
-    
+
     @highest_limit_voltage_raw.setter
     def highest_limit_voltage_raw(self, val):
-        
+
         limits.checkbounds('highest_limit_voltage', 10, 99, int(val))
         self.request_lock.acquire()
         self.requests['HIGHEST_LIMIT_VOLTAGE'] = int(val)
@@ -296,22 +296,22 @@ class DynamixelMotor(object):
 
 
     # MARK Lowest Limit Voltage
-    
+
     @property
     def lowest_limit_voltage(self):
         return conv.raw2_voltage(self.lowest_limit_voltage_raw)
-    
+
     @property
     def lowest_limit_voltage_raw(self):
         return self.mmem[protocol.DXL_LOWEST_LIMIT_VOLTAGE]
-    
+
     @lowest_limit_voltage.setter
     def lowest_limit_voltage(self, val):
         self.lowest_voltage_raw = int(val)
-    
+
     @lowest_limit_voltage_raw.setter
     def lowest_limit_voltage_raw(self, val):
-        
+
         limits.checkbounds('lowest_limit_voltage', 10, 99, int(val))
         self.request_lock.acquire()
         self.requests['LOWEST_LIMIT_VOLTAGE'] = int(val)
@@ -643,11 +643,11 @@ class DynamixelMotor(object):
     @property
     def lock(self):
         return bool(self.registered_raw)
-    
+
     @property
     def lock_raw(self):
         return self.mmem[protocol.DXL_LOCK]
-    
+
     # TODO Locking
 
 
@@ -769,21 +769,24 @@ class AXRXEXMotor(DynamixelMotor):
         self.request_lock.release()
 
 
-class AXMotor(AXRXMotor):
+class AXMotor(AXRXEXMotor):
     pass
 
-class RXMotor(AXRXMotor):
+class RXMotor(AXRXEXMotor):
     pass
 
-class EXMotor(AXRXMotor):
-    
+class EXMotor(AXRXEXMotor):
+
     @property
     def sensed_current(self):
         return self.raw2_sensed_current(self.sensed_current_raw)
-    
+
     @property
     def sensed_current_raw(self):
         return self.mmem[protocol.DXL_SENSED_CURRENT]
+
+
+
 
 class MXMotor(DynamixelMotor):
 
@@ -881,3 +884,117 @@ class MXMotor(DynamixelMotor):
         self.request_lock.acquire()
         self.requests['GAINS'] = (int(val[0]), int(val[1]), int(val[2]))
         self.request_lock.release()
+
+    # MARK Current
+
+    @property
+    def current(self):
+        return conv.raw2_current(self.current_raw)
+    
+    @property
+    def current_raw(self):
+        return self.mmem[protocol.DXL_CURRENT]
+    
+    @current.setter
+    def current(self, val):
+        self.current_raw = conv.dgain_2raw(val)
+    
+    @current_raw.setter
+    def current_raw(self, val):
+        limits.checkbounds('current raw', 0, 4095, int(val))
+        self.request_lock.acquire()
+        self.requests['CURRENT'] = int(val)
+        self.request_lock.release()
+
+# Only the MX64 and 106 seems to support current.
+# (although you have to go through the korean doc for the MX64 to know that)
+
+class MX64Motor(MXMotor):
+
+    # MARK Torque Control Mode
+
+    @property
+    def torque_control_mode_enable(self):
+        return bool(self.torque_control_mode_enable_raw)
+
+    @property
+    def torque_control_mode_enable_raw(self):
+        return self.mmem[protocol.DXL_TORQUE_CONTROL_MODE_ENABLE]
+
+    @torque_control_mode_enable.setter
+    def torque_control_mode_enable(self, val):
+        self.torque_control_mode_enable_raw = conv.dgain_2raw(val)
+
+    @torque_control_mode_enable_raw.setter
+    def torque_control_mode_enable_raw(self, val):
+        limits.checkoneof('torque_control_mode_enable raw', [0, 1], int(val))
+        self.request_lock.acquire()
+        self.requests['TORQUE_CONTROL_MODE_ENABLE'] = int(val)
+        self.request_lock.release()
+
+    # torque_mode alias for torque_control_mode_enable
+
+    @property
+    def torque_mode(self):
+        return self.torque_control_enable
+    
+    @property
+    def torque_mode_raw(self):
+        return self.torque_control_enable_raw
+    
+    @torque_mode.setter
+    def torque_mode(self, val):
+        self.torque_control_enable = val
+    
+    @torque_mode_raw.setter
+    def torque_mode_raw(self, val):
+        self.torque_control_enable_raw = val
+
+
+    # MARK Goal Torque
+
+    @property
+    def goal_torque(self):
+        return conv.raw2_goaltorque(self.goal_torque_raw)
+
+    @property
+    def goal_torque_raw(self):
+        return self.mmem[protocol.DXL_GOAL_TORQUE]
+
+    @goal_torque.setter
+    def goal_torque(self, val):
+        self.goal_torque_raw = conv.goaltorque_2raw(val)
+    
+    @goal_torque_raw.setter
+    def goal_torque_raw(self):
+        limits.checkbounds('goal torque raw', 0, 2047, int(val))
+        self.request_lock.acquire()
+        self.requests['GOAL_TORQUE'] = int(val)
+        self.request_lock.release()
+
+
+    # MARK Goal Acceleration
+    
+    @property
+    def goal_acceleration(self):
+        return conv.raw2_goalacc(self.goal_acceleration_raw)
+    
+    @property
+    def goal_acceleration_raw(self):
+        return self.mmem[protocol.DXL_GOAL_ACCELERATION]
+    
+    @goal_acceleration.setter
+    def goal_acceleration(self, val):
+        self.goal_acceleration_raw = conv.goalacc_2raw(val)
+    
+    @goal_acceleration_raw.setter
+    def goal_acceleration_raw(self):
+        limits.checkbounds('goal acceleration raw', 0, 254, int(val))
+        self.request_lock.acquire()
+        self.requests['GOAL_ACCELERATION'] = int(val)
+        self.request_lock.release()
+
+
+class MX106Motor(MX64Motor):
+
+    pass

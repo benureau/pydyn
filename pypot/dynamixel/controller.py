@@ -91,29 +91,48 @@ class DynamixelController(threading.Thread):
         #TODO: check for double motors
         return [self.create_motor(motor_id) for motor_id in motor_ids]
 
-    motorclass = {
-        'AX' : motor.AXMotor,
-        'RX' : motor.RXMotor,
-        'MX' : motor.MXMotor,
-        'EX' : motor.EXMotor,
+    motormodel = {
+        'AX-12'   : motor.AXMotor,
+        'AX-18'   : motor.AXMotor,
+        'AX-12W'  : motor.AXMotor,
+
+        'RX-10'   : motor.RXMotor,
+        'RX-24F'  : motor.RXMotor,
+        'RX-28'   : motor.RXMotor,
+        'RX-64'   : motor.RXMotor,
+
+        'MX-28'   : motor.MXMotor,
+        'MX-64'   : motor.MX64Motor,
+        'MX-106'  : motor.MX106Motor,
+
+        'EX-106+' : motor.EXMotor,
     }
 
     def create_motor(self, motor_id):
         """Create a motor instance and load it with EEPROM and RAM data."""
+        # reading eeprom, ram
         raw_eeprom = self.read_eeprom(motor_id)
         raw_ram    = self.read_ram(motor_id)
         mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
 
+        # reading extra ram (if necessary)
+        extra_addr = mmem.extra_addr()
+        if extra_addr is not None:
+            addr, size = extra_addr
+            raw_extra = self.io.read(motor_id, addr, size)
+            mem.process_extra(raw_extra)
+
+        # registering the motor memory to the io
         self.io.motormems[mmem.id] = mmem
 
-        m = DynamixelController.motorclass[mmem.modelclass](mmem)
-
+        # creating the motors
+        m = DynamixelController.motormodel[mmem.model](mmem)
         self.motors.append(m)
 
         return m
 
     def read_eeprom(self, motor_id):
-        return self.io.read(motor_id, 0, 24 )
+        return self.io.read(motor_id, 0, 24)
 
     def read_ram(self, motor_id):
         return self.io.read(motor_id, 24, 26)
@@ -256,7 +275,7 @@ class DynamixelController(threading.Thread):
             time.sleep(0.0001) # timeout to allow lock acquiring by other party
 
             end = time.time()
-            
+
             self.fps_history.append(end)
             dt = self._period - (end - start)
             if dt > 0:

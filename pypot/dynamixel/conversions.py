@@ -285,13 +285,37 @@ def name2_alarm_code(value):
 
 def current_2raw(value):
     """in A"""
-    limits.checkbounds('current', -9.2115, 9.2115, value)
+    limits.checkbounds('current', -9.216, 9.2115, value)
     return int(value/0.0045 + 2048)
     
 def raw2_current(value):
     """in A"""
     limits.checkbounds('current raw', 0, 4095, value)
     return 0.0045 * (value - 2048)
+
+def goaltorque_2raw(value):
+    """in A"""
+    limits.checkbounds('goal torque', -4.6035, 4.6035, value)
+    return int(value/0.0045 + 1024)
+
+def raw2_goaltorque(value):
+    """in A"""
+    # it says that goal torque can't be bigger than torque limit
+    # but since each have different units, it's difficult
+    # to test.
+    limits.checkbounds('goal torque raw', 0, 2047, value)
+    return 0.0045 * (value - 1024)
+
+def goalacc_2raw(value):
+    """in degree/s**2"""
+    limits.checkbounds('goal acceleration', 0, 2180.082, value)
+    return int(value*8.583)
+
+def raw2_goalacc(value):
+    """in degree/s**2"""
+    limits.checkbounds('goal acceleration raw', 0, 254, value)
+    return value/8.583
+
 
 def sensed_current_2raw(value):
     """in A - should not be useful (since you can't write sensed current)"""

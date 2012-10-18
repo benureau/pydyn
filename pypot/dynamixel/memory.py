@@ -42,7 +42,7 @@ class DynamixelMemory(object):
                       RX and MX are only documented up to address 18.
 
         """
-        self._memory_data = [None]*70
+        self._memory_data = [None]*74
         self._process_raw_eeprom(raw_eeprom)
         self._process_raw_ram(raw_ram)
 
@@ -66,6 +66,21 @@ class DynamixelMemory(object):
 
         self.lock = bool(self._memory_data[protocol.DXL_LOCK])
 
+    def extra_addr(self):
+        """Some motor have extra RAM value. This returns the address of those values"""
+        if self.modelclass == 'MX':
+            return 68, 6
+        if self.modelclass == 'EX':
+            return 56, 2
+            
+    def process_extra(self, rex):
+        if self.modelclass == 'MX':
+            self._memory_data[68+0] = rex[0] + (rex[1] << 8)
+            self._memory_data[68+2] = rex[2]
+            self._memory_data[68+3] = rex[3] + (rex[4] << 8)
+            self._memory_data[68+5] = rex[5]
+        if self.modelclass == 'EX':
+            self._memory_data[56+0] = rex[0] + (rex[1] << 8)
 
     def _process_raw_eeprom(self, rep):
         """Return the eeprom data, with two bytes data properly computed"""
