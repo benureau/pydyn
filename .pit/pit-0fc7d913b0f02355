@@ -1,0 +1,15 @@
+[header]
+title = feature/lowmemory: limits separated from conversions
+id = 0fc7d913b0f02355d68d64e2356668e57c60a438
+status = open
+type = feature
+author = Fabien Benureau
+mail = fabien.benureau+git@gmail.com
+date = 2012-10-18 at 09:55 UCT
+
+[eventlog]
+opened[0] = opened the 2012-10-18 at 09:55 UCT by Fabien Benureau
+
+[discussion]
+desc = # enter your description here
+
