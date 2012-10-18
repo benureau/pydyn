@@ -1,7 +1,7 @@
 import threading
 import time
 import sys
-from collections import OrderedDict
+from collections import OrderedDict, deque
 import copy
 
 from .. import color
@@ -24,7 +24,7 @@ class DynamixelController(threading.Thread):
         It does not access the content of the motors memory.
     """
 
-    def __init__(self, port, connection_type, timeout = 0.05, freq = 10):
+    def __init__(self, port, connection_type, timeout = 0.05, freq = 50):
         """
             :param freq  the target frequence for refreshing values in Hz.
         """
@@ -33,7 +33,7 @@ class DynamixelController(threading.Thread):
         self.daemon = True
 
         self.freq = freq
-
+        self.fps_history = deque(maxlen = 3*freq)
 
         if connection_type not in CONTROLLER_TYPE:
             raise ValueError('Unknown controller type: %s' % (connection_type))
@@ -252,9 +252,20 @@ class DynamixelController(threading.Thread):
             self._handle_special_requests(all_special_requests)
 
             self._ctrllock.release()
+            time.sleep(0.0001) # timeout to allow lock acquiring by other party
 
             end = time.time()
+            
+            self.fps_history.append(end)
             dt = self._period - (end - start)
             if dt > 0:
                 time.sleep(dt)
 
+    @property
+    def fps(self):
+        """FPS is computed over the last 2 seconds"""
+        len_fps = len(self.fps_history)
+        if len_fps < 2:
+            return 0.0
+        else:
+            return len_fps/(self.fps_history[len_fps-1] - self.fps_history[1])
