@@ -212,6 +212,31 @@ MAX_P_GAIN = 254.0 / 8.0
 MAX_I_GAIN = 254.0 * 1000.0 / 2048.0
 MAX_D_GAIN = 254.0 * 4.0 / 1000.0
 
+def raw2_dgain(raw):
+    checkbounds('p_gain raw', 0, 254, raw)
+    return 0.004 * raw
+
+def raw2_igain(raw):
+    checkbounds('i_gain raw', 0, 254, raw)
+    return raw / 2.048
+
+def raw2_pgain(raw):
+    checkbounds('d_gain raw', 0, 254, raw)
+    return 0.125 * raw
+
+def dgain_2raw(value):
+    checkbounds('p_gain', 0, MAX_P_GAIN, value)
+    return int(250.0 * value)
+
+def igain_2raw(value):
+    checkbounds('i_gain', 0, MAX_I_GAIN, value)
+    return int(2.048 * value)
+
+def pgain_2raw(value):
+    checkbounds('d_gain', 0, MAX_D_GAIN, value)
+    return int(8.0 * value)
+
+
 def raw2_gains(gains):
     """
         Return real values of PID gains according to
@@ -224,21 +249,15 @@ def raw2_gains(gains):
         """
     if not len(gains) == 3 :
         raise ValueError('Gains should have 3 values')
-    if ((min(gains) < 0) or (max(gains) > 254)):
-        raise ValueError('Gains values must be in [0,254]')
 
-    return list( numpy.array(gains) * numpy.array([0.004, 1000.0 / 2048, 0.125]) )
+    return raw2_dgain(gains[0]), raw2_dgain(gains[1]), raw2_dgain(gains[2])
 
 def gains_2raw(gains):
 
     if not len(gains) == 3 :
         raise ValueError('Gains should have 3 values')
 
-    if not ([0.0, 0.0, 0.0] < gains < [MAX_D_GAIN, MAX_I_GAIN, MAX_P_GAIN]):
-        raise ValueError('Gains values must be in [0, 0 ,0] and [%f, %f, %f]' % (MAX_D_GAIN, MAX_I_GAIN, MAX_P_GAIN))
-
-    gains = list( numpy.array(gains) * numpy.array([250, 2.048, 8.0]) )
-    return [int(floatvalues) for floatvalues in gains]
+    return dgain_2raw(gains[0]), igain_2raw(gains[1]), pgain_2raw(gains[2])
 
 
 # MARK: - Alarm conversions
@@ -248,7 +267,7 @@ def raw2_alarm_codes(value):
     checkbounds('alarm code raw', 0, 127, value)
 
     return numpy.unpackbits(numpy.asarray(value, dtype=numpy.uint8))
-    
+
 def raw2_alarm_names(value):
     """This unpack a single integer into a list of error names"""
     byte = raw2_alarm_codes(value)
@@ -273,5 +292,5 @@ def alarm_code_2name(value):
 def name2_alarm_code(value):
     """value is a integer representing a single alarmcode"""
     return protocol.DXL_ALARMS.index(value)
-    
+
 

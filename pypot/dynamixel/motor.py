@@ -1,6 +1,6 @@
 import threading
 import collections
- 
+
 import conversions as conv
 import protocol
 
@@ -99,7 +99,7 @@ class DynamixelMotor(object):
 
 
     # MARK Mode
-    
+
     @property
     def mode(self):
         return self.mmem.mode
@@ -692,5 +692,82 @@ class MXMotor(DynamixelMotor):
     # PID gains are aggressively cached since they are not changed
     # other than through user intervention
 
+    @property
+    def p_gain(self):
+        return conv.raw2_pgain(self.p_gain_raw)
 
+    @property
+    def p_gain_raw(self):
+        return self.mmem[protocol.DXL_P_GAIN]
 
+    @p_gain.setter
+    def p_gain(self, val):
+        self.p_gain_raw = conv.pgain_2raw(val)
+
+    @p_gain_raw.setter
+    def p_gain_raw(self, val):
+        conv.checkbounds('p_gain', 0, 254, int(val))
+        self.request_lock.acquire()
+        self.requests['P_GAIN'] = int(val)
+        self.request_lock.release()
+
+    @property
+    def i_gain(self):
+        return conv.raw2_igain(self.i_gain_raw)
+
+    @property
+    def i_gain_raw(self):
+        return self.mmem[protocol.DXL_I_GAIN]
+
+    @i_gain.setter
+    def i_gain(self, val):
+        self.i_gain_raw = conv.igain_2raw(val)
+
+    @i_gain_raw.setter
+    def i_gain_raw(self, val):
+        conv.checkbounds('i_gain', 0, 254, int(val))
+        self.request_lock.acquire()
+        self.requests['I_GAIN'] = int(val)
+        self.request_lock.release()
+
+    @property
+    def d_gain(self):
+        return conv.raw2_dgain(self.d_gain_raw)
+
+    @property
+    def d_gain_raw(self):
+        return self.mmem[protocol.DXL_D_GAIN]
+
+    @d_gain.setter
+    def d_gain(self, val):
+        self.d_gain_raw = conv.dgain_2raw(val)
+
+    @d_gain_raw.setter
+    def d_gain_raw(self, val):
+        conv.checkbounds('d_gain', 0, 254, int(val))
+        self.request_lock.acquire()
+        self.requests['D_GAIN'] = int(val)
+        self.request_lock.release()
+
+    @property
+    def gains(self):
+        return conv.raw2_gains(self.gains_raw)
+
+    @property
+    def gains_raw(self):
+        return (self.mmem[protocol.DXL_D_GAIN],
+                self.mmem[protocol.DXL_I_GAIN],
+                self.mmem[protocol.DXL_P_GAIN])
+
+    @gains.setter
+    def gains(self, val):
+        self.gains_raw = conv.gains_2raw(val)
+
+    @gains_raw.setter
+    def gains_raw(self, val):
+        conv.checkbounds('d_gain', 0, 254, int(val[0]))
+        conv.checkbounds('i_gain', 0, 254, int(val[1]))
+        conv.checkbounds('p_gain', 0, 254, int(val[2]))
+        self.request_lock.acquire()
+        self.requests['GAINS'] = (int(val[0]), int(val[1]), int(val[2]))
+        self.request_lock.release()
