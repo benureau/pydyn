@@ -1,8 +1,9 @@
 import threading
 import collections
 
-import conversions as conv
 import protocol
+import conversions as conv
+import limits 
 
 # TODO.
 
@@ -180,7 +181,7 @@ class DynamixelMotor(object):
 
     @return_delay_time_raw.setter
     def return_delay_time_raw(self):
-        conv.checkbounds('return_delay_time', 0, 254, int(val))
+        limits.checkbounds('return_delay_time', 0, 254, int(val))
         self.request_lock.acquire()
         self.requests['RETURN_DELAY_TIME'] = int(val)
         self.request_lock.release()
@@ -202,7 +203,7 @@ class DynamixelMotor(object):
 
     @cw_angle_limit_raw.setter
     def cw_angle_limit_raw(self, val):
-        conv.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
+        limits.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
         self.request_lock.acquire()
         self.requests['CW_ANGLE_LIMIT'] = int(val)
         self.request_lock.release()
@@ -221,7 +222,7 @@ class DynamixelMotor(object):
 
     @ccw_angle_limit_raw.setter
     def ccw_angle_limit_raw(self, val):
-        conv.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
+        limits.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
         self.request_lock.acquire()
         self.requests['CCW_ANGLE_LIMIT'] = int(val)
         self.request_lock.release()
@@ -243,8 +244,8 @@ class DynamixelMotor(object):
     def angle_limits_raw(self, val):
         if int(val[0]) > int(val[1]):
             raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], val[1]))
-        conv.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val[0]))
-        conv.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val[1]))
+        limits.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val[0]))
+        limits.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val[1]))
         self.request_lock.acquire()
         self.requests['CCW_ANGLE_LIMIT'] = int(val[0]), int(val[1])
         self.request_lock.release()
@@ -268,7 +269,7 @@ class DynamixelMotor(object):
     def highest_limit_temperature_raw(self, val):
         raise Warning('Official documentation advise not to modify this value (lower or higher)')
 
-        conv.checkbounds('highest_limit_temperature', 10, 99, int(val))
+        limits.checkbounds('highest_limit_temperature', 10, 99, int(val))
         self.request_lock.acquire()
         self.requests['HIGEST_LIMIT_TEMPERATURE'] = int(val)
         self.request_lock.release()
@@ -327,7 +328,7 @@ class DynamixelMotor(object):
 
     @max_torque_raw.setter
     def max_torque_raw(self, val):
-        conv.checkbounds('max_torque', 0, 1023, int(val))
+        limits.checkbounds('max_torque', 0, 1023, int(val))
         self.request_lock.acquire()
         self.requests['MAX_TORQUE'] = int(val)
         self.request_lock.release()
@@ -341,7 +342,7 @@ class DynamixelMotor(object):
 
     @return_status_level.setter
     def return_status_level(self, val):
-        conv.checkoneof('compliant', [0, 1, 2], int(val))
+        limits.checkoneof('compliant', [0, 1, 2], int(val))
         self.request_lock.acquire()
         self.requests['RETURN_STATUS_LEVEL'] = int(val)
         self.request_lock.release()
@@ -366,7 +367,7 @@ class DynamixelMotor(object):
 
     @torque_enable_raw.setter
     def torque_enable_raw(self, val):
-        conv.checkoneof('torque_enable', [0, 1], int(val))
+        limits.checkoneof('torque_enable', [0, 1], int(val))
         self.requests['TORQUE_ENABLE'] = int(val)
 
 
@@ -400,7 +401,7 @@ class DynamixelMotor(object):
     @goal_position_raw.setter
     def goal_position_raw(self, val):
         """Changing the goal position will turn on torque_enable if off."""
-        conv.checkbounds('goal_position',
+        limits.checkbounds('goal_position',
                          self.cw_angle_limit_raw, self.ccw_angle_limit_raw, int(val))
         self.request_lock.acquire()
         self.requests['GOAL_POSITION'] = int(val)
@@ -424,9 +425,9 @@ class DynamixelMotor(object):
     @moving_speed_raw.setter
     def moving_speed_raw(self, val):
         if self.mode == 'wheel':
-            conv.checkbounds_mode('moving_speed', 0, 2047, int(val), self.mode)
+            limits.checkbounds_mode('moving_speed', 0, 2047, int(val), self.mode)
         else:
-            conv.checkbounds_mode('moving_speed', 0, 1023, int(val), self.mode)
+            limits.checkbounds_mode('moving_speed', 0, 1023, int(val), self.mode)
         self.request_lock.acquire()
         self.requests['MOVING_SPEED'] = int(val)
         self.request_lock.release()
@@ -449,7 +450,7 @@ class DynamixelMotor(object):
     @torque_limit_raw.setter
     def torque_limit_raw(self, val):
 
-        conv.checkbounds_mode('torque_limit', 0, 1023, int(val))
+        limits.checkbounds_mode('torque_limit', 0, 1023, int(val))
         self.request_lock.acquire()
         self.requests['TORQUE_LIMIT'] = int(val)
         self.request_lock.release()
@@ -588,7 +589,7 @@ class DynamixelMotor(object):
 
     @punch_raw.setter
     def punch_raw(self, val):
-        conv.checkbounds_mode('punch', 32, 1023, int(val))
+        limits.checkbounds_mode('punch', 32, 1023, int(val))
         self.request_lock.acquire()
         self.requests['PUNCH'] = int(val)
         self.request_lock.release()
@@ -630,7 +631,7 @@ class AXRXMotor(DynamixelMotor):
 
     @cw_compliance_margin_raw.setter
     def cw_compliance_margin_raw(self, val):
-        conv.checkbounds('cw compliance margin', 0, 255, int(val))
+        limits.checkbounds('cw compliance margin', 0, 255, int(val))
         self.request_lock.acquire()
         self.requests['CW_COMPLIANCE_MARGIN'] = int(val)
         self.request_lock.release()
@@ -650,7 +651,7 @@ class AXRXMotor(DynamixelMotor):
 
     @ccw_compliance_margin_raw.setter
     def ccw_compliance_margin_raw(self, val):
-        conv.checkbounds('ccw compliance margin', 0, 255, int(val))
+        limits.checkbounds('ccw compliance margin', 0, 255, int(val))
         self.request_lock.acquire()
         self.requests['CCW_COMPLIANCE_MARGIN'] = int(val)
         self.request_lock.release()
@@ -671,8 +672,8 @@ class AXRXMotor(DynamixelMotor):
 
     @compliance_margins_raw.setter
     def compliance_margin_raw(self, val):
-        conv.checkbounds('ccw compliance margin', 0, 255, int(val[0]))
-        conv.checkbounds('ccw compliance margin', 0, 255, int(val[1]))
+        limits.checkbounds('ccw compliance margin', 0, 255, int(val[0]))
+        limits.checkbounds('ccw compliance margin', 0, 255, int(val[1]))
         self.request_lock.acquire()
         self.requests['COMPLIANCE_MARGINS'] = int(val[0]), int(val[1])
         self.request_lock.release()
@@ -716,7 +717,7 @@ class MXMotor(DynamixelMotor):
 
     @p_gain_raw.setter
     def p_gain_raw(self, val):
-        conv.checkbounds('p_gain', 0, 254, int(val))
+        limits.checkbounds('p_gain', 0, 254, int(val))
         self.request_lock.acquire()
         self.requests['P_GAIN'] = int(val)
         self.request_lock.release()
@@ -735,7 +736,7 @@ class MXMotor(DynamixelMotor):
 
     @i_gain_raw.setter
     def i_gain_raw(self, val):
-        conv.checkbounds('i_gain', 0, 254, int(val))
+        limits.checkbounds('i_gain', 0, 254, int(val))
         self.request_lock.acquire()
         self.requests['I_GAIN'] = int(val)
         self.request_lock.release()
@@ -754,7 +755,7 @@ class MXMotor(DynamixelMotor):
 
     @d_gain_raw.setter
     def d_gain_raw(self, val):
-        conv.checkbounds('d_gain', 0, 254, int(val))
+        limits.checkbounds('d_gain', 0, 254, int(val))
         self.request_lock.acquire()
         self.requests['D_GAIN'] = int(val)
         self.request_lock.release()
@@ -775,9 +776,9 @@ class MXMotor(DynamixelMotor):
 
     @gains_raw.setter
     def gains_raw(self, val):
-        conv.checkbounds('d_gain', 0, 254, int(val[0]))
-        conv.checkbounds('i_gain', 0, 254, int(val[1]))
-        conv.checkbounds('p_gain', 0, 254, int(val[2]))
+        limits.checkbounds('d_gain', 0, 254, int(val[0]))
+        limits.checkbounds('i_gain', 0, 254, int(val[1]))
+        limits.checkbounds('p_gain', 0, 254, int(val[2]))
         self.request_lock.acquire()
         self.requests['GAINS'] = (int(val[0]), int(val[1]), int(val[2]))
         self.request_lock.release()

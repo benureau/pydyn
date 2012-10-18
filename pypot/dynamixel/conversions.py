@@ -5,29 +5,13 @@ import protocol
 
 # for details, see http://support.robotis.com/en/product/dynamixel/
 
-def checkbounds(name, lower, upper, val):
-    if not lower <= val <= upper:
-        raise ValueError('{} should be in the [{}, {}] range but is {}'.format(name, lower, upper, val))
 
-def checkbounds_warning(name, lower, upper, val):
-    legal_val = max(lower, min(upper, val))
-    if legal_val != val:
-        raise Warning('{} should be in the [{}, {}] range but is {}'.format(name, lower, upper, val))
-    return legal_val
-
-def checkbounds_mode(name, lower, upper, val, mode):
-    if not lower <= val <= upper:
-        raise ValueError('in {} mode, {} should be in the [{}, {}] range but is {}'.format(mode, name, lower, upper, val))
-
-def checkoneof(name, collection, val):
-    if not val in collection:
-        raise ValueError('{} should be in {} but is {}'.format(name, collection, val))
 
 
 # MARK Baudrate
 
 def raw2_baudrate_axrx(value):
-    checkbounds('baudrate raw', 0, 254, value)
+    limits.checkbounds('baudrate raw', 0, 254, value)
     return 2000000.0/(value + 1)
 
 def baudrate_axrx_2raw(value):
@@ -38,6 +22,7 @@ baudrate_mx = {
     251 : 2500000,
     252 : 3000000,
 }
+
 mx_baudrate = {
     2250000 : 250,
     2500000 : 251,
@@ -45,7 +30,7 @@ mx_baudrate = {
 }
 
 def raw2_baudrate_mx(value):
-    checkbounds('baudrate raw', 0, 254, value)
+    limits.checkbounds('baudrate raw', 0, 254, value)
     try:
         return baudrate_mx[value]
     except KeyError:
@@ -74,12 +59,12 @@ def raw2_baudrate(value, modelclass):
 
 def return_delay_time_2raw(value):
     """in microseconds"""
-    checkbounds('return delay time', 0, 508, value)
+    limits.checkbounds('return delay time', 0, 508, value)
     return int(value/2)
 
 def raw2_return_delay_time(value):
     """in microseconds"""
-    checkbounds('return delay time raw', 0, 254, value)
+    limits.checkbounds('return delay time raw', 0, 254, value)
     return 2*value
 
 
@@ -87,12 +72,12 @@ def raw2_return_delay_time(value):
 
 def voltage_2raw(value):
     """Return the voltage in volt"""
-    checkbounds('voltage', 0, 25.5, value)
+    limits.checkbounds('voltage', 0, 25.5, value)
     return int(10.0*value)
 
 def raw2_voltage(value):
     """Return the voltage in volt"""
-    checkbounds('voltage raw', 0, 255, value)
+    limits.checkbounds('voltage raw', 0, 255, value)
     return value/10.0
 
 
@@ -100,12 +85,12 @@ def raw2_voltage(value):
 
 def raw2_torque(value):
     """Return the voltage in volt"""
-    checkbounds('torque', 0, 1023, value)
+    limits.checkbounds('torque', 0, 1023, value)
     return 100*value/1023.0
 
 def torque_2raw(value):
     """Return the voltage in volt"""
-    checkbounds('torque raw', 0, 100, value)
+    limits.checkbounds('torque raw', 0, 100, value)
     return int(value/100*1023)
 
 
@@ -115,12 +100,12 @@ def torque_2raw(value):
 
 def raw2_deg(raw, modelclass):
     max_pos, max_deg = limits.position_range[modelclass]
-    checkbounds('position raw', 0, max_pos, raw)
+    limits.checkbounds('position raw', 0, max_pos, raw)
     return (raw / max_pos) * max_deg
 
 def deg_2raw(deg, modelclass):
     max_pos, max_deg = limits.position_range[modelclass]
-    checkbounds('position', 0, max_deg, deg)
+    limits.checkbounds('position', 0, max_deg, deg)
     return int((deg / max_deg) * max_pos)
 
 # MARK Speed
@@ -137,7 +122,7 @@ def raw2_positivedps(raw, modelclass):
         raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
         (AX and RX)
         """
-    checkbounds('positive speed raw', 0, 1023, raw)
+    limits.checkbounds('positive speed raw', 0, 1023, raw)
     return raw*speedratio[modelclass]
 
 def movingdps_2raw(dps, modelclass):
@@ -147,7 +132,7 @@ def movingdps_2raw(dps, modelclass):
         (AX and RX)
         """
     max_speed = 1023*speedratio[modelclass]
-    checkbounds('positive speed', 0, max_speed, dps)
+    limits.checkbounds('positive speed', 0, max_speed, dps)
     return int(dps/speedratio[modelclass])
 
 def raw2_cwccwdps(raw, modelclass):
@@ -162,7 +147,7 @@ def raw2_cwccwdps(raw, modelclass):
         a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
 
         """
-    checkbounds('cw/ccw speed raw', 0, 2047, raw)
+    limits.checkbounds('cw/ccw speed raw', 0, 2047, raw)
     direction = ((raw >> 10) * 2) - 1
     speed = raw2_positivedps(raw % 1024, modelclass)
 
@@ -181,7 +166,7 @@ def cwccwdps_2raw(dps, modelclass):
 
         """
     max_speed = 1023*speedratio[modelclass]
-    checkbounds('cw/ccw speed', -max_speed, max_speed, dps)
+    limits.checkbounds('cw/ccw speed', -max_speed, max_speed, dps)
 
     if dps > 0:
         return int(1024 + abs(dps)/speedratio[modelclass])
@@ -192,13 +177,13 @@ def cwccwdps_2raw(dps, modelclass):
 
 def raw2_load(value):
     """return the load into signed torque percent"""
-    checkbounds('load raw', 0, 2047, value)
+    limits.checkbounds('load raw', 0, 2047, value)
     direction = ((value >> 10) * 2) - 1
 
     return direction * raw2_torque(value % 1024)
 
 def load_2raw(value):
-    checkbounds('load', -100, 100, value)
+    limits.checkbounds('load', -100, 100, value)
 
     if value > 0:
         return int(1024 + 1023*abs(value)/100.0)
@@ -213,27 +198,27 @@ MAX_I_GAIN = 254.0 * 1000.0 / 2048.0
 MAX_D_GAIN = 254.0 * 4.0 / 1000.0
 
 def raw2_dgain(raw):
-    checkbounds('p_gain raw', 0, 254, raw)
+    limits.checkbounds('p_gain raw', 0, 254, raw)
     return 0.004 * raw
 
 def raw2_igain(raw):
-    checkbounds('i_gain raw', 0, 254, raw)
+    limits.checkbounds('i_gain raw', 0, 254, raw)
     return raw / 2.048
 
 def raw2_pgain(raw):
-    checkbounds('d_gain raw', 0, 254, raw)
+    limits.checkbounds('d_gain raw', 0, 254, raw)
     return 0.125 * raw
 
 def dgain_2raw(value):
-    checkbounds('p_gain', 0, MAX_P_GAIN, value)
+    limits.checkbounds('p_gain', 0, MAX_P_GAIN, value)
     return int(250.0 * value)
 
 def igain_2raw(value):
-    checkbounds('i_gain', 0, MAX_I_GAIN, value)
+    limits.checkbounds('i_gain', 0, MAX_I_GAIN, value)
     return int(2.048 * value)
 
 def pgain_2raw(value):
-    checkbounds('d_gain', 0, MAX_D_GAIN, value)
+    limits.checkbounds('d_gain', 0, MAX_D_GAIN, value)
     return int(8.0 * value)
 
 
@@ -264,7 +249,7 @@ def gains_2raw(gains):
 
 def raw2_alarm_codes(value):
     """This unpack a single integer into a list of error code"""
-    checkbounds('alarm code raw', 0, 127, value)
+    limits.checkbounds('alarm code raw', 0, 127, value)
 
     return numpy.unpackbits(numpy.asarray(value, dtype=numpy.uint8))
 
@@ -292,5 +277,3 @@ def alarm_code_2name(value):
 def name2_alarm_code(value):
     """value is a integer representing a single alarmcode"""
     return protocol.DXL_ALARMS.index(value)
-
-
