@@ -1,7 +1,7 @@
 [header]
 title = feature/lowmemory: set motor mode
 id = 9ec93345a481d7aba3eb097a585e96e7f2a84513
-status = open
+status = closed
 type = feature
 author = Fabien Benureau
 mail = fabien.benureau+git@gmail.com
@@ -9,6 +9,7 @@ date = 2012-10-18 at 09:54 UCT
 
 [eventlog]
 opened[0] = opened the 2012-10-18 at 09:54 UCT by Fabien Benureau
+closed[1] = closed the 2012-10-18 at 10:40(UCT) by Fabien Benureau
 
 [discussion]
 desc = # enter your description here

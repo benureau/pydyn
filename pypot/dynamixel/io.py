@@ -206,6 +206,12 @@ class DynamixelIO:
 
     # MARK Mode
 
+    def change_mode(self, motor_id, mode):
+        if mode == 'wheel':
+            self.set_to_wheel_mode(motor_id)
+        else:
+            self.set_to_joint_mode(motor_id)
+
     def set_to_wheel_mode(self, motor_id):
         """
             Set the motor to wheel mode

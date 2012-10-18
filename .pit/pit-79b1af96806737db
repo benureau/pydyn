@@ -1,9 +1,12 @@
 [header]
 title = Make eeprom editable
 id = 79b1af96806737db110f776e55be889694cda2ab
-status = open
+status = closed
 type = task
 
 [discussion]
 desc = # enter your description here
+
+[eventlog]
+closed[0] = closed the 2012-10-18 at 10:39(UCT) by Fabien Benureau
 

@@ -138,7 +138,9 @@ class DynamixelController(threading.Thread):
                     print 'warning: communication error on motor {}'.format(m.id)
 
 
-    pst_set = set(('GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT'))
+    pst_set     = set(('GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT'))
+    special_set = set(('ID', 'MODE'))
+
 
     def _divide_requests(self):
         """This function distributes requests into relevant groups.
@@ -146,13 +148,15 @@ class DynamixelController(threading.Thread):
 
             Ideally, this function should treat all motor request in parallel.
             For the moment, it is limited to one motor at a time and only separate write
-            requests on goal_position, moving_speed and torque_limit from the rest.
+            requests on goal_position, moving_speed and torque_limit from special requrest, 
+            from the rest.
 
             :return  list of dictionary request
             """
         # Dividing requests
-        all_pst_requests   = []
-        all_other_requests = []
+        all_pst_requests     = []
+        all_special_requests = []
+        all_other_requests   = []
 
         for motor in self.motors:
 
@@ -161,21 +165,25 @@ class DynamixelController(threading.Thread):
             motor.requests.clear()
             motor.request_lock.release()
 
-            pst_requests = OrderedDict()
-            other_requests = OrderedDict()
+            pst_requests     = OrderedDict()
+            special_requests = OrderedDict()
+            other_requests   = OrderedDict()
 
             for request_name, value in requests.items():
                 if request_name in DynamixelController.pst_set and value is not None:
                     pst_requests[request_name] = value
+                if request_name in DynamixelController.special_set:
+                    special_requests[request_name] = value                    
                 else:
                     other_requests[request_name] = value
 
             all_pst_requests.append(pst_requests)
+            all_special_requests.append(special_requests)
             all_other_requests.append(other_requests)
 
         # copying the resquests (for thread safety)
 
-        return all_pst_requests, all_other_requests
+        return all_pst_requests, all_special_requests, all_other_requests
 
     def _handle_all_pst_requests(self, all_pst_requests):
         # Handling pst requests (if need be)
@@ -190,8 +198,25 @@ class DynamixelController(threading.Thread):
         if len(sync_pst) > 0:
             self.io.set_sync_positions_speeds_torque_limits(sync_pst)
 
-    def _handle_other_requests(self, motor_id, requests):
+    def _handle_special_requests(self, motor_id, requests):    
+        # handling the resquests
+        for request_name, value in requests.items():
+            if request_name == 'ID':
+                if value is None:
+                    self.io.get(motor_id, 'ID')
+                else:
+                    self.io.change_id(motor_id, value)
+            if request_name == 'MODE':
+                if value is None:
+                    self.io.get(motor_id, 'ANGLE_LIMITS')
+                else:
+                    self.io.change_mode(motor_id, value)
+                self.io.get(motor_id, request_name)
+            else:
+                raise NotImplementedError
 
+
+    def _handle_other_requests(self, motor_id, requests):
         # handling the resquests
         for request_name, value in requests.items():
             if value is None:

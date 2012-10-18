@@ -104,6 +104,14 @@ class DynamixelMotor(object):
     def mode(self):
         return self.mmem.mode
 
+    @mode.setter
+    def mode(self):
+        checkoneof('mode', ['wheel', 'joint'], val)
+        self.request_lock.acquire()
+        self.requests['MODE'] = val
+        self.request_lock.release()
+
+
     # MARK EEPROM properties
 
     @property
@@ -112,8 +120,10 @@ class DynamixelMotor(object):
 
     @id.setter
     def id(self):
-        self.O
-        return self.mmem.id
+        checkbounds('id', 0, 254, val)
+        self.request_lock.acquire()
+        self.requests['ID'] = int(val)
+        self.request_lock.release()
 
     @property
     def model(self):
