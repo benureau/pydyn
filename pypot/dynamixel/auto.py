@@ -27,7 +27,7 @@ def get_available_ports():
 
     raise NotImplementedError('Unknown operating system: %s' % (op_system))
 
-def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = 0.02, start = True):
+def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = 0.02, start = True, baudrate = 1000000):
     """
         Return a controller outfitted with all motor found.
     """
@@ -43,7 +43,7 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     port = ports[0]
     if verbose:
         print '  [{} OK {}] Port found : {}{}{}'.format(color.green, color.end, color.bold, port, color.end)
-    ctrl = DynamixelController(port, connection_type, timeout = timeout)
+    ctrl = DynamixelController(port, connection_type, timeout = timeout, baudrate = baudrate)
     if verbose:
         print '  [{} OK {}] Connexion established : {}'.format(color.green, color.end, ctrl.io)
     
@@ -60,7 +60,7 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     if len(motor_ids) == 0:
         print '  [{}FAIL{}] No motor found. Verify connections, power, USB dongle state, scan range.'.format(color.red,
         color.end)
-        exit(0)
+        return ctrl
     else:
         if verbose:
             print '  [{} OK {}] Motors found : {}'.format(color.green, color.end, ', '.join('{}{}{}'.format(color.cyan, m_id, color.end) for m_id in motor_ids))

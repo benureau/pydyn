@@ -24,7 +24,7 @@ class DynamixelController(threading.Thread):
         It does not access the content of the motors memory.
     """
 
-    def __init__(self, port, connection_type, timeout = 0.05, freq = 50):
+    def __init__(self, port, connection_type, timeout = 0.05, freq = 50, baudrate = 1000000):
         """
             :param freq  the target frequence for refreshing values in Hz.
         """
@@ -39,11 +39,14 @@ class DynamixelController(threading.Thread):
             raise ValueError('Unknown controller type: %s' % (connection_type))
 
         self.type = connection_type
-        self.io = io.DynamixelIO(port, timeout = timeout)
+        self.io = io.DynamixelIO(port, timeout = timeout, baudrate = baudrate)
         self.motors = []
 
         self._pinglock = threading.Lock() # when discovering motors
         self._ctrllock = threading.Lock() # when running as usual
+
+    def close(self):
+        self.io.close()
 
 
     # freq and period property, to ensure they remain coherent

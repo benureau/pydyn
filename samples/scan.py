@@ -1,15 +1,18 @@
 import debugenv # only to debug local (not installed) pypot version
 
+import sys
+
 import pypot
 import pypot.dynamixel as dyn
 
-ctrl = dyn.create_controller(verbose = True, motor_range = [0, 10], timeout = 0.02)
-
-print('\ndisplay eeprom ([y]/n) ?'),
-r = raw_input()
-
-
-if r == 'y' or r == '':
-    for m in ctrl.motors:
-        print('')
-        print(m.eeprom_desc())    
+mode = sys.argv[1] if len(sys.argv) == 2 else None
+    
+    
+if mode == 'deep':
+    for bps in [1000000, 500000, 400000, 250000, 200000, 115200, 57600, 19200, 9600]:
+        ctrl = dyn.create_controller(verbose = True, motor_range = [0, 253], 
+                                     timeout = 0.02, baudrate = bps)
+        ctrl.close()
+else:
+    ctrl = dyn.create_controller(verbose = True, motor_range = [0, 253], 
+                                         timeout = 0.02)

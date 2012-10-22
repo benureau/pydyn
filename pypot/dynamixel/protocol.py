@@ -11,7 +11,7 @@ DXL_INSTRUCTIONS = {
 
 DXL_BROADCAST = 0xFE
 
-DXL_ALARM = [
+DXL_ALARMS = [
     "Input Voltage Error",
     "Angle Limit Error",
     "Overheating Error",

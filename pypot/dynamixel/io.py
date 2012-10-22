@@ -11,6 +11,8 @@ import packet
 import limits
 import memory
 
+import conversions as conv
+
 # MARK: - Byte conversions
 
 def integer_to_two_bytes(value):
@@ -88,12 +90,18 @@ class DynamixelIO:
 
         self.motormems = {}
 
-    def __del__(self):
-        """ Automatically closes the serial communication on destruction. """
+    def close(self):
         if hasattr(self, '_serial'):
             self._lock.acquire()
-            self.__open_ports.remove(self._serial.port)
-            self._serial.close()
+            try:
+                self.__open_ports.remove(self._serial.port)
+                self._serial.close()
+            except:
+                pass
+                
+    def __del__(self):
+        """ Automatically closes the serial communication on destruction. """
+        self.close()
 
     def __repr__(self):
         return "<DXL IO: port='%s' baudrate=%d timeout=%.g>" % (self._serial.port,
@@ -1117,7 +1125,7 @@ class DynamixelIO:
                                                   read_bytes)
 
             if status_packet.error != 0:
-                alarms = byte_to_alarms(status_packet.error)
+                alarms = conv.raw2_alarm_names(status_packet.error)
                 alarms = filter(lambda a: a not in self.blacklisted_alarms, alarms)
 
                 if len(alarms):
