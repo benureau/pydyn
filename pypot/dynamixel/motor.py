@@ -86,18 +86,6 @@ class DynamixelMotor(object):
         return value
 
 
-    # MARK Model specific methods
-
-    # Defining virtual methods to convert speed
-    # Supporting new motors idiosyncrasies should be easy
-
-    def raw2_movingdps(self, raw):
-        raise NotImplementedError
-
-    def movingdps_2raw(self, dps):
-        raise NotImplementedError
-
-
     # MARK Mode
 
     @property
@@ -145,7 +133,7 @@ class DynamixelMotor(object):
 
     @property
     def baudrate(self):
-        return conv.raw2_baudrate(self.mmem[protocol.DXL_BAUD_RATE], self.modelclass)
+        return conv.raw2_baud_rate(self.mmem[protocol.DXL_BAUD_RATE], self.mmem)
 
     @property
     def baudrate_raw(self):
@@ -153,7 +141,7 @@ class DynamixelMotor(object):
 
     @baudrate.setter
     def baudrate(self, val):
-        self.baudrate_raw = conv.baudrate_2raw(val, self.modelclass)
+        self.baudrate_raw = conv.baud_rate_2raw(val, self.mmem)
 
     @baudrate_raw.setter
     def baudrate_raw(self, val):
@@ -190,7 +178,7 @@ class DynamixelMotor(object):
 
     @property
     def cw_angle_limit(self):
-        return conv.raw2_deg(self.cw_angle_limit_raw, self.modelclass)
+        return conv.raw2_cw_angle_limit(self.cw_angle_limit_raw, self.mmem)
 
     @property
     def cw_angle_limit_raw(self):
@@ -198,7 +186,7 @@ class DynamixelMotor(object):
 
     @cw_angle_limit.setter
     def cw_angle_limit(self, val):
-        self.cw_angle_limit_raw = self.deg_2raw(val)
+        self.cw_angle_limit_raw = conv.cw_angle_limit_2raw(val, self.mmem)
 
     @cw_angle_limit_raw.setter
     def cw_angle_limit_raw(self, val):
@@ -209,7 +197,7 @@ class DynamixelMotor(object):
 
     @property
     def ccw_angle_limit(self):
-        return conv.raw2_deg(self.ccw_angle_limit_raw, self.modelclass)
+        return conv.raw2_ccw_angle_limit(self.ccw_angle_limit_raw, self.mmem)
 
     @property
     def ccw_angle_limit_raw(self):
@@ -217,7 +205,7 @@ class DynamixelMotor(object):
 
     @ccw_angle_limit.setter
     def ccw_angle_limit(self, val):
-        self.ccw_angle_limit_raw = self.deg_2raw(val)
+        self.ccw_angle_limit_raw = conv.ccw_angle_limit_2raw(val, self.mmem)
 
     @ccw_angle_limit_raw.setter
     def ccw_angle_limit_raw(self, val):
@@ -237,7 +225,7 @@ class DynamixelMotor(object):
 
     @angle_limits.setter
     def angle_limits(self, val):
-        self.angle_limits_raw = self.deg_2raw(val[0]), self.deg_2raw(val[1])
+        self.angle_limits_raw = self.cw_angle_limit_2raw(val[0]), self.ccw_angle_limit_2raw(val[1])
 
     @angle_limits_raw.setter
     def angle_limits_raw(self, val):
@@ -254,7 +242,7 @@ class DynamixelMotor(object):
 
     @property
     def highest_limit_temperature(self):
-        return self.highest_limit_temperature_raw
+        return conv.raw2_hightest_limit_voltage(self.highest_limit_temperature_raw)
 
     @property
     def highest_limit_temperature_raw(self):
@@ -262,22 +250,39 @@ class DynamixelMotor(object):
 
     @highest_limit_temperature.setter
     def highest_limit_temperature(self, val):
-        self.highest_limit_temperature_raw = int(val)
+        self.highest_limit_temperature_raw = conv.hightest_limit_voltage_2raw(val)
 
     @highest_limit_temperature_raw.setter
     def highest_limit_temperature_raw(self, val):
-
         limits.checkbounds('highest_limit_temperature', 10, 99, int(val))
         self.request_lock.acquire()
         self.requests['HIGHEST_LIMIT_TEMPERATURE'] = int(val)
         self.request_lock.release()
 
-
+    # max_temp is provided as a conveniance alias
+    
+    @property
+    def max_temp(self):
+        return self.highest_limit_temperature
+    
+    @property
+    def max_temp_raw(self):
+        return self.highest_limit_temperature_raw
+    
+    @max_temp.setter
+    def max_temp(self, val):
+        self.highest_limit_temperature_raw = int(val)
+    
+    @max_temp_raw.setter
+    def max_temp_raw(self, val):
+        self.highest_limit_temperature_raw = val
+        
+        
     # MARK Highest Limit Voltage
 
     @property
     def highest_limit_voltage(self):
-        return conv.raw2_voltage(self.highest_limit_voltage_raw)
+        return conv.raw2_hightest_limit_voltage(self.highest_limit_voltage_raw)
 
     @property
     def highest_limit_voltage_raw(self):
@@ -285,11 +290,10 @@ class DynamixelMotor(object):
 
     @highest_limit_voltage.setter
     def highest_limit_voltage(self, val):
-        self.highest_voltage_raw = int(val)
+        self.highest_voltage_raw = conv.highest_limit_voltage_2raw(val)
 
     @highest_limit_voltage_raw.setter
     def highest_limit_voltage_raw(self, val):
-
         limits.checkbounds('highest_limit_voltage', 10, 99, int(val))
         self.request_lock.acquire()
         self.requests['HIGHEST_LIMIT_VOLTAGE'] = int(val)
@@ -300,7 +304,7 @@ class DynamixelMotor(object):
 
     @property
     def lowest_limit_voltage(self):
-        return conv.raw2_voltage(self.lowest_limit_voltage_raw)
+        return conv.raw2_lowest_limit_voltage(self.lowest_limit_voltage_raw)
 
     @property
     def lowest_limit_voltage_raw(self):
@@ -308,60 +312,56 @@ class DynamixelMotor(object):
 
     @lowest_limit_voltage.setter
     def lowest_limit_voltage(self, val):
-        self.lowest_voltage_raw = int(val)
+        self.lowest_voltage_raw = conv.lowest_limit_voltage_2raw(val)
 
     @lowest_limit_voltage_raw.setter
     def lowest_limit_voltage_raw(self, val):
-
         limits.checkbounds('lowest_limit_voltage', 10, 99, int(val))
         self.request_lock.acquire()
         self.requests['LOWEST_LIMIT_VOLTAGE'] = int(val)
         self.request_lock.release()
 
 
-    # max_temp is provided as a conveniance alias
-
-    @property
-    def max_temp(self):
-        return self.highest_limit_temperature
-
-    @property
-    def max_temp_raw(self):
-        return self.highest_limit_temperature_raw
-
-    @max_temp.setter
-    def max_temp(self, val):
-        self.highest_limit_temperature_raw = int(val)
-
-    @max_temp_raw.setter
-    def max_temp_raw(self, val):
-        self.highest_limit_temperature_raw = val
-
-
-    # MARK Limit Voltages (TODO: setters)
+    # max_voltage is provided as a conveniance alias
 
     @property
     def min_voltage(self):
-        return conv.raw2_voltage(self.mmem[protocol.DXL_LOWEST_LIMIT_VOLTAGE])
-
+        return self.lowest_limit_voltage
+    
     @property
     def min_voltage_raw(self):
-        return self.mmem[protocol.DXL_LOWEST_LIMIT_VOLTAGE]
-
+        return self.lowest_limit_voltage_raw
+    
+    @min_voltage.setter
+    def min_voltage(self, val):
+        self.lowest_limit_voltage = val
+    
+    @min_voltage_raw.setter
+    def min_voltage_raw(self, val):
+        self.lowest_limit_voltage_raw = val
+    
     @property
     def max_voltage(self):
-        return conv.raw2voltage(self.mmem[protocol.DXL_HIGEST_LIMIT_VOLTAGE])
-
+        return self.highest_limit_voltage
+    
     @property
     def max_voltage_raw(self):
-        return self.mmem[protocol.DXL_HIGEST_LIMIT_VOLTAGE]
+        return self.highest_limit_voltage_raw
+    
+    @max_voltage.setter
+    def max_voltage(self, val):
+        self.highest_limit_voltage = val
+    
+    @max_voltage_raw.setter
+    def max_voltage_raw(self, val):
+        self.highest_limit_voltage_raw = val
 
 
     # MARK Max Torque
 
     @property
     def max_torque(self):
-        return conv.raw2_torque(self.mmem[protocol.DXL_MAX_TORQUE])
+        return conv.raw2_max_torque(self.mmem[protocol.DXL_MAX_TORQUE])
 
     @property
     def max_torque_raw(self):
@@ -369,7 +369,7 @@ class DynamixelMotor(object):
 
     @max_torque.setter
     def max_torque(self, val):
-        self.max_torque_raw = conv.torque_2raw(val)
+        self.max_torque_raw = conv.max_torque_2raw(val)
 
     @max_torque_raw.setter
     def max_torque_raw(self, val):
@@ -391,7 +391,6 @@ class DynamixelMotor(object):
         self.request_lock.acquire()
         self.requests['RETURN_STATUS_LEVEL'] = int(val)
         self.request_lock.release()
-
 
 
     # MARK RAM properties
@@ -433,7 +432,7 @@ class DynamixelMotor(object):
 
     @property
     def led(self):
-        return bool(self.led_raw)
+        return conv.raw2_led(self.led_raw)
 
     @property
     def led_raw(self):
@@ -441,7 +440,7 @@ class DynamixelMotor(object):
 
     @led.setter
     def led(self, val):
-        self.led_raw = int(val)
+        self.led_raw = conv.led_2raw(val)
 
     @led_raw.setter
     def led_raw(self, val):
@@ -456,7 +455,7 @@ class DynamixelMotor(object):
 
     @property
     def goal_position(self):
-        return conv.raw2_deg(self.goal_position_raw, self.modelclass)
+        return conv.raw2_goal_position(self.goal_position_raw, self.mmem)
 
     @property
     def goal_position_raw(self):
@@ -464,7 +463,7 @@ class DynamixelMotor(object):
 
     @goal_position.setter
     def goal_position(self, val):
-        self.goal_position_raw = conv.deg_2raw(val, self.modelclass)
+        self.goal_position_raw = conv.goal_position_2raw(val, self.mmem)
 
     @goal_position_raw.setter
     def goal_position_raw(self, val):
@@ -480,7 +479,7 @@ class DynamixelMotor(object):
 
     @property
     def moving_speed(self):
-        return self.raw2_movingdps(self.moving_speed_raw)
+        return self.raw2_moving_speed(self.moving_speed_raw)
 
     @property
     def moving_speed_raw(self):
@@ -488,7 +487,7 @@ class DynamixelMotor(object):
 
     @moving_speed.setter
     def moving_speed(self, val):
-        self.moving_speed_raw = self.movingdps_2raw(val)
+        self.moving_speed_raw = self.moving_speed_2raw(val)
 
     @moving_speed_raw.setter
     def moving_speed_raw(self, val):
@@ -505,7 +504,7 @@ class DynamixelMotor(object):
 
     @property
     def torque_limit(self):
-        return self.raw2_torque(self.torque_limit_raw)
+        return self.raw2_torque_limit(self.torque_limit_raw)
 
     @property
     def torque_limit_raw(self):
@@ -513,11 +512,10 @@ class DynamixelMotor(object):
 
     @torque_limit.setter
     def torque_limit(self, val):
-        self.torque_limit_raw = conv.deg_2raw(val, self.modelclass)
+        self.torque_limit_raw = conv.torque_limit_2raw(val, self.modelclass)
 
     @torque_limit_raw.setter
     def torque_limit_raw(self, val):
-
         limits.checkbounds_mode('torque_limit', 0, 1023, int(val))
         self.request_lock.acquire()
         self.requests['TORQUE_LIMIT'] = int(val)
@@ -528,7 +526,7 @@ class DynamixelMotor(object):
 
     @property
     def present_position(self):
-        return conv.raw2_deg(self.present_position_raw, self.modelclass)
+        return conv.raw2_present_position(self.present_position_raw, self.modelclass)
 
     @property
     def present_position_raw(self):
@@ -536,7 +534,7 @@ class DynamixelMotor(object):
 
     @property
     def present_speed(self):
-        return conv.raw2_cwccwdps(self.present_speed_raw, self.modelclass)
+        return conv.raw2_present_speed(self.present_speed_raw, self.modelclass)
 
     @property
     def present_speed_raw(self):
@@ -544,7 +542,7 @@ class DynamixelMotor(object):
 
     @property
     def present_load(self):
-        return conv.raw2_load(self.mmem[protocol.DXL_PRESENT_LOAD])
+        return conv.raw2_present_load(self.mmem[protocol.DXL_PRESENT_LOAD])
 
     @property
     def present_load_raw(self):
@@ -594,7 +592,7 @@ class DynamixelMotor(object):
 
     @property
     def present_voltage(self):
-        return conv.raw2_voltage(self.present_voltage_raw)
+        return conv.raw2_present_voltage(self.present_voltage_raw)
 
     @property
     def present_voltage_raw(self):
@@ -613,26 +611,26 @@ class DynamixelMotor(object):
 
     @property
     def present_temperature(self):
-        return conv.raw2_voltage(self.present_temperature_raw)
+        return conv.raw2_present_temperature(self.present_temperature_raw)
 
     @property
     def present_temperature_raw(self):
         return self.mmem[protocol.DXL_PRESENT_TEMPERATURE]
 
     @property
-    def temperature(self):
-        return self.present_voltage
+    def temp(self):
+        return self.present_temperature
 
     @property
-    def temperature_raw(self):
-        return self.present_voltage_raw
+    def temp_raw(self):
+        return self.present_temperature_raw
 
 
     # MARK Registered
 
     @property
     def registered(self):
-        return bool(self.registered_raw)
+        return conv.raw2_registered(self.registered_raw)
 
     @property
     def registered_raw(self):
@@ -643,7 +641,7 @@ class DynamixelMotor(object):
 
     @property
     def lock(self):
-        return bool(self.registered_raw)
+        return conv.raw2_lock(self.registered_raw)
 
     @property
     def lock_raw(self):
@@ -656,7 +654,7 @@ class DynamixelMotor(object):
 
     @property
     def moving(self):
-        return bool(self.moving_raw)
+        return conv.raw2_moving(self.moving_raw)
 
     @property
     def moving_raw(self):
@@ -667,7 +665,7 @@ class DynamixelMotor(object):
 
     @property
     def punch(self):
-        return conv.raw2_torque(self.punch_raw)
+        return conv.raw2_punch(self.punch_raw)
 
     @property
     def punch_raw(self):
@@ -675,10 +673,11 @@ class DynamixelMotor(object):
 
     @punch.setter
     def punch(self, val):
-        self.punch_raw = conv.torque_2raw(val)
+        self.punch_raw = conv.punch_2raw(val, self.mmem)
 
     @punch_raw.setter
     def punch_raw(self, val):
+        # TODO 32 for RX, 0 for MX
         limits.checkbounds_mode('punch', 32, 1023, int(val))
         self.request_lock.acquire()
         self.requests['PUNCH'] = int(val)
@@ -687,21 +686,6 @@ class DynamixelMotor(object):
 
 class AXRXEXMotor(DynamixelMotor):
 
-    # MARK Conversion methods
-
-    def raw2_movingdps(self, raw):
-        if self.mode == 'wheel':
-            return conv.raw2_torquespeed(raw)
-        else:
-            return conv.raw2_movingdps(raw, self.modelclass)
-
-    def movingdps_2raw(self, dps):
-        if self.mode == 'wheel':
-            return conv.torquespeed_2raw(dps)
-        else:
-            return conv.movingdps_2raw(dps, self.modelclass)
-
-
     # MARK Compliance margin
 
     # Compliance margins are aggressively cached since they are not changed
@@ -709,7 +693,7 @@ class AXRXEXMotor(DynamixelMotor):
 
     @property
     def cw_compliance_margin(self):
-        return raw2_deg(self.mmem[protocol.DXL_CW_COMPLIANCE_MARGIN])
+        return conv.raw2_cw_compliance_margin(self.mmem[protocol.DXL_CW_COMPLIANCE_MARGIN], self.mmem)
 
     @property
     def cw_compliance_margin_raw(self):
@@ -718,7 +702,7 @@ class AXRXEXMotor(DynamixelMotor):
 
     @cw_compliance_margin.setter
     def cw_compliance_margin(self, val):
-        self.cw_compliance_margin_raw = val
+        self.cw_compliance_margin_raw = conv.cw_compliance_margin_2raw(val, self.mmem)
 
     @cw_compliance_margin_raw.setter
     def cw_compliance_margin_raw(self, val):
@@ -730,7 +714,7 @@ class AXRXEXMotor(DynamixelMotor):
 
     @property
     def ccw_compliance_margin(self):
-        return self.raw2_deg(self.mmem[protocol.DXL_CCW_COMPLIANCE_MARGIN])
+        return conv.raw2_ccw_compliance_margin(self.mmem[protocol.DXL_CCW_COMPLIANCE_MARGIN], self.mmem)
 
     @property
     def ccw_compliance_margin_raw(self):
@@ -738,7 +722,7 @@ class AXRXEXMotor(DynamixelMotor):
 
     @ccw_compliance_margin.setter
     def ccw_compliance_margin(self, val):
-        self.ccw_compliance_margin_raw = val
+        self.ccw_compliance_margin_raw = conv.ccw_compliance_margin_2raw(val, self.mmem)
 
     @ccw_compliance_margin_raw.setter
     def ccw_compliance_margin_raw(self, val):
@@ -769,6 +753,8 @@ class AXRXEXMotor(DynamixelMotor):
         self.requests['COMPLIANCE_MARGINS'] = int(val[0]), int(val[1])
         self.request_lock.release()
 
+
+    # TODO compliance slopes
 
     # MARK Printing EEPROM, RAM
 
@@ -819,16 +805,6 @@ class EXMotor(AXRXEXMotor):
 
 class MXMotor(DynamixelMotor):
 
-    # MARK Conversion methods
-
-    def raw2_movingdps(self, raw):
-        return conv.raw2_movingdps(raw, self.modelclass)
-
-    def movingdps_2raw(self, dps):
-        return conv.movingdps_2raw(dps, self.modelclass)
-
-
-
     # MARK PID Gains
 
     # PID gains are aggressively cached since they are not changed
@@ -836,7 +812,7 @@ class MXMotor(DynamixelMotor):
 
     @property
     def p_gain(self):
-        return conv.raw2_pgain(self.p_gain_raw)
+        return conv.raw2_p_gain(self.p_gain_raw)
 
     @property
     def p_gain_raw(self):
@@ -844,7 +820,7 @@ class MXMotor(DynamixelMotor):
 
     @p_gain.setter
     def p_gain(self, val):
-        self.p_gain_raw = conv.pgain_2raw(val)
+        self.p_gain_raw = conv.p_gain_2raw(val)
 
     @p_gain_raw.setter
     def p_gain_raw(self, val):
@@ -855,7 +831,7 @@ class MXMotor(DynamixelMotor):
 
     @property
     def i_gain(self):
-        return conv.raw2_igain(self.i_gain_raw)
+        return conv.raw2_i_gain(self.i_gain_raw)
 
     @property
     def i_gain_raw(self):
@@ -863,7 +839,7 @@ class MXMotor(DynamixelMotor):
 
     @i_gain.setter
     def i_gain(self, val):
-        self.i_gain_raw = conv.igain_2raw(val)
+        self.i_gain_raw = conv.i_gain_2raw(val)
 
     @i_gain_raw.setter
     def i_gain_raw(self, val):
@@ -874,7 +850,7 @@ class MXMotor(DynamixelMotor):
 
     @property
     def d_gain(self):
-        return conv.raw2_dgain(self.d_gain_raw)
+        return conv.raw2_d_gain(self.d_gain_raw)
 
     @property
     def d_gain_raw(self):
@@ -882,7 +858,7 @@ class MXMotor(DynamixelMotor):
 
     @d_gain.setter
     def d_gain(self, val):
-        self.d_gain_raw = conv.dgain_2raw(val)
+        self.d_gain_raw = conv.d_gain_2raw(val)
 
     @d_gain_raw.setter
     def d_gain_raw(self, val):
@@ -926,7 +902,7 @@ class MXMotor(DynamixelMotor):
     
     @current.setter
     def current(self, val):
-        self.current_raw = conv.dgain_2raw(val)
+        self.current_raw = conv.current_2raw(val)
     
     @current_raw.setter
     def current_raw(self, val):
@@ -934,6 +910,7 @@ class MXMotor(DynamixelMotor):
         self.request_lock.acquire()
         self.requests['CURRENT'] = int(val)
         self.request_lock.release()
+
 
 # Only the MX64 and 106 seems to support current.
 # (although you have to go through the korean doc for the MX64 to know that)
@@ -944,7 +921,7 @@ class MX64Motor(MXMotor):
 
     @property
     def torque_control_mode_enable(self):
-        return bool(self.torque_control_mode_enable_raw)
+        return conv.raw2_torque_control_mode_enable(self.torque_control_mode_enable_raw)
 
     @property
     def torque_control_mode_enable_raw(self):
@@ -952,7 +929,7 @@ class MX64Motor(MXMotor):
 
     @torque_control_mode_enable.setter
     def torque_control_mode_enable(self, val):
-        self.torque_control_mode_enable_raw = conv.dgain_2raw(val)
+        self.torque_control_mode_enable_raw = conv.torque_control_mode_enable_2raw(val)
 
     @torque_control_mode_enable_raw.setter
     def torque_control_mode_enable_raw(self, val):
@@ -984,7 +961,7 @@ class MX64Motor(MXMotor):
 
     @property
     def goal_torque(self):
-        return conv.raw2_goaltorque(self.goal_torque_raw)
+        return conv.raw2_goal_torque(self.goal_torque_raw)
 
     @property
     def goal_torque_raw(self):
@@ -992,7 +969,7 @@ class MX64Motor(MXMotor):
 
     @goal_torque.setter
     def goal_torque(self, val):
-        self.goal_torque_raw = conv.goaltorque_2raw(val)
+        self.goal_torque_raw = conv.goal_torque_2raw(val)
     
     @goal_torque_raw.setter
     def goal_torque_raw(self):
@@ -1006,7 +983,7 @@ class MX64Motor(MXMotor):
     
     @property
     def goal_acceleration(self):
-        return conv.raw2_goalacc(self.goal_acceleration_raw)
+        return conv.raw2_goal_acceleration(self.goal_acceleration_raw)
     
     @property
     def goal_acceleration_raw(self):
@@ -1014,7 +991,7 @@ class MX64Motor(MXMotor):
     
     @goal_acceleration.setter
     def goal_acceleration(self, val):
-        self.goal_acceleration_raw = conv.goalacc_2raw(val)
+        self.goal_acceleration_raw = conv.goal_acceleration_2raw(val)
     
     @goal_acceleration_raw.setter
     def goal_acceleration_raw(self):
