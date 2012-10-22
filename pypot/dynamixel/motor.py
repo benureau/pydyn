@@ -179,7 +179,7 @@ class DynamixelMotor(object):
         self.return_delay_time_raw = conv.return_delay_time_2raw(val)
 
     @return_delay_time_raw.setter
-    def return_delay_time_raw(self):
+    def return_delay_time_raw(self, val):
         limits.checkbounds('return_delay_time', 0, 254, int(val))
         self.request_lock.acquire()
         self.requests['RETURN_DELAY_TIME'] = int(val)
