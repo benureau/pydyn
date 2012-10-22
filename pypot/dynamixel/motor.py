@@ -106,7 +106,7 @@ class DynamixelMotor(object):
 
     @mode.setter
     def mode(self):
-        checkoneof('mode', ['wheel', 'joint'], val)
+        limits.checkoneof('mode', ['wheel', 'joint'], val)
         self.request_lock.acquire()
         self.requests['MODE'] = val
         self.request_lock.release()
@@ -119,8 +119,8 @@ class DynamixelMotor(object):
         return self.mmem.id
 
     @id.setter
-    def id(self):
-        checkbounds('id', 0, 254, val)
+    def id(self, val):
+        limits.checkbounds('id', 0, 254, val)
         self.request_lock.acquire()
         self.requests['ID'] = int(val)
         self.request_lock.release()
@@ -158,7 +158,7 @@ class DynamixelMotor(object):
     @baudrate_raw.setter
     def baudrate_raw(self, val):
         # usually, only value 1, 3, 4, 7, 9, 16, 34, 103, 207, (and 250, 251, 252 for MX) are used
-        checkbounds('baudrate', 0, 254, val)
+        limits.checkbounds('baudrate', 0, 254, val)
         self.request_lock.acquire()
         self.requests['BAUD_RATE'] = int(val)
         self.request_lock.release()
@@ -382,11 +382,11 @@ class DynamixelMotor(object):
     # MARK Return Status Level
 
     @property
-    def return_status_level(self):
+    def status_return_level(self):
         return self.mmem.status_return_level
 
-    @return_status_level.setter
-    def return_status_level(self, val):
+    @status_return_level.setter
+    def status_return_level(self, val):
         limits.checkoneof('compliant', [0, 1, 2], int(val))
         self.request_lock.acquire()
         self.requests['RETURN_STATUS_LEVEL'] = int(val)
