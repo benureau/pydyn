@@ -50,10 +50,10 @@ baudrate_fun = {
 }
 
 def baudrate_2raw(value, modelclass):
-    return baudrate_fun[modelclass][0](value)
+    return baudrate_fun[modelclass][1](value)
 
 def raw2_baudrate(value, modelclass):
-    return baudrate_fun[modelclass][1](value)
+    return baudrate_fun[modelclass][0](value)
 
 
 # MARK Return delay time
