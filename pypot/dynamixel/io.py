@@ -11,7 +11,7 @@ import packet
 import limits
 import memory
 
-import conversions as conv
+import alarms as conv # the only conversion needed in I/O
 
 # MARK: - Byte conversions
 

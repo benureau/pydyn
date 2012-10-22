@@ -11,16 +11,6 @@ DXL_INSTRUCTIONS = {
 
 DXL_BROADCAST = 0xFE
 
-DXL_ALARMS = [
-    "Input Voltage Error",
-    "Angle Limit Error",
-    "Overheating Error",
-    "Range Error",
-    "Checksum Error",
-    "Overload Error",
-    "Instruction Error",
-]
-
 DXL_INPUT_VOLTAGE_ERROR = 0
 DXL_ANGLE_LIMIT_ERROR   = 1
 DXL_OVERHEATING_ERROR   = 2
