@@ -4,6 +4,7 @@ import collections
 import protocol
 import conversions as conv
 import limits
+from .. import color
 
 class DynamixelMotor(object):
     """
@@ -767,6 +768,34 @@ class AXRXEXMotor(DynamixelMotor):
         self.request_lock.acquire()
         self.requests['COMPLIANCE_MARGINS'] = int(val[0]), int(val[1])
         self.request_lock.release()
+
+
+    # MARK Printing EEPROM, RAM
+
+    def _mem_desc(self, addr, desc):
+        return ('{}{:2d}{}'.format(color.cyan, addr, color.end),
+                '{}{:4d}  {}{}{}'.format(color.purple, self.mmem[addr], color.grey, desc, color.end))
+        
+    def eeprom_desc(self):
+        s = ['EEPROM', 
+             '{} Model                 : {}'.format(*self._mem_desc(0, self.model)),
+             '{} Firware               : {}'.format(*self._mem_desc(2, '')),
+             '{} ID                    : {}'.format(*self._mem_desc(3, '')),
+             '{} Baud Rate             : {}'.format(*self._mem_desc(4, '{} bauds'.format(self.baudrate))),
+             '{} Return Delay Time     : {}'.format(*self._mem_desc(5, '{} usec'.format(self.return_delay_time))),
+             '{} CW Angle Limit        : {}'.format(*self._mem_desc(6, '{:6.2f} degrees'.format(self.cw_angle_limit))),
+             '{} CCW Angle Limit       : {}'.format(*self._mem_desc(8, '{:6.2f} degrees, {} mode'.format(self.ccw_angle_limit, self.mode))),
+             '{} Max Limit Temp        : {}'.format(*self._mem_desc(11, '{} celsius'.format(self.highest_limit_temperature))),
+             '{} Min Limit Voltage     : {}'.format(*self._mem_desc(12, '{:4.1f} V'.format(self.lowest_limit_voltage))),
+             '{} Max Limit Voltage     : {}'.format(*self._mem_desc(13, '{:4.1f} V'.format(self.highest_limit_voltage))),
+             '{} Max Torque            : {}'.format(*self._mem_desc(14, '{:.1f} % of max'.format(self.max_torque))),
+             '{} Status Return Level   : {}'.format(*self._mem_desc(16, '')),
+             #'{} Alarm LED             : {}' % column(17, aled),
+             #'{} Alarm Shutdown        : {}' % column(18, ashutdown),
+             '\n'+color.end]
+        s = '\n'.join(s)
+        return s
+
 
 
 class AXMotor(AXRXEXMotor):
