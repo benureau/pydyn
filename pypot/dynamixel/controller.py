@@ -223,20 +223,21 @@ class DynamixelController(threading.Thread):
 
     def _handle_special_requests(self, all_special_requests):
         # handling the resquests
-        for motor_id, requests in zip(self.motors, all_special_requests):
+        for motor, requests in zip(self.motors, all_special_requests):
             for request_name, value in requests.items():
                 if request_name == 'ID':
                     if value is None:
-                        self.io.get(motor_id, 'ID')
+                        self.io.get(motor.id, 'ID')
                     else:
-                        self.io.change_id(motor_id, value)
-                if request_name == 'MODE':
+                        self.io.change_id(motor.id, value)
+                elif request_name == 'MODE':
                     if value is None:
-                        self.io.get(motor_id, 'ANGLE_LIMITS')
+                        self.io.get(motor.id, 'ANGLE_LIMITS')
                     else:
-                        self.io.change_mode(motor_id, value)
-                    self.io.get(motor_id, request_name)
+                        self.io.change_mode(motor.id, value)
+                    self.io.get(motor.id, request_name)
                 else:
+                    print 'REQUEST_NAME', value
                     raise NotImplementedError
 
 
