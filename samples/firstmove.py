@@ -28,6 +28,13 @@ motor.compliant = False
 
 motor.position = 150.0
 time.sleep(1.0)
+motor.position = 100.0
+time.sleep(1.0)
+motor.position = 200.0
+time.sleep(1.0)
+motor.position = 150.0
+time.sleep(1.0)
+
 
 #motion = robot.sinus2(6, 150, 40, period = 2.0, duration = 10)
 #motion = robot.sinus(94, 150, 40, period = 2.0, duration = 10)

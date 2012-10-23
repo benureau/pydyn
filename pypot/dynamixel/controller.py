@@ -152,7 +152,7 @@ class DynamixelController(threading.Thread):
             for m in self.motors:
                 try:
                     try:
-                        self.io.get_position_speed_load(m.id)
+                        self.io.get(m.id, 'PRESENT_POS_SPEED_LOAD')
                     except ValueError as ve:
                         print 'warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0])
 
@@ -235,7 +235,6 @@ class DynamixelController(threading.Thread):
                         self.io.get(motor.id, 'ANGLE_LIMITS')
                     else:
                         self.io.change_mode(motor.id, value)
-                    self.io.get(motor.id, request_name)
                 else:
                     print 'REQUEST_NAME', value
                     raise NotImplementedError
