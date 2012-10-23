@@ -1,5 +1,8 @@
 # MARK: - Alarm conversions
 
+import limits
+import numpy
+
 DXL_ALARMS = [
     "Input Voltage Error",
     "Angle Limit Error",
@@ -19,12 +22,12 @@ def raw2_alarm_codes(value):
 def raw2_alarm_names(value):
     """This unpack a single integer into a list of error names"""
     byte = raw2_alarm_codes(value)
-    return tuple(numpy.array(protocol.DXL_ALARMS)[byte == 1])
+    return tuple(alarm_i for byte_i, alarm_i in zip(byte, DXL_ALARMS) if byte_i == 1)
 
 def alarm_names_2raw(value):
     b = 0
     for a in value:
-        b += 2 ** (7 - protocol.DXL_ALARMS.index(a))
+        b += 2 ** (7 - DXL_ALARMS.index(a))
     return b
 
 def alarm_codes_2raw(value):
@@ -35,8 +38,8 @@ def alarm_codes_2raw(value):
 
 def alarm_code_2name(value):
     """value is a integer representing a single alarmcode"""
-    return protocol.DXL_ALARMS[value]
+    return DXL_ALARMS[value]
 
 def name2_alarm_code(value):
     """value is a integer representing a single alarmcode"""
-    return protocol.DXL_ALARMS.index(value)
+    return DXL_ALARMS.index(value)

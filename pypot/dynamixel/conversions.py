@@ -1,5 +1,3 @@
-import numpy
-
 import limits
 import protocol
 import alarms
