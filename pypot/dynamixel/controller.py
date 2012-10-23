@@ -235,7 +235,6 @@ class DynamixelController(threading.Thread):
                         self.io.get(motor.id, 'ANGLE_LIMITS')
                     else:
                         self.io.change_mode(motor.id, value)
-                    self.io.get(motor.id, request_name)
                 else:
                     print 'REQUEST_NAME', value
                     raise NotImplementedError

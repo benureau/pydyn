@@ -93,7 +93,7 @@ class DynamixelMotor(object):
         return self.mmem.mode
 
     @mode.setter
-    def mode(self):
+    def mode(self, val):
         limits.checkoneof('mode', ['wheel', 'joint'], val)
         self.request_lock.acquire()
         self.requests['MODE'] = val
