@@ -82,7 +82,7 @@ class DynamixelIO:
 
         self._serial = serial.Serial(port, baudrate, timeout=timeout)
         self.__open_ports.append(port)
-        self.flush_serial_communication()
+        self.flush()
 
         self.blacklisted_alarms = blacklisted_alarms
 
@@ -109,7 +109,7 @@ class DynamixelIO:
                                                                 self._serial.timeout)
 
 
-    def flush_serial_communication(self):
+    def flush(self):
         """
             Flush the serial communication (both input and output).
 

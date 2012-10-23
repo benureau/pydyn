@@ -152,7 +152,7 @@ class DynamixelController(threading.Thread):
             for m in self.motors:
                 try:
                     try:
-                        self.io.get_position_speed_load(m.id)
+                        self.io.get(m.id, 'PRESENT_POS_SPEED_LOAD')
                     except ValueError as ve:
                         print 'warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0])
 

@@ -177,8 +177,8 @@ def deg_2raw(value, mmem):
     return int((value / max_deg) * max_pos)
 
 def safedeg_2raw(value, mmem):
-    min_angle = raw2_deg(mmem[protocol.DXL_CW_ANGLE_LIMIT])
-    max_angle = raw2_deg(mmem[protocol.DXL_CCW_ANGLE_LIMIT])
+    min_angle = raw2_deg(mmem[protocol.DXL_CW_ANGLE_LIMIT], mmem)
+    max_angle = raw2_deg(mmem[protocol.DXL_CCW_ANGLE_LIMIT], mmem)
     limits.checkbounds('safe position', min_angle, max_angle, value)
     return deg_2raw(value, mmem)
 
@@ -229,15 +229,15 @@ def movingdps_2raw(value, mmem):
 
 def raw2_moving_speed(value, mmem):
     if mmem.mode == 'wheel' and mmem.modelclass in ('RX', 'AX'):
-        return conv.raw2_torquespeed(raw)
+        return raw2_torquespeed(value)
     else:
-        return conv.raw2_movingdps(raw, mmem.modelclass)
+        return raw2_movingdps(value, mmem)
 
 def moving_speed_2raw(value, mmem):
     if mmem.mode == 'wheel' and mmem.modelclass in ('RX', 'AX'):
-        return conv.torquespeed_2raw(dps)
+        return torquespeed_2raw(value)
     else:
-        return conv.movingdps_2raw(dps, mmem.modelclass)
+        return movingdps_2raw(value, mmem)
 
 def raw2_cwccwdps(value, mmem):
     """
@@ -253,7 +253,7 @@ def raw2_cwccwdps(value, mmem):
         """
     limits.checkbounds('cw/ccw speed raw', 0, 2047, value)
     direction = ((value >> 10) * 2) - 1
-    speed = raw2_positivedps(value % 1024, mmem.modelclass)
+    speed = raw2_moving_speed(value % 1024, mmem)
 
     return direction * speed
 

@@ -479,7 +479,7 @@ class DynamixelMotor(object):
 
     @property
     def moving_speed(self):
-        return self.raw2_moving_speed(self.moving_speed_raw)
+        return self.raw2_moving_speed(self.moving_speed_raw, self.mmem)
 
     @property
     def moving_speed_raw(self):
@@ -487,7 +487,7 @@ class DynamixelMotor(object):
 
     @moving_speed.setter
     def moving_speed(self, val):
-        self.moving_speed_raw = self.moving_speed_2raw(val)
+        self.moving_speed_raw = self.moving_speed_2raw(val, self.mmem)
 
     @moving_speed_raw.setter
     def moving_speed_raw(self, val):
@@ -504,7 +504,7 @@ class DynamixelMotor(object):
 
     @property
     def torque_limit(self):
-        return self.raw2_torque_limit(self.torque_limit_raw)
+        return self.raw2_torque_limit(self.torque_limit_raw, self.mmem)
 
     @property
     def torque_limit_raw(self):
@@ -512,7 +512,7 @@ class DynamixelMotor(object):
 
     @torque_limit.setter
     def torque_limit(self, val):
-        self.torque_limit_raw = conv.torque_limit_2raw(val, self.modelclass)
+        self.torque_limit_raw = conv.torque_limit_2raw(val, self.mmem)
 
     @torque_limit_raw.setter
     def torque_limit_raw(self, val):
@@ -526,7 +526,7 @@ class DynamixelMotor(object):
 
     @property
     def present_position(self):
-        return conv.raw2_present_position(self.present_position_raw, self.modelclass)
+        return conv.raw2_present_position(self.present_position_raw, self.mmem)
 
     @property
     def present_position_raw(self):
@@ -534,7 +534,7 @@ class DynamixelMotor(object):
 
     @property
     def present_speed(self):
-        return conv.raw2_present_speed(self.present_speed_raw, self.modelclass)
+        return conv.raw2_present_speed(self.present_speed_raw, self.mmem)
 
     @property
     def present_speed_raw(self):
