@@ -93,7 +93,7 @@ class DynamixelMotor(object):
         return self.mmem.mode
 
     @mode.setter
-    def mode(self):
+    def mode(self, val):
         limits.checkoneof('mode', ['wheel', 'joint'], val)
         self.request_lock.acquire()
         self.requests['MODE'] = val
@@ -242,7 +242,7 @@ class DynamixelMotor(object):
 
     @property
     def highest_limit_temperature(self):
-        return conv.raw2_hightest_limit_voltage(self.highest_limit_temperature_raw)
+        return conv.raw2_highest_limit_temperature(self.highest_limit_temperature_raw)
 
     @property
     def highest_limit_temperature_raw(self):
@@ -250,7 +250,7 @@ class DynamixelMotor(object):
 
     @highest_limit_temperature.setter
     def highest_limit_temperature(self, val):
-        self.highest_limit_temperature_raw = conv.hightest_limit_voltage_2raw(val)
+        self.highest_limit_temperature_raw = conv.hightest_limit_temperature_2raw(val)
 
     @highest_limit_temperature_raw.setter
     def highest_limit_temperature_raw(self, val):
@@ -282,7 +282,7 @@ class DynamixelMotor(object):
 
     @property
     def highest_limit_voltage(self):
-        return conv.raw2_hightest_limit_voltage(self.highest_limit_voltage_raw)
+        return conv.raw2_highest_limit_voltage(self.highest_limit_voltage_raw)
 
     @property
     def highest_limit_voltage_raw(self):
@@ -479,7 +479,7 @@ class DynamixelMotor(object):
 
     @property
     def moving_speed(self):
-        return self.raw2_moving_speed(self.moving_speed_raw, self.mmem)
+        return conv.raw2_moving_speed(self.moving_speed_raw, self.mmem)
 
     @property
     def moving_speed_raw(self):
@@ -487,7 +487,7 @@ class DynamixelMotor(object):
 
     @moving_speed.setter
     def moving_speed(self, val):
-        self.moving_speed_raw = self.moving_speed_2raw(val, self.mmem)
+        self.moving_speed_raw = conv.moving_speed_2raw(val, self.mmem)
 
     @moving_speed_raw.setter
     def moving_speed_raw(self, val):
@@ -757,6 +757,7 @@ class AXRXEXMotor(DynamixelMotor):
     # TODO compliance slopes
 
     # MARK Printing EEPROM, RAM
+    # TODO move to Motor
 
     def _mem_desc(self, addr, desc):
         return ('{}{:2d}{}'.format(color.cyan, addr, color.end),

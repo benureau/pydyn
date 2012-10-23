@@ -227,13 +227,13 @@ def movingdps_2raw(value, mmem):
 
 def raw2_moving_speed(value, mmem):
     if mmem.mode == 'wheel' and mmem.modelclass in ('RX', 'AX'):
-        return raw2_torquespeed(value)
+        return raw2_present_load(value)
     else:
         return raw2_movingdps(value, mmem)
 
 def moving_speed_2raw(value, mmem):
     if mmem.mode == 'wheel' and mmem.modelclass in ('RX', 'AX'):
-        return torquespeed_2raw(value)
+        return present_load_2raw(value)
     else:
         return movingdps_2raw(value, mmem)
 
