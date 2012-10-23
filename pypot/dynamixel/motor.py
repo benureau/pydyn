@@ -504,7 +504,7 @@ class DynamixelMotor(object):
 
     @property
     def torque_limit(self):
-        return self.raw2_torque_limit(self.torque_limit_raw, self.mmem)
+        return conv.raw2_torque_limit(self.torque_limit_raw, self.mmem)
 
     @property
     def torque_limit_raw(self):
@@ -682,6 +682,57 @@ class DynamixelMotor(object):
         self.request_lock.acquire()
         self.requests['PUNCH'] = int(val)
         self.request_lock.release()
+        
+        
+    # MARK Printing EEPROM, RAM
+    # TODO move to Motor
+    
+    def _mem_desc(self, addr, desc):
+        return ('{}{:2d}{}'.format(color.cyan, addr, color.end),
+                '{}{:4d}  {}{}{}'.format(color.purple, self.mmem[addr], color.grey, desc, color.end))
+        
+    def eeprom_desc(self):
+        s = ['EEPROM', 
+             '{} Model                 : {}'.format(*self._mem_desc(0,  self.model)),
+             '{} Firware               : {}'.format(*self._mem_desc(2,  '')),
+             '{} ID                    : {}'.format(*self._mem_desc(3,  '')),
+             '{} Baud Rate             : {}'.format(*self._mem_desc(4,  '{} bauds'.format(self.baudrate))),
+             '{} Return Delay Time     : {}'.format(*self._mem_desc(5,  '{} usec'.format(self.return_delay_time))),
+             '{} CW Angle Limit        : {}'.format(*self._mem_desc(6,  '{:6.2f} degrees'.format(self.cw_angle_limit))),
+             '{} CCW Angle Limit       : {}'.format(*self._mem_desc(8,  '{:6.2f} degrees, {} mode'.format(self.ccw_angle_limit, self.mode))),
+             '{} Max Limit Temp        : {}'.format(*self._mem_desc(11, '{} celsius'.format(self.highest_limit_temperature))),
+             '{} Min Limit Voltage     : {}'.format(*self._mem_desc(12, '{:4.1f} V'.format(self.lowest_limit_voltage))),
+             '{} Max Limit Voltage     : {}'.format(*self._mem_desc(13, '{:4.1f} V'.format(self.highest_limit_voltage))),
+             '{} Max Torque            : {}'.format(*self._mem_desc(14, '{:.1f} % of max'.format(self.max_torque))),
+             '{} Status Return Level   : {}'.format(*self._mem_desc(16, '')),
+             #'{} Alarm LED             : {}' % column(17, aled),
+             #'{} Alarm Shutdown        : {}' % column(18, ashutdown),
+             '\n'+color.end]
+        s = '\n'.join(s)
+        return s
+
+    def ram_desc(self):
+        s  = ['RAM', 
+              '{} Torque Enable         : {}'.format(*self._mem_desc(24, self.torque_enable)),
+              '{} LED                   : {}'.format(*self._mem_desc(25, self.led)),
+             ]
+        #s += self._pid_ram_desc() # PID or Margin/Slopes
+        s += [
+              '{} Goal Position         : {}'.format(*self._mem_desc(30,  '{:6.2f} degrees'.format(self.goal_position))),
+              '{} Moving Speed          : {}'.format(*self._mem_desc(32,  '{:6.1f} dps'.format(self.moving_speed))),
+              '{} Torque Limit          : {}'.format(*self._mem_desc(34,  '{:6.1f} % of max'.format(self.torque_limit))),
+              '{} Present Position      : {}'.format(*self._mem_desc(36,  '{:6.2f} degree'.format(self.present_position))),
+              '{} Present Speed         : {}'.format(*self._mem_desc(38,  '{:6.1f} dps'.format(self.present_speed))),
+              '{} Present Load          : {}'.format(*self._mem_desc(40,  '{:6.1f} % of max {}'.format(abs(self.present_load), ['ccw', 'cw'][self.present_load > 0]))),
+              '{} Present Voltage       : {}'.format(*self._mem_desc(42,  '{} V'.format(self.present_voltage))),
+              '{} Present Temperature   : {}'.format(*self._mem_desc(43,  '{} celsius'.format(self.present_temperature))),
+              '{} Registered            : {}'.format(*self._mem_desc(44,  self.registered)),
+              '{} Moving                : {}'.format(*self._mem_desc(46,  self.moving)),
+              '{} Lock                  : {}'.format(*self._mem_desc(46,  self.lock)),
+              '{} Punch                 : {}'.format(*self._mem_desc(46,  self.punch)),
+             '\n'+color.end]
+        s = '\n'.join(s)
+        return s
 
 
 class AXRXEXMotor(DynamixelMotor):
@@ -755,34 +806,6 @@ class AXRXEXMotor(DynamixelMotor):
 
 
     # TODO compliance slopes
-
-    # MARK Printing EEPROM, RAM
-    # TODO move to Motor
-
-    def _mem_desc(self, addr, desc):
-        return ('{}{:2d}{}'.format(color.cyan, addr, color.end),
-                '{}{:4d}  {}{}{}'.format(color.purple, self.mmem[addr], color.grey, desc, color.end))
-        
-    def eeprom_desc(self):
-        s = ['EEPROM', 
-             '{} Model                 : {}'.format(*self._mem_desc(0, self.model)),
-             '{} Firware               : {}'.format(*self._mem_desc(2, '')),
-             '{} ID                    : {}'.format(*self._mem_desc(3, '')),
-             '{} Baud Rate             : {}'.format(*self._mem_desc(4, '{} bauds'.format(self.baudrate))),
-             '{} Return Delay Time     : {}'.format(*self._mem_desc(5, '{} usec'.format(self.return_delay_time))),
-             '{} CW Angle Limit        : {}'.format(*self._mem_desc(6, '{:6.2f} degrees'.format(self.cw_angle_limit))),
-             '{} CCW Angle Limit       : {}'.format(*self._mem_desc(8, '{:6.2f} degrees, {} mode'.format(self.ccw_angle_limit, self.mode))),
-             '{} Max Limit Temp        : {}'.format(*self._mem_desc(11, '{} celsius'.format(self.highest_limit_temperature))),
-             '{} Min Limit Voltage     : {}'.format(*self._mem_desc(12, '{:4.1f} V'.format(self.lowest_limit_voltage))),
-             '{} Max Limit Voltage     : {}'.format(*self._mem_desc(13, '{:4.1f} V'.format(self.highest_limit_voltage))),
-             '{} Max Torque            : {}'.format(*self._mem_desc(14, '{:.1f} % of max'.format(self.max_torque))),
-             '{} Status Return Level   : {}'.format(*self._mem_desc(16, '')),
-             #'{} Alarm LED             : {}' % column(17, aled),
-             #'{} Alarm Shutdown        : {}' % column(18, ashutdown),
-             '\n'+color.end]
-        s = '\n'.join(s)
-        return s
-
 
 
 class AXMotor(AXRXEXMotor):

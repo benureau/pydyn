@@ -128,24 +128,24 @@ class DynamixelMemory(object):
 
         """Return the ram data, with two bytes data properly computed"""
         assert len(rram) >= 26
-        self._memory_data[24+ 0] = rram[0],
-        self._memory_data[24+ 1] = rram[1],
-        self._memory_data[24+ 2] = rram[2],
-        self._memory_data[24+ 3] = rram[3],
-        self._memory_data[24+ 4] = rram[4],
-        self._memory_data[24+ 5] = rram[5],
+        self._memory_data[24+ 0] = rram[0]
+        self._memory_data[24+ 1] = rram[1]
+        self._memory_data[24+ 2] = rram[2]
+        self._memory_data[24+ 3] = rram[3]
+        self._memory_data[24+ 4] = rram[4]
+        self._memory_data[24+ 5] = rram[5]
         self._memory_data[24+ 6] = rram[6]  + (rram[7]  << 8)
         self._memory_data[24+ 8] = rram[8]  + (rram[9]  << 8)
         self._memory_data[24+10] = rram[10] + (rram[11] << 8)
         self._memory_data[24+12] = rram[12] + (rram[13] << 8)
         self._memory_data[24+14] = rram[14] + (rram[15] << 8)
         self._memory_data[24+16] = rram[16] + (rram[17] << 8)
-        self._memory_data[24+18] = rram[18],
-        self._memory_data[24+19] = rram[19],
-        self._memory_data[24+20] = rram[20],
-        self._memory_data[24+21] = rram[21], # undocumented
-        self._memory_data[24+22] = rram[22],
-        self._memory_data[24+23] = rram[23],
+        self._memory_data[24+18] = rram[18]
+        self._memory_data[24+19] = rram[19]
+        self._memory_data[24+20] = rram[20]
+        self._memory_data[24+21] = rram[21] # undocumented
+        self._memory_data[24+22] = rram[22]
+        self._memory_data[24+23] = rram[23]
         self._memory_data[24+24] = rram[24] + (rram[25] << 8)
 
         if len(rram) >= 28:
