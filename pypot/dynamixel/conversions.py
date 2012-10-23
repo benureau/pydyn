@@ -145,12 +145,12 @@ raw2_present_voltage = raw2_voltage
 def raw2_torque(value, mmem = None):
     """Return the voltage in volt"""
     limits.checkbounds('torque', 0, 1023, value)
-    return 100*value/1023.0
+    return 100.0*value/1023.0
 
 def torque_2raw(value, mmem = None):
     """Return the voltage in volt"""
     limits.checkbounds('torque raw', 0, 100, value)
-    return int(value/100*1023)
+    return int(value/100.0*1023)
 
 max_torque_2raw = torque_2raw
 raw2_max_torque = raw2_torque
