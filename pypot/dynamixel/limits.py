@@ -17,7 +17,7 @@ def checkbounds_mode(name, lower, upper, val, mode):
 def checkoneof(name, collection, val):
     if not val in collection:
         raise ValueError('{} should be in {} but is {}'.format(name, collection, val))
-        
+
 
 position_range = {
     'EX' : (4095.0, 250.92),

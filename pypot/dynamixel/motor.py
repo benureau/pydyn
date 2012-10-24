@@ -491,6 +491,7 @@ class DynamixelMotor(object):
 
     @moving_speed_raw.setter
     def moving_speed_raw(self, val):
+        print val
         if self.mode == 'wheel':
             limits.checkbounds_mode('moving_speed', 0, 2047, int(val), self.mode)
         else:

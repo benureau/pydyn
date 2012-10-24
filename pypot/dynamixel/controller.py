@@ -34,6 +34,7 @@ class DynamixelController(threading.Thread):
 
         self.freq = freq
         self.fps_history = deque(maxlen = 3*freq)
+        self.framecount = 0
 
         if connection_type not in CONTROLLER_TYPE:
             raise ValueError('Unknown controller type: %s' % (connection_type))
@@ -45,9 +46,15 @@ class DynamixelController(threading.Thread):
         self._pinglock = threading.Lock() # when discovering motors
         self._ctrllock = threading.Lock() # when running as usual
 
-    def close(self):
-        self.io.close()
+    def wait(self, loops):
+        frame = self.framecount
+        while(frame + loops >= self.framecount):
+            time.sleep(0.001)
 
+    def close(self, immediately = False):
+        if not immediately:
+            self.wait(3)
+        self.io.close()
 
     # freq and period property, to ensure they remain coherent
 
@@ -279,6 +286,7 @@ class DynamixelController(threading.Thread):
 
             end = time.time()
 
+            self.framecount += 1
             self.fps_history.append(end)
             dt = self._period - (end - start)
             if dt > 0:

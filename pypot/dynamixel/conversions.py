@@ -8,7 +8,7 @@ import alarms
 
 def raw2_value(name, value, mmem = None):
     return globals()['raw2_' + name.lower()](int(value), mmem)
-    
+
 def value_2raw(name, value, mmem = None):
     return globals()[name.lower()+'_2raw'](value, mmem)
 
@@ -198,7 +198,7 @@ ccw_angle_limit_2raw  = deg_2raw
 
 
 # MARK Speed
-        
+
 speedratio = {
     'AX': 6*0.111,
     'RX': 6*0.111,
@@ -237,6 +237,8 @@ def moving_speed_2raw(value, mmem):
     else:
         return movingdps_2raw(value, mmem)
 
+
+# TODO : correct present speed for AX/RX
 def raw2_cwccwdps(value, mmem):
     """
         Raw to degree per second for CW/CCW speed
@@ -443,7 +445,7 @@ def raw2_current(value, mmem = None):
     """in A"""
     limits.checkbounds('current raw', 0, 4095, value)
     return 0.0045 * (value - 2048)
-    
+
 def sensed_current_2raw(value, mmem = None):
     """in A - should not be useful (since you can't write sensed current)"""
     limits.checkbounds('sensed current', -5.12, 5.11, value)

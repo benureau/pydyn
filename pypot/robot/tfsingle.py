@@ -34,7 +34,6 @@ class AutoGoto(timedf.TimedFunction):
         return self.target
 
     def has_finished(self, t):
-        print self.motor.id, self.motor.position - self.target
         if abs(self.motor.position - self.target) <= self.margin:
             return True
         return False
