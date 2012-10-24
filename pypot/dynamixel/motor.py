@@ -766,7 +766,7 @@ class AXRXEXMotor(DynamixelMotor):
 
     @cw_compliance_margin_raw.setter
     def cw_compliance_margin_raw(self, val):
-        limits.checkbounds('cw compliance margin', 0, 255, int(val))
+        limits.checkbounds('cw compliance margin raw', 0, 255, int(val))
         self.request_lock.acquire()
         self.requests['CW_COMPLIANCE_MARGIN'] = int(val)
         self.request_lock.release()
@@ -786,7 +786,7 @@ class AXRXEXMotor(DynamixelMotor):
 
     @ccw_compliance_margin_raw.setter
     def ccw_compliance_margin_raw(self, val):
-        limits.checkbounds('ccw compliance margin', 0, 255, int(val))
+        limits.checkbounds('ccw compliance margin raw', 0, 255, int(val))
         self.request_lock.acquire()
         self.requests['CCW_COMPLIANCE_MARGIN'] = int(val)
         self.request_lock.release()
@@ -814,7 +814,68 @@ class AXRXEXMotor(DynamixelMotor):
         self.request_lock.release()
 
 
-    # TODO compliance slopes
+    # MARK compliance slopes
+
+    @property
+    def cw_compliance_slope(self):
+        return conv.raw2_cw_compliance_slope(self.mmem[protocol.DXL_CW_COMPLIANCE_slope], self.mmem)
+    
+    @property
+    def cw_compliance_slope_raw(self):
+        return self.mmem[protocol.DXL_CW_COMPLIANCE_SLOPE]
+    
+    @cw_compliance_slope.setter
+    def cw_compliance_slope(self, val):
+        self.cw_compliance_slope_raw = conv.cw_compliance_slope_2raw(val, self.mmem)
+    
+    @ccw_compliance_slope_raw.setter
+    def cw_compliance_slope_raw(self, val):
+        limits.checkbounds('cw compliance slope raw', 0, 254, int(val))
+        self.request_lock.acquire()
+        self.requests['CW_COMPLIANCE_SLOPE'] = int(val)
+        self.request_lock.release()
+    
+
+    @property
+    def ccw_compliance_slope(self):
+        return conv.raw2_ccw_compliance_slope(self.mmem[protocol.DXL_CCW_COMPLIANCE_slope], self.mmem)
+    
+    @property
+    def ccw_compliance_slope_raw(self):
+        return self.mmem[protocol.DXL_CCW_COMPLIANCE_SLOPE]
+    
+    @ccw_compliance_slope.setter
+    def ccw_compliance_slope(self, val):
+        self.ccw_compliance_slope_raw = conv.ccw_compliance_slope_2raw(val, self.mmem)
+    
+    @ccw_compliance_slope_raw.setter
+    def ccw_compliance_slope_raw(self, val):
+        limits.checkbounds('ccw compliance slope raw', 0, 254, int(val))
+        self.request_lock.acquire()
+        self.requests['CCW_COMPLIANCE_SLOPE'] = int(val)
+        self.request_lock.release()
+
+
+    @property
+    def compliance_slopes(self):
+        return self.cw_compliance_slope, self.ccw_compliance_slope
+    
+    @property
+    def compliance_slopes_raw(self):
+        return self.cw_compliance_slope_raw, self.ccw_compliance_slope_raw
+    
+    # here we can do only one write
+    @compliance_slopes.setter
+    def compliance_slopes(self, val):
+        self.compliance_slopes_raw = val
+    
+    @compliance_slopes_raw.setter
+    def compliance_slope_raw(self, val):
+        limits.checkbounds('ccw compliance slope', 0, 255, int(val[0]))
+        limits.checkbounds('ccw compliance slope', 0, 255, int(val[1]))
+        self.request_lock.acquire()
+        self.requests['COMPLIANCE_slopeS'] = int(val[0]), int(val[1])
+        self.request_lock.release()
 
 
 class AXMotor(AXRXEXMotor):
