@@ -1,4 +1,5 @@
 import protocol
+import memsave
 
 class DynamixelUnsupportedMotorError(Exception):
     def __init__(self, motor_id, model_number):
@@ -31,7 +32,7 @@ class DynamixelMemory(object):
 
         """
 
-    def __init__(self, raw_eeprom, raw_ram):
+    def __init__(self, raw_eeprom, raw_ram, save = False):
         """
             :param raw_eeprom  raw eeprom data, ie a list of 19 or 24 integers
                                each between 0 and 255.
@@ -43,8 +44,12 @@ class DynamixelMemory(object):
 
         """
         self._memory_data = [None]*74
+        self.save = save
+        self.history = memsave.MemSave(74)
+
         self._process_raw_eeprom(raw_eeprom)
         self._process_raw_ram(raw_ram)
+
 
         self.update()
 
@@ -72,34 +77,34 @@ class DynamixelMemory(object):
             return 68, 6
         if self.modelclass == 'EX':
             return 56, 2
-            
+
     def process_extra(self, rex):
         if self.modelclass == 'MX':
-            self._memory_data[68+0] = rex[0] + (rex[1] << 8)
-            self._memory_data[68+2] = rex[2]
-            self._memory_data[68+3] = rex[3] + (rex[4] << 8)
-            self._memory_data[68+5] = rex[5]
+            self[68+0] = rex[0] + (rex[1] << 8)
+            self[68+2] = rex[2]
+            self[68+3] = rex[3] + (rex[4] << 8)
+            self[68+5] = rex[5]
         if self.modelclass == 'EX':
-            self._memory_data[56+0] = rex[0] + (rex[1] << 8)
+            self[56+0] = rex[0] + (rex[1] << 8)
 
     def _process_raw_eeprom(self, rep):
         """Return the eeprom data, with two bytes data properly computed"""
         assert len(rep) >= 19
-        self._memory_data[0]  = rep[0] + (rep[1] << 8)
-        self._memory_data[2]  = rep[2]
-        self._memory_data[3]  = rep[3]
-        self._memory_data[4]  = rep[4]
-        self._memory_data[5]  = rep[5]
-        self._memory_data[6]  = rep[6] + (rep[7] << 8)
-        self._memory_data[8]  = rep[8] + (rep[9] << 8)
-        self._memory_data[10] = rep[10]  # undocumented
-        self._memory_data[11] = rep[11]
-        self._memory_data[12] = rep[12]
-        self._memory_data[13] = rep[13]
-        self._memory_data[14] = rep[14] + (rep[15] << 8)
-        self._memory_data[16] = rep[16]
-        self._memory_data[17] = rep[17]
-        self._memory_data[18] = rep[18]
+        self[0]  = rep[0] + (rep[1] << 8)
+        self[2]  = rep[2]
+        self[3]  = rep[3]
+        self[4]  = rep[4]
+        self[5]  = rep[5]
+        self[6]  = rep[6] + (rep[7] << 8)
+        self[8]  = rep[8] + (rep[9] << 8)
+        self[10] = rep[10]  # undocumented
+        self[11] = rep[11]
+        self[12] = rep[12]
+        self[13] = rep[13]
+        self[14] = rep[14] + (rep[15] << 8)
+        self[16] = rep[16]
+        self[17] = rep[17]
+        self[18] = rep[18]
 
         if len(rep) >= 24:
             self._memory_data[19] = rep[19]  # undocumented
@@ -128,25 +133,25 @@ class DynamixelMemory(object):
 
         """Return the ram data, with two bytes data properly computed"""
         assert len(rram) >= 26
-        self._memory_data[24+ 0] = rram[0]
-        self._memory_data[24+ 1] = rram[1]
-        self._memory_data[24+ 2] = rram[2]
-        self._memory_data[24+ 3] = rram[3]
-        self._memory_data[24+ 4] = rram[4]
-        self._memory_data[24+ 5] = rram[5]
-        self._memory_data[24+ 6] = rram[6]  + (rram[7]  << 8)
-        self._memory_data[24+ 8] = rram[8]  + (rram[9]  << 8)
-        self._memory_data[24+10] = rram[10] + (rram[11] << 8)
-        self._memory_data[24+12] = rram[12] + (rram[13] << 8)
-        self._memory_data[24+14] = rram[14] + (rram[15] << 8)
-        self._memory_data[24+16] = rram[16] + (rram[17] << 8)
-        self._memory_data[24+18] = rram[18]
-        self._memory_data[24+19] = rram[19]
-        self._memory_data[24+20] = rram[20]
-        self._memory_data[24+21] = rram[21] # undocumented
-        self._memory_data[24+22] = rram[22]
-        self._memory_data[24+23] = rram[23]
-        self._memory_data[24+24] = rram[24] + (rram[25] << 8)
+        self[24+ 0] = rram[0]
+        self[24+ 1] = rram[1]
+        self[24+ 2] = rram[2]
+        self[24+ 3] = rram[3]
+        self[24+ 4] = rram[4]
+        self[24+ 5] = rram[5]
+        self[24+ 6] = rram[6]  + (rram[7]  << 8)
+        self[24+ 8] = rram[8]  + (rram[9]  << 8)
+        self[24+10] = rram[10] + (rram[11] << 8)
+        self[24+12] = rram[12] + (rram[13] << 8)
+        self[24+14] = rram[14] + (rram[15] << 8)
+        self[24+16] = rram[16] + (rram[17] << 8)
+        self[24+18] = rram[18]
+        self[24+19] = rram[19]
+        self[24+20] = rram[20]
+        self[24+21] = rram[21] # undocumented
+        self[24+22] = rram[22]
+        self[24+23] = rram[23]
+        self[24+24] = rram[24] + (rram[25] << 8)
 
         if len(rram) >= 28:
             self._memory_data[24+26] = rram[26] + (rram[27] << 8)
@@ -164,13 +169,17 @@ class DynamixelMemory(object):
         """This methods accept single integers and iterables, in which case
             there value are distributed to address consecutive of index.
         """
-        if hasattr(val, '__iter__'): 
+        if hasattr(val, '__iter__'):
             addr = index
             for val_i in val:
                 self._memory_data[addr] = int(val_i)
+                if self.save:
+                    self.history[addr] = int(val_i)
                 addr = self.next_addr(addr)
         else:
             self._memory_data[index] = int(val)
+            if self.save:
+                self.history[addr] = int(val_i)
 
     def long_desc(self):
         s = '\n'.join('{:2i}: {:4i}'.format(address, value)

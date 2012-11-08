@@ -47,9 +47,10 @@ class DynamixelController(threading.Thread):
         self._ctrllock = threading.Lock() # when running as usual
 
     def wait(self, loops):
-        frame = self.framecount
-        while(frame + loops >= self.framecount):
-            time.sleep(0.001)
+        if self.is_alive():
+            frame = self.framecount
+            while(frame + loops >= self.framecount):
+                time.sleep(0.001)
 
     def close(self, immediately = False):
         if not immediately:
@@ -99,7 +100,11 @@ class DynamixelController(threading.Thread):
 
     def load_motors(self, motor_ids):
         #TODO: check for double motors
-        return [self.create_motor(motor_id) for motor_id in motor_ids]
+        for motor_id in motor_ids:
+            mmem = self.io.create(motor_id)
+            m = DynamixelController.motormodel[mmem.model](mmem)
+            self.motors.append(m)
+            
 
     motormodel = {
         'AX-12'   : motor.AXMotor,
@@ -117,36 +122,6 @@ class DynamixelController(threading.Thread):
 
         'EX-106+' : motor.EXMotor,
     }
-
-    def create_motor(self, motor_id):
-        """Create a motor instance and load it with EEPROM and RAM data."""
-        # reading eeprom, ram
-        raw_eeprom = self.read_eeprom(motor_id)
-        raw_ram    = self.read_ram(motor_id)
-        mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
-
-        # reading extra ram (if necessary)
-        extra_addr = mmem.extra_addr()
-        if extra_addr is not None:
-            addr, size = extra_addr
-            raw_extra = self.io.read(motor_id, addr, size)
-            mem.process_extra(raw_extra)
-
-        # registering the motor memory to the io
-        self.io.motormems[mmem.id] = mmem
-
-        # creating the motors
-        m = DynamixelController.motormodel[mmem.model](mmem)
-        self.motors.append(m)
-
-        return m
-
-    def read_eeprom(self, motor_id):
-        return self.io.read(motor_id, 0, 24)
-
-    def read_ram(self, motor_id):
-        return self.io.read(motor_id, 24, 26)
-
 
     # MARK Handling Requests and Updating
 

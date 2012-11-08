@@ -168,30 +168,34 @@ class DynamixelIO:
         status_packet = self._send_packet(ipacket)
         return status_packet.parameters
 
-    def create(self, ids, cache_ram = True):
+    
+    def create(self, motor_id):
         """
             Load the motor memory.
     
             :param list ids, the ids to create.
             :return: instances of DynamixelMemory
     
-            .. warning:: we assume ids have been checked by a previous ping.
+            .. warning:: we assume the motor id has been checked by a previous ping.
             .. note:: if a memory already exist, it is recreated anyway.
             """
-        created = []
-        for motor_id in ids:
-            raw_eeprom = self.read(motor_id, 0, 24)
-            m = memory.DynamixelMemory(raw_eeprom)
-            if cache_ram:
-                raw_ram = self.read(motor_id, 24, 26)
-                if m.modelclass == 'MX':
-                    raw_ram += self.read(motor_id, 68, 2)
-                m.cache_ram(raw_ram)
-            created.append(m)
-            self.motormems[motor_id] = m
-    
-        return created
 
+        # reading eeprom, ram
+        raw_eeprom = self.read(motor_id, 0, 24)
+        raw_ram    = self.read(motor_id, 24, 26)
+        mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
+        
+        # reading extra ram (if necessary)
+        extra_addr = mmem.extra_addr()
+        if extra_addr is not None:
+            addr, size = extra_addr
+            raw_extra = self.read(motor_id, addr, size)
+            mem.process_extra(raw_extra)
+        
+        # registering the motor memory to the io
+        self.motormems[mmem.id] = mmem
+
+        return mmem
 
     # MARK Parameter based read/write
     
