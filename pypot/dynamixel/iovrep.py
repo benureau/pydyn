@@ -104,8 +104,8 @@ class DynamixelIOVRep(object):
         self.port = port
         self.ip   = ip
         self.__open_ports.append(port)
-        self.__sim.append(self.sim)
-        
+        self.__sims.append(self.sim)
+
         if self.sim.connectTo(self.ip, self.port) == -1:
             raise IOError('Connection to VREP instance {}:{} unsuccessful', self.ip, self.port)
 
@@ -247,7 +247,7 @@ class DynamixelIOVRep(object):
             Register all continuously called functions.
         """
         handle = [self.id2handle[motor_id]]
-        
+
         self.sim.registerBackgroundFunction("simGetJointPosition", handle)
         self.sim.registerBackgroundFunction("simSetJointTargetPosition", handle)
         self.sim.registerBackgroundFunction("simSetJointForce", handle)

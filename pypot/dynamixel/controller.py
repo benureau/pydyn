@@ -76,7 +76,7 @@ class DynamixelController(threading.Thread):
         self._freq = 1.0/val
         self._period = val
 
-    # pausing resuming the controller (and eventually the simulation)
+    # pausing resuming the controller
 
     def pause(self):
         self._ctrllock.acquire()
@@ -93,12 +93,6 @@ class DynamixelController(threading.Thread):
             self.io.sim.simStopSimulation()
             self.io.sim.simStartSimulation()
         self._ctrllock.release()
-
-    def start(self):
-        threading.Thread.start(self)
-        if hasattr(self.io, 'sim'):
-            self.io.sim.simStartSimulation()
-
 
     # MARK Motor discovery and creation
 

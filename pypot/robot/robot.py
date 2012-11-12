@@ -8,12 +8,14 @@ from ..import dynamixel
 class Robot(object):
     """A simple robot with only one controller"""
 
-    def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03):
+    def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03, start = True):
         self._ctrl = controller
         if self._ctrl is None:
             self._ctrl = dynamixel.create_controller(verbose=True,
                                                      motor_range =  motor_range,
-                                                     timeout = timeout)
+                                                     timeout = timeout,
+                                                     start = start)
+                                                     
 
         self.m_by_id = {}
         self.motors  = []
