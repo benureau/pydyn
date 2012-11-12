@@ -82,6 +82,7 @@ class DynamixelIOVRep(object):
         """
 
     __open_ports = []
+    __sims       = []
 
     def __init__(self, port, ip = '127.0.0.1', **kwargs):
         """
@@ -103,8 +104,9 @@ class DynamixelIOVRep(object):
         self.port = port
         self.ip   = ip
         self.__open_ports.append(port)
-#        if self.sim.connectTo(self.ip, self.port) == -1:
-        if self.sim.connect(self.port) == -1:
+        self.__sim.append(self.sim)
+        
+        if self.sim.connectTo(self.ip, self.port) == -1:
             raise IOError('Connection to VREP instance {}:{} unsuccessful', self.ip, self.port)
 
         # stopping simulation if it is on

@@ -4,7 +4,7 @@ import time
 
 import pypot
 import pypot.robot
-pypot.dynamixel.enable_vrep()
+pypot.enable_vrep()
 
 robot = pypot.robot.Robot(motor_range = [1, 6])
 

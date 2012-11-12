@@ -27,6 +27,12 @@ class Robot(object):
         """Representation of the stem, with motor id and position"""
         return 'Robot({})'.format(', '.join("M%d:%0.f" % (m.id, m.position) for m in self.motors))
 
+    def get_sim(self):
+        """If vrep_mode is enable, return the simulation instance.
+        Else, raise a AttributeError exception
+        """
+        return self._ctrl.io.sim
+
     # position
 
     @property
