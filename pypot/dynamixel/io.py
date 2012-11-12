@@ -1,12 +1,12 @@
 
 try:
-    from ioserial import DynamixelIOSerial
+    from ioserial import *
     serial_available = True
 except ImportError:
     serial_available = False
 
 try:
-    from iovrep import DynamixelIOVRep
+    from iovrep import *
     vrep_available = True
 except ImportError:
     vrep_available = False
