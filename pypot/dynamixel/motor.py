@@ -16,7 +16,7 @@ class DynamixelMotor(object):
 
         For every variable, there is an alternative raw variable if the unit or value differs (no raw for id, firmware for example). You can use them to access the raw integer value present in the hardware memory register.
 
-        Note that this class should not be instanciated, but only its child (AXMotor, RXMotor, MXMotor), since some methods are not implemented.
+        Note that this class should not be instanciated, but only its child (AXMotor, RXMotor, MXMotor), since some core methods are not implemented.
 
         """
     def __init__(self, memory):
@@ -744,7 +744,11 @@ class DynamixelMotor(object):
         return s
 
 
-class AXRXEXMotor(DynamixelMotor):
+    # MARK Extra motor properties
+
+# Here we don't inherit from DynamixelMotor - we do multiple inheritance (composition)
+# instead that grant us more flexibility
+class ComplianceMarginSlopeExtra(object):
 
     # MARK Compliance margin
 
@@ -878,26 +882,7 @@ class AXRXEXMotor(DynamixelMotor):
         self.request_lock.release()
 
 
-class AXMotor(AXRXEXMotor):
-    pass
-
-class RXMotor(AXRXEXMotor):
-    pass
-
-class EXMotor(AXRXEXMotor):
-
-    @property
-    def sensed_current(self):
-        return self.raw2_sensed_current(self.sensed_current_raw)
-
-    @property
-    def sensed_current_raw(self):
-        return self.mmem[protocol.DXL_SENSED_CURRENT]
-
-
-
-
-class MXMotor(DynamixelMotor):
+class PIDExtra(object):
 
     # MARK PID Gains
 
@@ -984,6 +969,22 @@ class MXMotor(DynamixelMotor):
         self.requests['GAINS'] = (int(val[0]), int(val[1]), int(val[2]))
         self.request_lock.release()
 
+
+
+
+class SensedCurrentExtra(object):
+
+    @property
+    def sensed_current(self):
+        return self.raw2_sensed_current(self.sensed_current_raw)
+
+    @property
+    def sensed_current_raw(self):
+        return self.mmem[protocol.DXL_SENSED_CURRENT]
+
+
+class CurrentExtra(object):
+
     # MARK Current
 
     @property
@@ -1009,7 +1010,7 @@ class MXMotor(DynamixelMotor):
 # Only the MX64 and 106 seems to support current.
 # (although you have to go through the korean doc for the MX64 to know that)
 
-class MX64Motor(MXMotor):
+class TorqueModeExtra(object):
 
     # MARK Torque Control Mode
 
@@ -1073,6 +1074,9 @@ class MX64Motor(MXMotor):
         self.request_lock.release()
 
 
+
+class GoalAccelerationExtra(object):
+
     # MARK Goal Acceleration
 
     @property
@@ -1095,6 +1099,25 @@ class MX64Motor(MXMotor):
         self.request_lock.release()
 
 
-class MX106Motor(MX64Motor):
 
+class AXMotor(DynamixelMotor, ComplianceMarginSlopeExtra):
+    pass
+
+class RXMotor(DynamixelMotor, ComplianceMarginSlopeExtra):
+    pass
+
+class EXMotor(DynamixelMotor, ComplianceMarginSlopeExtra, SensedCurrentExtra):
+    pass
+
+class MXMotor(DynamixelMotor, PIDExtra, CurrentExtra, GoalAccelerationExtra):
+    pass
+
+class MX28Motor(MXMotor):
+    pass
+class MX64Motor(MXMotor):
+    pass
+class MX106Motor(MXMotor):
+    pass
+
+class VXMotor(DynamixelMotor, PIDExtra):
     pass

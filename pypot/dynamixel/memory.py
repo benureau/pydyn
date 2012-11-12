@@ -50,7 +50,6 @@ class DynamixelMemory(object):
         self._process_raw_eeprom(raw_eeprom)
         self._process_raw_ram(raw_ram)
 
-
         self.update()
 
     def update(self):
@@ -61,7 +60,7 @@ class DynamixelMemory(object):
             self.model      = protocol.DXL_MODELS[self._memory_data[protocol.DXL_MODEL_NUMBER]]
             self.modelclass = self.model[:2]
         except KeyError:
-            raise DynamixelUnsupportedMotorError(motor_id, model_number)
+            raise DynamixelUnsupportedMotorError(self.id, self._memory_data[protocol.DXL_MODEL_NUMBER])
 
         self.status_return_level = self._memory_data[protocol.DXL_STATUS_RETURN_LEVEL]
 

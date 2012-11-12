@@ -16,11 +16,11 @@ def value_2raw(name, value, mmem = None):
 # MARK Model Number
 
 def raw2_model_number(value, mmem = None):
-    limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107], value)
+    limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107, 10028, 10064], value)
     return int(value)
 
 def model_number_2raw(value, mmem = None):
-    limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107], value)
+    limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107, 10028, 10064], value)
     return int(value)
 
 
@@ -96,6 +96,7 @@ baudrate_fun = {
     'RX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
     'EX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
     'MX' : (raw2_baudrate_mx,   baudrate_mx_2raw),
+    'VX' : (raw2_baudrate_mx,   baudrate_mx_2raw),
 }
 
 def baud_rate_2raw(value, mmem):
@@ -143,12 +144,11 @@ raw2_present_voltage = raw2_voltage
 # MARK Torque
 
 def raw2_torque(value, mmem = None):
-    """Return the voltage in volt"""
+    """Return the torque in percent"""
     limits.checkbounds('torque', 0, 1023, value)
     return 100.0*value/1023.0
 
 def torque_2raw(value, mmem = None):
-    """Return the voltage in volt"""
     limits.checkbounds('torque raw', 0, 100, value)
     return int(value/100.0*1023)
 
@@ -204,6 +204,15 @@ speedratio = {
     'RX': 6*0.111,
     'EX': 6*0.111,
     'MX': 6*0.11445,
+    'VX': 6*0.11445,
+}
+
+speedrawmax = {
+    'AX': 1023,
+    'RX': 1023,
+    'EX': 1023,
+    'MX': 1023,
+    'VX': 32767,
 }
 
 def raw2_movingdps(value, mmem):
@@ -212,7 +221,7 @@ def raw2_movingdps(value, mmem):
         raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
         (AX and RX)
         """
-    limits.checkbounds('positive speed raw', 0, 1023, value)
+    limits.checkbounds('positive speed raw', 0, speedrawmax[mmem.modelclass], value)
     return value*speedratio[mmem.modelclass]
 
 def movingdps_2raw(value, mmem):
@@ -221,7 +230,7 @@ def movingdps_2raw(value, mmem):
         raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
         (AX and RX)
         """
-    max_speed = 1023*speedratio[mmem.modelclass]
+    max_speed = speedrawmax[mmem.modelclass]*speedratio[mmem.modelclass]
     limits.checkbounds('positive speed', 0, max_speed, value)
     return int(value/speedratio[mmem.modelclass])
 
@@ -251,9 +260,9 @@ def raw2_cwccwdps(value, mmem):
         a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
 
         """
-    limits.checkbounds('cw/ccw speed raw', 0, 2047, value)
+    limits.checkbounds('cw/ccw speed raw', 0, 2*speedrawmax[mmem.modelclass]+1, value)
     direction = ((value >> 10) * 2) - 1
-    speed = raw2_moving_speed(value % 1024, mmem)
+    speed = raw2_moving_speed(value % (speedrawmax[mmem.modelclass]+1), mmem)
 
     return direction * speed
 
@@ -269,11 +278,11 @@ def cwccwdps_2raw(value, mmem):
         a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
 
         """
-    max_speed = 1023*speedratio[mmem.modelclass]
+    max_speed = speedrawmax[mmem.modelclass]*speedratio[mmem.modelclass]
     limits.checkbounds('cw/ccw speed', -max_speed, max_speed, value)
 
     if value > 0:
-        return int(1024 + abs(value)/speedratio[mmem.modelclass])
+        return int(speedrawmax[mmem.modelclass]+1 + abs(value)/speedratio[mmem.modelclass])
     else:
         return int(abs(value)/speedratio[mmem.modelclass])
 
