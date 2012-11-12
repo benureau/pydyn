@@ -149,12 +149,12 @@ class DynamixelIOVRep(object):
         if handle28 != -1:
             self.handle2id[handle28] = motor_id
             self.id2handle[motor_id] = handle28
-            self.vx28.add(handle28)
+            self.vx28.add(motor_id)
             return True
         elif handle64 != -1:
             self.handle2id[handle64] = motor_id
             self.id2handle[motor_id] = handle64
-            self.vx64.add(handle64)
+            self.vx64.add(motor_id)
             return True
         else:
             return False
@@ -205,7 +205,7 @@ class DynamixelIOVRep(object):
         mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
 
         # updating mmem
-        self.sim.simSetJointMode(handle, pyvrep.sim_jointmode_force, 0)
+        self.sim.simSetJointMode(handle, 5, 0)
 
         load     = self.sim.simJointGetForce(handle)[0]
         position = self.sim.simGetJointPosition(handle)[0]
