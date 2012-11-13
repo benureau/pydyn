@@ -353,7 +353,7 @@ class DynamixelIOVRep(object):
         handle = self.id2handle[motor_id]
         mmem = self.motormems[motor_id]
 
-        torque_percent = conversions.raw2_torquelim(value, mmem)
+        torque_percent = conversions.raw2_torque(value, mmem)
         self.sim.simSetJointForce(handle, torque_percent*MAXTORQUE[mmem.model])
 
     def _get_pos_speed_load(self, motor_id):
