@@ -15,7 +15,7 @@ class Robot(object):
                                                      motor_range =  motor_range,
                                                      timeout = timeout,
                                                      start = start)
-                                                     
+
 
         self.m_by_id = {}
         self.motors  = []
@@ -194,7 +194,8 @@ class Robot(object):
             motor = self.m_by_id[motor_id]
             motor.speed = max_speed
 
-            tf = tfsingle.AutoGoto(motor, pos_i, margin)
+#            tf = tfsingle.AutoGoto(motor, pos_i, margin)
+            tf = tfsingle.ProgressGoto(motor, pos_i)
             motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
             motion.start()
             self.motions.append(motion)
