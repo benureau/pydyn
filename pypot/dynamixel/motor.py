@@ -412,8 +412,9 @@ class DynamixelMotor(object):
     @torque_enable_raw.setter
     def torque_enable_raw(self, val):
         limits.checkoneof('torque_enable', [0, 1], int(val))
+        self.request_lock.acquire()
         self.requests['TORQUE_ENABLE'] = int(val)
-
+        self.request_lock.release()
 
     # compliant is a more intuive alternative for torque_enable
     # Beware ! compliant == not torque_enable. (for this reason, compliant_raw
