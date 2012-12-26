@@ -12,7 +12,6 @@ import memory
 
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX")
 
-
 class DynamixelController(threading.Thread):
     """
         The Controller is in charge of handling the read and write request of the motors.
@@ -24,7 +23,7 @@ class DynamixelController(threading.Thread):
         It does not access the content of the motors memory.
     """
 
-    def __init__(self, port, connection_type, timeout = 0.05, freq = 50, baudrate = 1000000):
+    def __init__(self, port, connection_type, timeout = 0.05, freq = 50, baudrate = 1000000, ip = '127.0.0.1'):
         """
             :param freq  the target frequence for refreshing values in Hz.
         """
@@ -40,7 +39,7 @@ class DynamixelController(threading.Thread):
             raise ValueError('Unknown controller type: %s' % (connection_type))
 
         self.type = connection_type
-        self.io = io.DynamixelIO(port, timeout = timeout, baudrate = baudrate)
+        self.io = io.DynamixelIO(port, timeout = timeout, baudrate = baudrate, ip = ip)
         self.motors = []
 
         self._pinglock = threading.Lock() # when discovering motors
@@ -77,6 +76,23 @@ class DynamixelController(threading.Thread):
         self._freq = 1.0/val
         self._period = val
 
+    # pausing resuming the controller
+
+    def pause(self):
+        self._ctrllock.acquire()
+        if hasattr(self.io, 'sim'):
+            self.io.sim.simPauseSimulation()
+
+    def resume(self):
+        if hasattr(self.io, 'sim'):
+            self.io.sim.simStartSimulation()
+        self._ctrllock.release()
+
+    def restart(self):
+        if hasattr(self.io, 'sim'):
+            self.io.sim.simStopSimulation()
+            self.io.sim.simStartSimulation()
+        self._ctrllock.release()
 
     # MARK Motor discovery and creation
 
@@ -104,7 +120,7 @@ class DynamixelController(threading.Thread):
             mmem = self.io.create(motor_id)
             m = DynamixelController.motormodel[mmem.model](mmem)
             self.motors.append(m)
-            
+
 
     motormodel = {
         'AX-12'   : motor.AXMotor,
@@ -121,6 +137,9 @@ class DynamixelController(threading.Thread):
         'MX-106'  : motor.MX106Motor,
 
         'EX-106+' : motor.EXMotor,
+
+        'VX-28'   : motor.VXMotor,
+        'VX-64'   : motor.VXMotor,
     }
 
     # MARK Handling Requests and Updating
@@ -156,7 +175,7 @@ class DynamixelController(threading.Thread):
             requests on goal_position, moving_speed and torque_limit from special requrest,
             from the rest.
 
-            :return  list of dictionary request
+            :return:  list of dictionary request
             """
         # Dividing requests
         all_pst_requests     = []
@@ -177,14 +196,14 @@ class DynamixelController(threading.Thread):
             for request_name, value in requests.items():
                 if request_name in DynamixelController.pst_set and value is not None:
                     pst_requests[request_name] = value
-                if request_name in DynamixelController.special_set:
+                elif request_name in DynamixelController.special_set:
                     special_requests[request_name] = value
                 else:
                     other_requests[request_name] = value
 
+            all_other_requests.append(other_requests)
             all_pst_requests.append(pst_requests)
             all_special_requests.append(special_requests)
-            all_other_requests.append(other_requests)
 
         # copying the resquests (for thread safety)
 
@@ -199,6 +218,7 @@ class DynamixelController(threading.Thread):
                                  pst_requests.get('GOAL_POSITION', m.goal_position_raw),
                                  pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
                                  pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
+
 
         if len(sync_pst) > 0:
             self.io.set_sync_positions_speeds_torque_limits(sync_pst)
@@ -246,12 +266,13 @@ class DynamixelController(threading.Thread):
             # Dividing requests
             all_pst_requests, all_special_requests, all_other_requests = self._divide_requests()
 
-            # Handling pst requests
-            self._handle_all_pst_requests(all_pst_requests)
 
             # Handling other requests
             for m, other_requests in zip(self.motors, all_other_requests):
                 self._handle_other_requests(m.id, other_requests)
+
+            # Handling pst requests
+            self._handle_all_pst_requests(all_pst_requests)
 
             # Handling special requests
             self._handle_special_requests(all_special_requests)
@@ -275,3 +296,4 @@ class DynamixelController(threading.Thread):
             return 0.0
         else:
             return len_fps/(self.fps_history[len_fps-1] - self.fps_history[1])
+

@@ -38,6 +38,31 @@ class AutoGoto(timedf.TimedFunction):
             return True
         return False
 
+class ProgressGoto(timedf.TimedFunction):
+    """Implements a function that stop when not progressing toward the goal anymore.
+
+    :param start, stop, duration  in s
+    """
+
+    def __init__(self, motor, target, timeout = 0.2, margin = 0.5):
+        self.motor = motor
+        self.target = target
+        self.closest = None
+        self.margin = margin
+        self.timeout = timeout
+
+    def get_value(self, t):
+        if self.closest is None:
+            self.closest = self.motor.position, t
+        elif abs(self.motor.position - self.target) < abs(self.closest[0] - self.target):
+            self.closest = self.motor.position, t
+        return self.target
+
+    def has_finished(self, t):
+        if t - self.closest[1] > self.timeout or abs(self.motor.position-self.target) < self.margin:
+            return True
+        return False
+
 
 class LinearGoto(timedf.TimedFunction):
     """Implements a goal moving linearly from a given start to a given stop

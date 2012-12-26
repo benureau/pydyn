@@ -8,12 +8,14 @@ from ..import dynamixel
 class Robot(object):
     """A simple robot with only one controller"""
 
-    def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03):
+    def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03, start = True):
         self._ctrl = controller
         if self._ctrl is None:
             self._ctrl = dynamixel.create_controller(verbose=True,
                                                      motor_range =  motor_range,
-                                                     timeout = timeout)
+                                                     timeout = timeout,
+                                                     start = start)
+
 
         self.m_by_id = {}
         self.motors  = []
@@ -27,11 +29,21 @@ class Robot(object):
         """Representation of the stem, with motor id and position"""
         return 'Robot({})'.format(', '.join("M%d:%0.f" % (m.id, m.position) for m in self.motors))
 
+    def get_sim(self):
+        """If vrep_mode is enable, return the simulation instance.
+        Else, raise a AttributeError exception
+        """
+        return self._ctrl.io.sim
+
     # position
 
     @property
     def pose(self):
         return tuple(m.position for m in self.motors)
+
+    @property
+    def goal_pose(self):
+        return tuple(m.goal_position for m in self.motors)
 
     @pose.setter
     def pose(self, p):
@@ -186,7 +198,8 @@ class Robot(object):
             motor = self.m_by_id[motor_id]
             motor.speed = max_speed
 
-            tf = tfsingle.AutoGoto(motor, pos_i, margin)
+#            tf = tfsingle.AutoGoto(motor, pos_i, margin)
+            tf = tfsingle.ProgressGoto(motor, pos_i)
             motion = motionctrl.PoseMotionController(motor, tf, freq = 30)
             motion.start()
             self.motions.append(motion)
