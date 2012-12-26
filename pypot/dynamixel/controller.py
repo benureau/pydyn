@@ -175,7 +175,7 @@ class DynamixelController(threading.Thread):
             requests on goal_position, moving_speed and torque_limit from special requrest,
             from the rest.
 
-            :return  list of dictionary request
+            :return:  list of dictionary request
             """
         # Dividing requests
         all_pst_requests     = []
@@ -196,14 +196,14 @@ class DynamixelController(threading.Thread):
             for request_name, value in requests.items():
                 if request_name in DynamixelController.pst_set and value is not None:
                     pst_requests[request_name] = value
-                if request_name in DynamixelController.special_set:
+                elif request_name in DynamixelController.special_set:
                     special_requests[request_name] = value
                 else:
                     other_requests[request_name] = value
 
+            all_other_requests.append(other_requests)
             all_pst_requests.append(pst_requests)
             all_special_requests.append(special_requests)
-            all_other_requests.append(other_requests)
 
         # copying the resquests (for thread safety)
 
@@ -218,6 +218,7 @@ class DynamixelController(threading.Thread):
                                  pst_requests.get('GOAL_POSITION', m.goal_position_raw),
                                  pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
                                  pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
+
 
         if len(sync_pst) > 0:
             self.io.set_sync_positions_speeds_torque_limits(sync_pst)
@@ -265,12 +266,13 @@ class DynamixelController(threading.Thread):
             # Dividing requests
             all_pst_requests, all_special_requests, all_other_requests = self._divide_requests()
 
-            # Handling pst requests
-            self._handle_all_pst_requests(all_pst_requests)
 
             # Handling other requests
             for m, other_requests in zip(self.motors, all_other_requests):
                 self._handle_other_requests(m.id, other_requests)
+
+            # Handling pst requests
+            self._handle_all_pst_requests(all_pst_requests)
 
             # Handling special requests
             self._handle_special_requests(all_special_requests)

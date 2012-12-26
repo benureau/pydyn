@@ -225,7 +225,7 @@ class DynamixelMotor(object):
 
     @angle_limits.setter
     def angle_limits(self, val):
-        self.angle_limits_raw = self.cw_angle_limit_2raw(val[0]), self.ccw_angle_limit_2raw(val[1])
+        self.angle_limits_raw = conv.cw_angle_limit_2raw(val[0], self.mmem), conv.ccw_angle_limit_2raw(val[1], self.mmem)
 
     @angle_limits_raw.setter
     def angle_limits_raw(self, val):
@@ -234,7 +234,10 @@ class DynamixelMotor(object):
         limits.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val[0]))
         limits.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val[1]))
         self.request_lock.acquire()
-        self.requests['CCW_ANGLE_LIMIT'] = int(val[0]), int(val[1])
+        #FIXME : that should work
+        #self.requests['ANGLE_LIMITS'] = int(val[0]), int(val[1])
+        self.requests['CW_ANGLE_LIMIT']  = int(val[0])
+        self.requests['CCW_ANGLE_LIMIT'] = int(val[1])
         self.request_lock.release()
 
 

@@ -208,8 +208,8 @@ class DynamixelWriteDataPacket(DynamixelInstructionPacket):
         parameters = [REG_ADDRESS(control_name)] + list(data)
 
         if len(data) != REG_LENGTH(control_name):
-            raise ValueError('Inconsistent data (%s) for the control %s' \
-                             % (data, control_name))
+            raise ValueError('Inconsistent data (%s) for the control %s; except data length %s, got %s' \
+                             % (data, control_name, REG_LENGTH(control_name), len(data)))
 
         DynamixelInstructionPacket.__init__(self,
                                             motor_id,
