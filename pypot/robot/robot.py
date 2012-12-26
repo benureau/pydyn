@@ -41,6 +41,10 @@ class Robot(object):
     def pose(self):
         return tuple(m.position for m in self.motors)
 
+    @property
+    def goal_pose(self):
+        return tuple(m.goal_position for m in self.motors)
+
     @pose.setter
     def pose(self, p):
         """Set target position.
