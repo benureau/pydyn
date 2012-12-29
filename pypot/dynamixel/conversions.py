@@ -59,12 +59,18 @@ def status_return_level_2raw(value, mmem = None):
 
 # MARK Baudrate
 
+_baudrate_axrx_raw = set((1, 3, 4, 7, 9, 16, 34, 103, 207))
+
 def raw2_baudrate_axrx(value):
-    limits.checkbounds('baudrate raw', 0, 254, value)
+    limits.checkoneof('baudrate raw', _baudrate_axrx_raw, value)
     return 2000000.0/(value + 1)
 
+_baudrate_axrx = set((9600, 19200, 57200, 115200, 200000, 250000, 400000, 500000, 1000000))
+
 def baudrate_axrx_2raw(value):
+    limits.checkoneof('baudrate', _baudrate_axrx, value)
     return int(2000000.0/value - 1)
+
 
 baudrate_mx = {
     250 : 2250000,

@@ -10,6 +10,8 @@ import io
 import motor
 import memory
 
+debug = True
+
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX")
 
 class DynamixelController(threading.Thread):
@@ -213,6 +215,8 @@ class DynamixelController(threading.Thread):
         # Handling pst requests (if need be)
         sync_pst = []
         for m, pst_requests in zip(self.motors, all_pst_requests):
+            if debug and len(pst_request) > 0:
+                print 'controller: pst_request:', pst_requests
             if not m.compliant and len(pst_requests) > 0:
                 sync_pst.append((m.id,
                                  pst_requests.get('GOAL_POSITION', m.goal_position_raw),

@@ -1,3 +1,23 @@
+""" The motor classes allow you to control and read the motor values transparently.
+
+    When reading a value, the cached (most up to date) value is returned. For EEPROM and unchanging RAM values (eg compliance slopes), this is not a problem. For speed, pos and load, that means that the values of the last loop of the controller are provided. Depending on the current speed of the motor and the speed of the serial loop, these values might not reflect accurrately the actual status of the motor, but this is the best the hardware is capable to do. Some other RAM values may change quickly and often (``torque_enable``, ``led``, ``present_voltage``, ``present_temperature``, ``registered``, ``moving`` and ``current`` (or ``sensed_current``)), and if an updated value is desired, the user should use the request_read() method, with the previous names as argument.
+
+    Writing a value is not immediate, and will be done during the next controller loop.
+
+    Given a motor instance ``m`` and a variable (eg, ``torque_enable``), you can read the cached value, request refreshing the cached value and writting a new value using, respectively :
+
+    >>> m.torque_enable
+    >>> m.request_read('torque_enable')
+    >>> m.torque_enable = False
+
+    Once a request has been made, you can call ``m.requested('torque_enable')`` to check what value is going to be written
+    The requested value can be read with the method m.requested('torque_enable'), and may differ from m.torque_enable until the motor value has been updated on the hardware. If the request have already been processed, requested() will return None. Note that if you request multiple values for the same variable, only the last one at the start of the next controller loop will be taken into account.
+
+    For every variable, there is an alternative raw variable if the unit or value differs (no raw for id, firmware for example). You can use them to access the raw integer value present in the hardware memory register.
+
+"""
+
+
 import threading
 import collections
 
@@ -7,18 +27,6 @@ import limits
 from .. import color
 
 class DynamixelMotor(object):
-    """
-        This class allows you to control and read the motor values transparently.
-
-        When reading a value, the cached (most up to date) value is returned. For EEPROM and unchanging RAM values (eg compliance slopes), this is not a problem. For speed, pos and load, that means that the values of the last loop of the controller are provided. Depending on the current speed of the motor and the speed of the serial loop, these values might not reflect accurrately the actual status of the motor, but this is the best the hardware is possible to do. Some other RAM values may change quickly and often (torque_enable, led, present_voltage, present_temperature, registered, moving and current (or sensed_current)), and if an updated value is desired, the user should use the request_read() method, with the previous names as argument.
-
-        Writing a value is not immediate, and will be done during the next controller loop. Given a motor m and a variable (eg, torque_enable), you can read the cached value using m.torque_enable, request a new value setting m.torque_enable to a new value : m.torque_enable = False. The requested value can be read with the method m.requested('torque_enable'), and may differ from m.torque_enable until the motor value has been updated on the hardware. If the request have already been processed, requested() will return None. Note that if you request multiple values for the same variable, only the last one at the start of the next controller loop will be taken into account.
-
-        For every variable, there is an alternative raw variable if the unit or value differs (no raw for id, firmware for example). You can use them to access the raw integer value present in the hardware memory register.
-
-        Note that this class should not be instanciated, but only its child (AXMotor, RXMotor, MXMotor), since some core methods are not implemented.
-
-        """
     def __init__(self, memory):
 
         self.mmem = memory
@@ -65,6 +73,14 @@ class DynamixelMotor(object):
     }
 
     def request_read(name):
+        """ Request a specific value of the motor to be refreshed
+
+            :arg name:  the protocol name of the value. See the :py:mod:`protocol <pypot.dynamixel.protocol>` module for the list of values.
+        """
+
+        name = name.lower()
+        if name.startswith('dxl_'):
+            name = name[4:]
         if name in aliases:
             name = aliases[name]
         if name in ['present_position', 'present_speed', 'present_load']:
@@ -75,8 +91,10 @@ class DynamixelMotor(object):
         self.request_lock.release()
 
     def requested(name):
-        """Return raw values for the moment"""
+        """ Return raw values for the moment """
 
+        if name.startswith('DXL_'):
+            name = name[4:]
         if name in aliases:
             name = aliases[name]
 
@@ -104,6 +122,11 @@ class DynamixelMotor(object):
 
     @property
     def id(self):
+        """ The id of the motor. You can also change the id of a motor this way.
+
+            .. warning:: beware of id collisions, they are not checked yet.
+        """
+
         return self.mmem.id
 
     @id.setter
@@ -115,6 +138,7 @@ class DynamixelMotor(object):
 
     @property
     def model(self):
+        """ The model of motor ('RX-28', 'MX-64', etc.) """
         return self.mmem.model
 
     @property
@@ -123,6 +147,7 @@ class DynamixelMotor(object):
 
     @property
     def modelclass(self):
+        """ The class of motor (for a RX-28, return 'RX') """
         return self.mmem.modelclass
 
     @property
@@ -133,6 +158,14 @@ class DynamixelMotor(object):
 
     @property
     def baudrate(self):
+        """ Baudrate of the motor.
+
+            | Raw possible value (for ``baudrate_raw``) are : 1, 3, 4, 7, 9, 16, 34, 103, 207, (and 250, 251, 252 for MX).
+            | They translate into (in bps) : 1000000, 50000, 40000, 25000, 20000, 115200, 57600, 19200, 9600.
+            | For MX, 250, 251 and 252 translate respectively into : 2250000, 2500000, 3000000.
+
+            .. note :: A motor should have the same baudrate than the serial port he is connected to. Failing that, it can't communicate with it.
+        """
         return conv.raw2_baud_rate(self.mmem[protocol.DXL_BAUD_RATE], self.mmem)
 
     @property
@@ -1104,15 +1137,18 @@ class GoalAccelerationExtra(object):
 
 
 class AXMotor(DynamixelMotor, ComplianceMarginSlopeExtra):
+    """AX-12 motors"""
     pass
 
 class RXMotor(DynamixelMotor, ComplianceMarginSlopeExtra):
+    """RX-28 and RX-64 motors"""
     pass
 
 class EXMotor(DynamixelMotor, ComplianceMarginSlopeExtra, SensedCurrentExtra):
     pass
 
 class MXMotor(DynamixelMotor, PIDExtra, CurrentExtra, GoalAccelerationExtra):
+    """MX-28, MX-64 and MX-128 motors"""
     pass
 
 class MX28Motor(MXMotor):
@@ -1123,4 +1159,5 @@ class MX106Motor(MXMotor):
     pass
 
 class VXMotor(DynamixelMotor, PIDExtra):
+    """VX-28, and VX-64 motors, used by the V-Rep simulation"""
     pass
