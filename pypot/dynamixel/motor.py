@@ -55,7 +55,6 @@ class DynamixelMotor(object):
     # MARK Read/Write request
 
     aliases_read = {
-        'compliant'   : 'torque_enable',
         'voltage'     : 'present_voltage',
         'temperature' : 'present_temperature',
         'position'    : 'present_position',
@@ -65,14 +64,13 @@ class DynamixelMotor(object):
     }
 
     aliases_write = {
-        'compliant'   : 'torque_enable',
         'voltage'     : 'present_voltage',
         'position'    : 'goal_position',
         'speed'       : 'moving_speed',
         'max_temp'    : 'highest_limit_temperature',
     }
 
-    def request_read(name):
+    def request_read(self, name):
         """ Request a specific value of the motor to be refreshed
 
             :arg name:  the protocol name of the value. See the :py:mod:`protocol <pypot.dynamixel.protocol>` module for the list of values.
@@ -81,8 +79,8 @@ class DynamixelMotor(object):
         name = name.lower()
         if name.startswith('dxl_'):
             name = name[4:]
-        if name in aliases:
-            name = aliases[name]
+        if name in self.aliases_read:
+            name = self.aliases_read[name]
         if name in ['present_position', 'present_speed', 'present_load']:
             return
 
@@ -90,10 +88,27 @@ class DynamixelMotor(object):
         self.request[protocol.REG_ADDRESS(name.upper())] = None
         self.request_lock.release()
 
-    def requested(name):
+    def request_write(self, name, value):
+        """ Request a specific write on the motor
+
+            :arg name:  the protocol name of the value. See the :py:mod:`protocol <pypot.dynamixel.protocol>` module for the list of values.
+        """
+
+        name = name.lower()
+        if name.startswith('dxl_'):
+            name = name[4:]
+        if name in self.aliases_write:
+            name = self.aliases_write[name]
+
+        setattr(self, name, value)
+
+    def requested(self, name):
         """ Return raw values for the moment """
 
-        if name.startswith('DXL_'):
+        raise Exception('method not working') # FIXME
+
+        name = name.lower()
+        if name.startswith('dxl_'):
             name = name[4:]
         if name in aliases:
             name = aliases[name]
