@@ -173,18 +173,12 @@ class DynamixelMotor(object):
 
     @property
     def baudrate(self):
-        """ Baudrate of the motor.
-
-            | Raw possible value (for ``baudrate_raw``) are : 1, 3, 4, 7, 9, 16, 34, 103, 207, (and 250, 251, 252 for MX).
-            | They translate into (in bps) : 1000000, 50000, 40000, 25000, 20000, 115200, 57600, 19200, 9600.
-            | For MX, 250, 251 and 252 translate respectively into : 2250000, 2500000, 3000000.
-
-            .. note :: A motor should have the same baudrate than the serial port he is connected to. Failing that, it can't communicate with it.
-        """
+        """ Possible values are : 1000000, 50000, 40000, 25000, 20000, 115200, 57600, 19200, 9600 (and 2250000, 2500000, 3000000 for MX). """
         return conv.raw2_baud_rate(self.mmem[protocol.DXL_BAUD_RATE], self.mmem)
 
     @property
     def baudrate_raw(self):
+        """ Possible values are : 1, 3, 4, 7, 9, 16, 34, 103, 207 (and 250, 251, 252 for MX). """
         return self.mmem[protocol.DXL_BAUD_RATE]
 
     @baudrate.setter
