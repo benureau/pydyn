@@ -33,10 +33,18 @@ def get_available_ports():
 
     raise NotImplementedError('Unknown operating system: %s' % (op_system))
 
-def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = 0.02, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984):
-    """
-        Return a controller outfitted with all motor found.
-    """
+def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = None, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984):
+    """ Return a controller outfitted with all motor found. """
+
+    if timeout is None:
+        op_system = os.uname()[0]
+        if op_system == 'Darwin':
+            timeout = 0.02
+        elif op_system == 'Linux':
+            timeout = 0.005
+        else:
+            timeout = 0.01
+
     if vrep_mode:
         if verbose:
             print 'Loading the robot from V-Rep...'
