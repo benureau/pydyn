@@ -122,7 +122,7 @@ class Robot(object):
         if hasattr(v, '__iter__'):
             assert len(v) >= len(self.motors)
             for m_i, v_i in zip(self.motors, v):
-                m_i.torque = v_i
+                m_i.torque_limit = v_i
         else:
             for m_i in self.motors:
                 m_i.torque_limit = v
