@@ -1,0 +1,741 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>motor – Motor class &mdash; pypot 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pypot 0.1 documentation" href="index.html" />
+    <link rel="up" title="pypot – Reference API" href="reference.html" />
+    <link rel="prev" title="pypot – Reference API" href="reference.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="pypot – Reference API"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pypot 0.1 documentation</a> &raquo;</li>
+          <li><a href="reference.html" accesskey="U"><tt class="docutils literal docutils literal docutils literal"><span class="pre">pypot</span></tt> &#8211; Reference API</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="reference.html"
+                        title="previous chapter"><tt class="docutils literal docutils literal"><span class="pre">pypot</span></tt> &#8211; Reference API</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/motor.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pypot.dynamixel.motor">
+<span id="motor-motor-class"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">motor</span></tt> &#8211; Motor class<a class="headerlink" href="#module-pypot.dynamixel.motor" title="Permalink to this headline">¶</a></h1>
+<p>The motor classes allow you to control and read the motor values transparently.</p>
+<p>When reading a value, the cached (most up to date) value is returned. For EEPROM and unchanging RAM values (eg compliance slopes), this is not a problem. For speed, pos and load, that means that the values of the last loop of the controller are provided. Depending on the current speed of the motor and the speed of the serial loop, these values might not reflect accurrately the actual status of the motor, but this is the best the hardware is capable to do. Some other RAM values may change quickly and often (<tt class="docutils literal"><span class="pre">torque_enable</span></tt>, <tt class="docutils literal"><span class="pre">led</span></tt>, <tt class="docutils literal"><span class="pre">present_voltage</span></tt>, <tt class="docutils literal"><span class="pre">present_temperature</span></tt>, <tt class="docutils literal"><span class="pre">registered</span></tt>, <tt class="docutils literal"><span class="pre">moving</span></tt> and <tt class="docutils literal"><span class="pre">current</span></tt> (or <tt class="docutils literal"><span class="pre">sensed_current</span></tt>)), and if an updated value is desired, the user should use the request_read() method, with the previous names as argument.</p>
+<p>Writing a value is not immediate, and will be done during the next controller loop.</p>
+<p>Given a motor instance <tt class="docutils literal"><span class="pre">m</span></tt> and a variable (eg, <tt class="docutils literal"><span class="pre">torque_enable</span></tt>), you can read the cached value, request refreshing the cached value and writting a new value using, respectively :</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">torque_enable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">request_read</span><span class="p">(</span><span class="s">&#39;torque_enable&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">torque_enable</span> <span class="o">=</span> <span class="bp">False</span>
+</pre></div>
+</div>
+<p>Once a request has been made, you can call <tt class="docutils literal"><span class="pre">m.requested('torque_enable')</span></tt> to check what value is going to be written
+The requested value can be read with the method m.requested(&#8216;torque_enable&#8217;), and may differ from m.torque_enable until the motor value has been updated on the hardware. If the request have already been processed, requested() will return None. Note that if you request multiple values for the same variable, only the last one at the start of the next controller loop will be taken into account.</p>
+<p>For every variable, there is an alternative raw variable if the unit or value differs (no raw for id, firmware for example). You can use them to access the raw integer value present in the hardware memory register.</p>
+<p>The motor classes all inherit from the <a class="reference internal" href="#pypot.dynamixel.motor.DynamixelMotor" title="pypot.dynamixel.motor.DynamixelMotor"><tt class="xref py py-class docutils literal"><span class="pre">DynamixelMotor</span></tt></a> class. The end-user class use multiple inheritance to adapt to the model specificities.</p>
+<dl class="class">
+<dt id="pypot.dynamixel.motor.AXMotor">
+<em class="property">class </em><tt class="descname">AXMotor</tt><big>(</big><em>memory</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.AXMotor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pypot.dynamixel.motor.DynamixelMotor" title="pypot.dynamixel.motor.DynamixelMotor"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.DynamixelMotor</span></tt></a>, <a class="reference internal" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra" title="pypot.dynamixel.motor.ComplianceMarginSlopeExtra"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.ComplianceMarginSlopeExtra</span></tt></a></p>
+<p>AX-12 motors</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.RXMotor">
+<em class="property">class </em><tt class="descname">RXMotor</tt><big>(</big><em>memory</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.RXMotor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pypot.dynamixel.motor.DynamixelMotor" title="pypot.dynamixel.motor.DynamixelMotor"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.DynamixelMotor</span></tt></a>, <a class="reference internal" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra" title="pypot.dynamixel.motor.ComplianceMarginSlopeExtra"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.ComplianceMarginSlopeExtra</span></tt></a></p>
+<p>RX-28 and RX-64 motors</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.MXMotor">
+<em class="property">class </em><tt class="descname">MXMotor</tt><big>(</big><em>memory</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.MXMotor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pypot.dynamixel.motor.DynamixelMotor" title="pypot.dynamixel.motor.DynamixelMotor"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.DynamixelMotor</span></tt></a>, <a class="reference internal" href="#pypot.dynamixel.motor.PIDExtra" title="pypot.dynamixel.motor.PIDExtra"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.PIDExtra</span></tt></a>, <a class="reference internal" href="#pypot.dynamixel.motor.CurrentExtra" title="pypot.dynamixel.motor.CurrentExtra"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.CurrentExtra</span></tt></a>, <a class="reference internal" href="#pypot.dynamixel.motor.GoalAccelerationExtra" title="pypot.dynamixel.motor.GoalAccelerationExtra"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.GoalAccelerationExtra</span></tt></a></p>
+<p>MX-28, MX-64 and MX-128 motors</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.VXMotor">
+<em class="property">class </em><tt class="descname">VXMotor</tt><big>(</big><em>memory</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.VXMotor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pypot.dynamixel.motor.DynamixelMotor" title="pypot.dynamixel.motor.DynamixelMotor"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.DynamixelMotor</span></tt></a>, <a class="reference internal" href="#pypot.dynamixel.motor.PIDExtra" title="pypot.dynamixel.motor.PIDExtra"><tt class="xref py py-class docutils literal"><span class="pre">pypot.dynamixel.motor.PIDExtra</span></tt></a></p>
+<p>VX-28, and VX-64 motors, used by the V-Rep simulation</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.DynamixelMotor">
+<em class="property">class </em><tt class="descname">DynamixelMotor</tt><big>(</big><em>memory</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>memory</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.aliases_read">
+<tt class="descname">aliases_read</tt><em class="property"> = {'load': 'present_load', 'temperature': 'present_temperature', 'voltage': 'present_voltage', 'position': 'present_position', 'speed': 'present_speed', 'max_temp': 'highest_limit_temperature'}</em><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.aliases_read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.aliases_write">
+<tt class="descname">aliases_write</tt><em class="property"> = {'position': 'goal_position', 'speed': 'moving_speed', 'voltage': 'present_voltage', 'max_temp': 'highest_limit_temperature'}</em><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.aliases_write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.request_read">
+<tt class="descname">request_read</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.request_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request a specific value of the motor to be refreshed</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the protocol name of the value. See the <tt class="xref py py-mod docutils literal"><span class="pre">protocol</span></tt> module for the list of values.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.request_write">
+<tt class="descname">request_write</tt><big>(</big><em>name</em>, <em>value</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.request_write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request a specific write on the motor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the protocol name of the value. See the <tt class="xref py py-mod docutils literal"><span class="pre">protocol</span></tt> module for the list of values.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.requested">
+<tt class="descname">requested</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.requested" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return raw values for the moment</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.mode">
+<tt class="descname">mode</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.mode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.id">
+<tt class="descname">id</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>The id of the motor. You can also change the id of a motor this way.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">beware of id collisions, they are not checked yet.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.model">
+<tt class="descname">model</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>The model of motor (&#8216;RX-28&#8217;, &#8216;MX-64&#8217;, etc.)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.model_raw">
+<tt class="descname">model_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.model_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.modelclass">
+<tt class="descname">modelclass</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.modelclass" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class of motor (for a RX-28, return &#8216;RX&#8217;)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.version">
+<tt class="descname">version</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.baudrate">
+<tt class="descname">baudrate</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.baudrate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possible values are : 1000000, 50000, 40000, 25000, 20000, 115200, 57600, 19200, 9600 (and 2250000, 2500000, 3000000 for MX).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.baudrate_raw">
+<tt class="descname">baudrate_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.baudrate_raw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possible values are : 1, 3, 4, 7, 9, 16, 34, 103, 207 (and 250, 251, 252 for MX).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.return_delay_time">
+<tt class="descname">return_delay_time</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.return_delay_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.return_delay_time_raw">
+<tt class="descname">return_delay_time_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.return_delay_time_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.cw_angle_limit">
+<tt class="descname">cw_angle_limit</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.cw_angle_limit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.cw_angle_limit_raw">
+<tt class="descname">cw_angle_limit_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.cw_angle_limit_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.ccw_angle_limit">
+<tt class="descname">ccw_angle_limit</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.ccw_angle_limit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.ccw_angle_limit_raw">
+<tt class="descname">ccw_angle_limit_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.ccw_angle_limit_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.angle_limits">
+<tt class="descname">angle_limits</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.angle_limits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.angle_limits_raw">
+<tt class="descname">angle_limits_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.angle_limits_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.highest_limit_temperature">
+<tt class="descname">highest_limit_temperature</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.highest_limit_temperature" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.highest_limit_temperature_raw">
+<tt class="descname">highest_limit_temperature_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.highest_limit_temperature_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.max_temp">
+<tt class="descname">max_temp</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.max_temp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.max_temp_raw">
+<tt class="descname">max_temp_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.max_temp_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.highest_limit_voltage">
+<tt class="descname">highest_limit_voltage</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.highest_limit_voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.highest_limit_voltage_raw">
+<tt class="descname">highest_limit_voltage_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.highest_limit_voltage_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.lowest_limit_voltage">
+<tt class="descname">lowest_limit_voltage</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.lowest_limit_voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.lowest_limit_voltage_raw">
+<tt class="descname">lowest_limit_voltage_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.lowest_limit_voltage_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.min_voltage">
+<tt class="descname">min_voltage</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.min_voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.min_voltage_raw">
+<tt class="descname">min_voltage_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.min_voltage_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.max_voltage">
+<tt class="descname">max_voltage</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.max_voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.max_voltage_raw">
+<tt class="descname">max_voltage_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.max_voltage_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.max_torque">
+<tt class="descname">max_torque</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.max_torque" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.max_torque_raw">
+<tt class="descname">max_torque_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.max_torque_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.status_return_level">
+<tt class="descname">status_return_level</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.status_return_level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.torque_enable">
+<tt class="descname">torque_enable</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.torque_enable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.torque_enable_raw">
+<tt class="descname">torque_enable_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.torque_enable_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.compliant">
+<tt class="descname">compliant</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.compliant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.led">
+<tt class="descname">led</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.led" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.led_raw">
+<tt class="descname">led_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.led_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.goal_position">
+<tt class="descname">goal_position</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.goal_position" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.goal_position_raw">
+<tt class="descname">goal_position_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.goal_position_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.moving_speed">
+<tt class="descname">moving_speed</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.moving_speed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.moving_speed_raw">
+<tt class="descname">moving_speed_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.moving_speed_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.torque_limit">
+<tt class="descname">torque_limit</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.torque_limit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.torque_limit_raw">
+<tt class="descname">torque_limit_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.torque_limit_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_position">
+<tt class="descname">present_position</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_position" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_position_raw">
+<tt class="descname">present_position_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_position_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_speed">
+<tt class="descname">present_speed</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_speed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_speed_raw">
+<tt class="descname">present_speed_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_speed_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_load">
+<tt class="descname">present_load</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_load_raw">
+<tt class="descname">present_load_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_load_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.position">
+<tt class="descname">position</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.position" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.position_raw">
+<tt class="descname">position_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.position_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.speed">
+<tt class="descname">speed</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.speed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.speed_raw">
+<tt class="descname">speed_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.speed_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.load">
+<tt class="descname">load</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.load_raw">
+<tt class="descname">load_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.load_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_voltage">
+<tt class="descname">present_voltage</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_voltage_raw">
+<tt class="descname">present_voltage_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_voltage_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.voltage">
+<tt class="descname">voltage</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.voltage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.voltage_raw">
+<tt class="descname">voltage_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.voltage_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_temperature">
+<tt class="descname">present_temperature</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_temperature" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.present_temperature_raw">
+<tt class="descname">present_temperature_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.present_temperature_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.temp">
+<tt class="descname">temp</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.temp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.temp_raw">
+<tt class="descname">temp_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.temp_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.registered">
+<tt class="descname">registered</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.registered" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.registered_raw">
+<tt class="descname">registered_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.registered_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.lock">
+<tt class="descname">lock</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.lock" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.lock_raw">
+<tt class="descname">lock_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.lock_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.moving">
+<tt class="descname">moving</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.moving" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.moving_raw">
+<tt class="descname">moving_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.moving_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.punch">
+<tt class="descname">punch</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.punch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.punch_raw">
+<tt class="descname">punch_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.punch_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.eeprom_desc">
+<tt class="descname">eeprom_desc</tt><big>(</big><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.eeprom_desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pypot.dynamixel.motor.DynamixelMotor.ram_desc">
+<tt class="descname">ram_desc</tt><big>(</big><big>)</big><a class="headerlink" href="#pypot.dynamixel.motor.DynamixelMotor.ram_desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p>This extra properties only apply to specific class of models.</p>
+<dl class="class">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra">
+<em class="property">class </em><tt class="descname">ComplianceMarginSlopeExtra</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_margin">
+<tt class="descname">ccw_compliance_margin</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_margin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_margin_raw">
+<tt class="descname">ccw_compliance_margin_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_margin_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_slope">
+<tt class="descname">ccw_compliance_slope</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_slope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_slope_raw">
+<tt class="descname">ccw_compliance_slope_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.ccw_compliance_slope_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_margin_raw">
+<tt class="descname">compliance_margin_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_margin_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_margins">
+<tt class="descname">compliance_margins</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_margins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_margins_raw">
+<tt class="descname">compliance_margins_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_margins_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_slope_raw">
+<tt class="descname">compliance_slope_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_slope_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_slopes">
+<tt class="descname">compliance_slopes</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_slopes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_slopes_raw">
+<tt class="descname">compliance_slopes_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.compliance_slopes_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_margin">
+<tt class="descname">cw_compliance_margin</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_margin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_margin_raw">
+<tt class="descname">cw_compliance_margin_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_margin_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_slope">
+<tt class="descname">cw_compliance_slope</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_slope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_slope_raw">
+<tt class="descname">cw_compliance_slope_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.ComplianceMarginSlopeExtra.cw_compliance_slope_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.PIDExtra">
+<em class="property">class </em><tt class="descname">PIDExtra</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.d_gain">
+<tt class="descname">d_gain</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.d_gain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.d_gain_raw">
+<tt class="descname">d_gain_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.d_gain_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.gains">
+<tt class="descname">gains</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.gains" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.gains_raw">
+<tt class="descname">gains_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.gains_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.i_gain">
+<tt class="descname">i_gain</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.i_gain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.i_gain_raw">
+<tt class="descname">i_gain_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.i_gain_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.p_gain">
+<tt class="descname">p_gain</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.p_gain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.PIDExtra.p_gain_raw">
+<tt class="descname">p_gain_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.PIDExtra.p_gain_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.GoalAccelerationExtra">
+<em class="property">class </em><tt class="descname">GoalAccelerationExtra</tt><a class="headerlink" href="#pypot.dynamixel.motor.GoalAccelerationExtra" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pypot.dynamixel.motor.GoalAccelerationExtra.goal_acceleration">
+<tt class="descname">goal_acceleration</tt><a class="headerlink" href="#pypot.dynamixel.motor.GoalAccelerationExtra.goal_acceleration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.GoalAccelerationExtra.goal_acceleration_raw">
+<tt class="descname">goal_acceleration_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.GoalAccelerationExtra.goal_acceleration_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.CurrentExtra">
+<em class="property">class </em><tt class="descname">CurrentExtra</tt><a class="headerlink" href="#pypot.dynamixel.motor.CurrentExtra" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pypot.dynamixel.motor.CurrentExtra.current">
+<tt class="descname">current</tt><a class="headerlink" href="#pypot.dynamixel.motor.CurrentExtra.current" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.CurrentExtra.current_raw">
+<tt class="descname">current_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.CurrentExtra.current_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypot.dynamixel.motor.SensedCurrentExtra">
+<em class="property">class </em><tt class="descname">SensedCurrentExtra</tt><a class="headerlink" href="#pypot.dynamixel.motor.SensedCurrentExtra" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="pypot.dynamixel.motor.SensedCurrentExtra.sensed_current">
+<tt class="descname">sensed_current</tt><a class="headerlink" href="#pypot.dynamixel.motor.SensedCurrentExtra.sensed_current" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypot.dynamixel.motor.SensedCurrentExtra.sensed_current_raw">
+<tt class="descname">sensed_current_raw</tt><a class="headerlink" href="#pypot.dynamixel.motor.SensedCurrentExtra.sensed_current_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="pypot – Reference API"
+             >previous</a> |</li>
+        <li><a href="index.html">pypot 0.1 documentation</a> &raquo;</li>
+          <li><a href="reference.html" ><tt class="docutils literal docutils literal docutils literal"><span class="pre">pypot</span></tt> &#8211; Reference API</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Fabien Benureau and Clement Moulin-Frier.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
