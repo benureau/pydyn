@@ -10,7 +10,7 @@ import io
 import motor
 import memory
 
-debug = True
+debug = False
 
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX")
 
