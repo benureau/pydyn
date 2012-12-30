@@ -177,13 +177,13 @@ def raw2_deg(value, mmem):
 
 def deg_2raw(value, mmem):
     max_pos, max_deg = limits.position_range[mmem.modelclass]
-    limits.checkbounds('position', 0, max_deg, value)
-    return int((value / max_deg) * max_pos)
+    limits.checkbounds('position', -0.001, max_deg + 0.001, value)
+    return round((value / max_deg) * max_pos)
 
 def safedeg_2raw(value, mmem):
     min_angle = raw2_deg(mmem[protocol.DXL_CW_ANGLE_LIMIT], mmem)
     max_angle = raw2_deg(mmem[protocol.DXL_CCW_ANGLE_LIMIT], mmem)
-    limits.checkbounds('safe position', min_angle, max_angle, value)
+    limits.checkbounds('safe position', min_angle - 0.001, max_angle + 0.001, value)
     return deg_2raw(value, mmem)
 
 
@@ -238,7 +238,7 @@ def movingdps_2raw(value, mmem):
         """
     max_speed = speedrawmax[mmem.modelclass]*speedratio[mmem.modelclass]
     limits.checkbounds('positive speed', 0, max_speed, value)
-    return int(value/speedratio[mmem.modelclass])
+    return round(value/speedratio[mmem.modelclass])
 
 def raw2_moving_speed(value, mmem):
     if mmem.mode == 'wheel' and mmem.modelclass in ('RX', 'AX'):
