@@ -80,6 +80,17 @@ class PoseMotionController(threading.Thread):
             self._zero = time.time() - self._suspendtime
             self._suspendlock.release()            
 
+class SpeedController(PoseMotionController):
+    """Class for pose, speed and torque motion controller."""
+
+    def __init__(self, motor, tf, freq = 10):
+        PoseMotionController.__init__(self, motor, tf, freq = freq)
+
+    def update(self, elapsed):
+        speed = self.tf.get_value(elapsed)
+        if speed is not None:
+            self.motor.moving_speed  = speed
+
 class PoseSpeedTorqueController(PoseMotionController):
     """Class for pose, speed and torque motion controller."""
     
