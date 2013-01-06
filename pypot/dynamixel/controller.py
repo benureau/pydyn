@@ -10,7 +10,7 @@ import io
 import motor
 import memory
 
-debug = True
+debug = False
 
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX")
 
@@ -183,20 +183,24 @@ class DynamixelController(threading.Thread):
         all_pst_requests     = []
         all_special_requests = []
         all_other_requests   = []
+        all_read_requests    = []
 
         for motor in self.motors:
 
             motor.request_lock.acquire()
-            requests = copy.copy(motor.requests)
-            motor.requests.clear()
+            read_requests  = copy.copy(motor.read_requests)
+            write_requests = copy.copy(motor.write_requests)
+            motor.read_requests.clear()
+            motor.write_requests.clear()
             motor.request_lock.release()
 
             pst_requests     = OrderedDict()
             special_requests = OrderedDict()
             other_requests   = OrderedDict()
+            read_requests    = OrderedDict()
 
-            for request_name, value in requests.items():
-                if request_name in DynamixelController.pst_set and value is not None:
+            for request_name, value in write_requests.items():
+                if request_name in DynamixelController.pst_set:
                     pst_requests[request_name] = value
                 elif request_name in DynamixelController.special_set:
                     special_requests[request_name] = value
@@ -206,10 +210,11 @@ class DynamixelController(threading.Thread):
             all_other_requests.append(other_requests)
             all_pst_requests.append(pst_requests)
             all_special_requests.append(special_requests)
+            all_read_requests.append(read_requests)
 
         # copying the resquests (for thread safety)
 
-        return all_pst_requests, all_special_requests, all_other_requests
+        return all_pst_requests, all_special_requests, all_other_requests, all_read_requests
 
     def _handle_all_pst_requests(self, all_pst_requests):
         # Handling pst requests (if need be)
@@ -245,27 +250,25 @@ class DynamixelController(threading.Thread):
         for motor, requests in zip(self.motors, all_special_requests):
             for request_name, value in requests.items():
                 if request_name == 'ID':
-                    if value is None:
-                        self.io.get(motor.id, 'ID')
-                    else:
-                        self.io.change_id(motor.id, value)
+                    self.io.change_id(motor.id, value)
                 elif request_name == 'MODE':
-                    if value is None:
-                        self.io.get(motor.id, 'ANGLE_LIMITS')
-                    else:
-                        self.io.change_mode(motor.id, value)
+                    self.io.change_mode(motor.id, value)
                 else:
                     print 'REQUEST_NAME', value
                     raise NotImplementedError
 
 
-    def _handle_other_requests(self, motor_id, requests):
+    def _handle_all_other_requests(self, all_other_requests):
         # handling the resquests
-        for request_name, value in requests.items():
-            if value is None:
-                self.io.get(motor_id, request_name)
-            else:
-                self.io.set(motor_id, request_name, value)
+        for m, requests in zip(self.motors, all_other_requests):
+            for request_name, value in requests.items():
+                self.io.set(m.id, request_name, value)
+
+    def _handle_all_read_requests(self, all_read_requests):
+        # handling the resquests
+        for m, requests in zip(self.motors, all_read_requests):
+            for request_name, value in requests.items():
+                self.io.get(m.id, request_name)
 
 
     def run(self):
@@ -281,18 +284,13 @@ class DynamixelController(threading.Thread):
             self._reading_present_posspeedload()
 
             # Dividing requests
-            all_pst_requests, all_special_requests, all_other_requests = self._divide_requests()
+            all_pst_requests, all_special_requests, all_other_requests, all_read_requests = self._divide_requests()
 
-
-            # Handling other requests
-            for m, other_requests in zip(self.motors, all_other_requests):
-                self._handle_other_requests(m.id, other_requests)
-
-            # Handling pst requests
+            # Handling requests
+            self._handle_all_other_requests(all_other_requests)
             self._handle_all_pst_requests(all_pst_requests)
-
-            # Handling special requests
             self._handle_special_requests(all_special_requests)
+            self._handle_all_read_requests(all_special_requests)
 
             self._ctrllock.release()
             time.sleep(0.0001) # timeout to allow lock acquiring by other party

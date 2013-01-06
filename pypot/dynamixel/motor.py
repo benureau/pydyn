@@ -31,9 +31,10 @@ class DynamixelMotor(object):
 
         self.mmem = memory
 
-        # this dictionary collect write or read request on part of non standart
+        # these dictionaries collect write or read request on part of non standart
         # memory (not pos, speed, load (read) or torque lim, moving speed goal pos (write))
-        self.requests = collections.OrderedDict()
+        self.read_requests  = collections.OrderedDict()
+        self.write_requests = collections.OrderedDict()
         # the dictionary is protected by a semaphore since both Motor and
         # Controller access and modify it. But the semaphore should only be acquired for
         # the duration of atomic actions on the dictionary, and not, for instance, the
@@ -55,6 +56,7 @@ class DynamixelMotor(object):
     # MARK Read/Write request
 
     aliases_read = {
+        'mode'        : 'angle_limits',
         'voltage'     : 'present_voltage',
         'temperature' : 'present_temperature',
         'position'    : 'present_position',
@@ -85,7 +87,7 @@ class DynamixelMotor(object):
             return
 
         self.request_lock.acquire()
-        self.request[protocol.REG_ADDRESS(name.upper())] = None
+        self.read_request[protocol.REG_ADDRESS(name.upper())] = True
         self.request_lock.release()
 
     def request_write(self, name, value):
@@ -102,21 +104,38 @@ class DynamixelMotor(object):
 
         setattr(self, name, value)
 
-    def requested(self, name):
-        """ Return raw values for the moment """
-
-        raise Exception('method not working') # FIXME
+    def requested_read(self, name):
+        """ Return True if a value is requested for reading but was not read yet.
+            After the value was read, return False.
+        """
 
         name = name.lower()
         if name.startswith('dxl_'):
             name = name[4:]
-        if name in aliases:
-            name = aliases[name]
+        if name in aliases_read:
+            name = aliases_read[name]
 
         self.request_lock.acquire()
-        value = self.request.get(protocol.REG_ADDRESS(name.upper()), None)
+        value = self.read_requests.get(protocol.REG_ADDRESS(name.upper()), False)
         self.request_lock.release()
         return value
+
+    def requested_write(self, name):
+        """ Return the value of the requested write, if it wasn't written yet.
+            After the value was read, return None.
+        """
+
+        name = name.lower()
+        if name.startswith('dxl_'):
+            name = name[4:]
+        if name in aliases_write:
+            name = aliases_write[name]
+
+        self.request_lock.acquire()
+        value = self.write_requests.get(protocol.REG_ADDRESS(name.upper()), None)
+        self.request_lock.release()
+        return value
+
 
 
     # MARK Mode
@@ -129,7 +148,7 @@ class DynamixelMotor(object):
     def mode(self, val):
         limits.checkoneof('mode', ['wheel', 'joint'], val)
         self.request_lock.acquire()
-        self.requests['MODE'] = val
+        self.write_requests['MODE'] = val
         self.request_lock.release()
 
 
@@ -148,7 +167,7 @@ class DynamixelMotor(object):
     def id(self, val):
         limits.checkbounds('id', 0, 254, val)
         self.request_lock.acquire()
-        self.requests['ID'] = int(val)
+        self.write_requests['ID'] = int(val)
         self.request_lock.release()
 
     @property
@@ -190,7 +209,7 @@ class DynamixelMotor(object):
         # usually, only value 1, 3, 4, 7, 9, 16, 34, 103, 207, (and 250, 251, 252 for MX) are used
         limits.checkbounds('baudrate', 0, 254, val)
         self.request_lock.acquire()
-        self.requests['BAUD_RATE'] = int(val)
+        self.write_requests['BAUD_RATE'] = int(val)
         self.request_lock.release()
 
 
@@ -212,7 +231,7 @@ class DynamixelMotor(object):
     def return_delay_time_raw(self, val):
         limits.checkbounds('return_delay_time', 0, 254, int(val))
         self.request_lock.acquire()
-        self.requests['RETURN_DELAY_TIME'] = int(val)
+        self.write_requests['RETURN_DELAY_TIME'] = int(val)
         self.request_lock.release()
 
 
@@ -234,7 +253,7 @@ class DynamixelMotor(object):
     def cw_angle_limit_raw(self, val):
         limits.checkbounds('cw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
         self.request_lock.acquire()
-        self.requests['CW_ANGLE_LIMIT'] = int(val)
+        self.write_requests['CW_ANGLE_LIMIT'] = int(val)
         self.request_lock.release()
 
     @property
@@ -253,7 +272,7 @@ class DynamixelMotor(object):
     def ccw_angle_limit_raw(self, val):
         limits.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val))
         self.request_lock.acquire()
-        self.requests['CCW_ANGLE_LIMIT'] = int(val)
+        self.write_requests['CCW_ANGLE_LIMIT'] = int(val)
         self.request_lock.release()
 
 
@@ -277,9 +296,9 @@ class DynamixelMotor(object):
         limits.checkbounds('ccw_angle_limit', 0, limits.position_range[self.modelclass], int(val[1]))
         self.request_lock.acquire()
         #FIXME : that should work
-        #self.requests['ANGLE_LIMITS'] = int(val[0]), int(val[1])
-        self.requests['CW_ANGLE_LIMIT']  = int(val[0])
-        self.requests['CCW_ANGLE_LIMIT'] = int(val[1])
+        #self.write_requests['ANGLE_LIMITS'] = int(val[0]), int(val[1])
+        self.write_requests['CW_ANGLE_LIMIT']  = int(val[0])
+        self.write_requests['CCW_ANGLE_LIMIT'] = int(val[1])
         self.request_lock.release()
 
 
@@ -301,7 +320,7 @@ class DynamixelMotor(object):
     def highest_limit_temperature_raw(self, val):
         limits.checkbounds('highest_limit_temperature', 10, 99, int(val))
         self.request_lock.acquire()
-        self.requests['HIGHEST_LIMIT_TEMPERATURE'] = int(val)
+        self.write_requests['HIGHEST_LIMIT_TEMPERATURE'] = int(val)
         self.request_lock.release()
 
     # max_temp is provided as a conveniance alias
@@ -341,7 +360,7 @@ class DynamixelMotor(object):
     def highest_limit_voltage_raw(self, val):
         limits.checkbounds('highest_limit_voltage', 10, 99, int(val))
         self.request_lock.acquire()
-        self.requests['HIGHEST_LIMIT_VOLTAGE'] = int(val)
+        self.write_requests['HIGHEST_LIMIT_VOLTAGE'] = int(val)
         self.request_lock.release()
 
 
@@ -363,7 +382,7 @@ class DynamixelMotor(object):
     def lowest_limit_voltage_raw(self, val):
         limits.checkbounds('lowest_limit_voltage', 10, 99, int(val))
         self.request_lock.acquire()
-        self.requests['LOWEST_LIMIT_VOLTAGE'] = int(val)
+        self.write_requests['LOWEST_LIMIT_VOLTAGE'] = int(val)
         self.request_lock.release()
 
 
@@ -420,7 +439,7 @@ class DynamixelMotor(object):
     def max_torque_raw(self, val):
         limits.checkbounds('max_torque', 0, 1023, int(val))
         self.request_lock.acquire()
-        self.requests['MAX_TORQUE'] = int(val)
+        self.write_requests['MAX_TORQUE'] = int(val)
         self.request_lock.release()
 
 
@@ -434,7 +453,7 @@ class DynamixelMotor(object):
     def status_return_level(self, val):
         limits.checkoneof('compliant', [0, 1, 2], int(val))
         self.request_lock.acquire()
-        self.requests['RETURN_STATUS_LEVEL'] = int(val)
+        self.write_requests['RETURN_STATUS_LEVEL'] = int(val)
         self.request_lock.release()
 
 
@@ -458,7 +477,7 @@ class DynamixelMotor(object):
     def torque_enable_raw(self, val):
         limits.checkoneof('torque_enable', [0, 1], int(val))
         self.request_lock.acquire()
-        self.requests['TORQUE_ENABLE'] = int(val)
+        self.write_requests['TORQUE_ENABLE'] = int(val)
         self.request_lock.release()
 
     # compliant is a more intuive alternative for torque_enable
@@ -493,7 +512,7 @@ class DynamixelMotor(object):
         """Changing the goal position will turn on torque_enable if off."""
         limits.checkoneof('led', [0, 1], int(val))
         self.request_lock.acquire()
-        self.requests['LED'] = int(val)
+        self.write_requests['LED'] = int(val)
         self.request_lock.release()
 
 
@@ -517,7 +536,7 @@ class DynamixelMotor(object):
         limits.checkbounds('goal_position',
                          self.cw_angle_limit_raw, self.ccw_angle_limit_raw, int(val))
         self.request_lock.acquire()
-        self.requests['GOAL_POSITION'] = int(val)
+        self.write_requests['GOAL_POSITION'] = int(val)
         self.request_lock.release()
 
 
@@ -542,7 +561,7 @@ class DynamixelMotor(object):
         else:
             limits.checkbounds_mode('moving_speed', 0, 1023, int(val), self.mode)
         self.request_lock.acquire()
-        self.requests['MOVING_SPEED'] = int(val)
+        self.write_requests['MOVING_SPEED'] = int(val)
         self.request_lock.release()
 
 
@@ -564,7 +583,7 @@ class DynamixelMotor(object):
     def torque_limit_raw(self, val):
         limits.checkbounds('torque_limit', 0, 1023, int(val))
         self.request_lock.acquire()
-        self.requests['TORQUE_LIMIT'] = int(val)
+        self.write_requests['TORQUE_LIMIT'] = int(val)
         self.request_lock.release()
 
 
@@ -734,7 +753,7 @@ class DynamixelMotor(object):
         # TODO 32 for RX, 0 for MX
         limits.checkbounds_mode('punch', 32, 1023, int(val))
         self.request_lock.acquire()
-        self.requests['PUNCH'] = int(val)
+        self.write_requests['PUNCH'] = int(val)
         self.request_lock.release()
 
 
@@ -817,7 +836,7 @@ class ComplianceMarginSlopeExtra(object):
     def cw_compliance_margin_raw(self, val):
         limits.checkbounds('cw compliance margin raw', 0, 255, int(val))
         self.request_lock.acquire()
-        self.requests['CW_COMPLIANCE_MARGIN'] = int(val)
+        self.write_requests['CW_COMPLIANCE_MARGIN'] = int(val)
         self.request_lock.release()
 
 
@@ -837,7 +856,7 @@ class ComplianceMarginSlopeExtra(object):
     def ccw_compliance_margin_raw(self, val):
         limits.checkbounds('ccw compliance margin raw', 0, 255, int(val))
         self.request_lock.acquire()
-        self.requests['CCW_COMPLIANCE_MARGIN'] = int(val)
+        self.write_requests['CCW_COMPLIANCE_MARGIN'] = int(val)
         self.request_lock.release()
 
 
@@ -859,7 +878,7 @@ class ComplianceMarginSlopeExtra(object):
         limits.checkbounds('ccw compliance margin', 0, 255, int(val[0]))
         limits.checkbounds('ccw compliance margin', 0, 255, int(val[1]))
         self.request_lock.acquire()
-        self.requests['COMPLIANCE_MARGINS'] = int(val[0]), int(val[1])
+        self.write_requests['COMPLIANCE_MARGINS'] = int(val[0]), int(val[1])
         self.request_lock.release()
 
 
@@ -881,7 +900,7 @@ class ComplianceMarginSlopeExtra(object):
     def cw_compliance_slope_raw(self, val):
         limits.checkbounds('cw compliance slope raw', 0, 254, int(val))
         self.request_lock.acquire()
-        self.requests['CW_COMPLIANCE_SLOPE'] = int(val)
+        self.write_requests['CW_COMPLIANCE_SLOPE'] = int(val)
         self.request_lock.release()
 
 
@@ -901,7 +920,7 @@ class ComplianceMarginSlopeExtra(object):
     def ccw_compliance_slope_raw(self, val):
         limits.checkbounds('ccw compliance slope raw', 0, 254, int(val))
         self.request_lock.acquire()
-        self.requests['CCW_COMPLIANCE_SLOPE'] = int(val)
+        self.write_requests['CCW_COMPLIANCE_SLOPE'] = int(val)
         self.request_lock.release()
 
 
@@ -923,7 +942,7 @@ class ComplianceMarginSlopeExtra(object):
         limits.checkbounds('ccw compliance slope', 0, 255, int(val[0]))
         limits.checkbounds('ccw compliance slope', 0, 255, int(val[1]))
         self.request_lock.acquire()
-        self.requests['COMPLIANCE_SLOPES'] = int(val[0]), int(val[1])
+        self.write_requests['COMPLIANCE_SLOPES'] = int(val[0]), int(val[1])
         self.request_lock.release()
 
 
@@ -950,7 +969,7 @@ class PIDExtra(object):
     def p_gain_raw(self, val):
         limits.checkbounds('p_gain', 0, 254, int(val))
         self.request_lock.acquire()
-        self.requests['P_GAIN'] = int(val)
+        self.write_requests['P_GAIN'] = int(val)
         self.request_lock.release()
 
     @property
@@ -969,7 +988,7 @@ class PIDExtra(object):
     def i_gain_raw(self, val):
         limits.checkbounds('i_gain', 0, 254, int(val))
         self.request_lock.acquire()
-        self.requests['I_GAIN'] = int(val)
+        self.write_requests['I_GAIN'] = int(val)
         self.request_lock.release()
 
     @property
@@ -988,7 +1007,7 @@ class PIDExtra(object):
     def d_gain_raw(self, val):
         limits.checkbounds('d_gain', 0, 254, int(val))
         self.request_lock.acquire()
-        self.requests['D_GAIN'] = int(val)
+        self.write_requests['D_GAIN'] = int(val)
         self.request_lock.release()
 
     @property
@@ -1011,7 +1030,7 @@ class PIDExtra(object):
         limits.checkbounds('i_gain', 0, 254, int(val[1]))
         limits.checkbounds('p_gain', 0, 254, int(val[2]))
         self.request_lock.acquire()
-        self.requests['GAINS'] = (int(val[0]), int(val[1]), int(val[2]))
+        self.write_requests['GAINS'] = (int(val[0]), int(val[1]), int(val[2]))
         self.request_lock.release()
 
 
@@ -1048,7 +1067,7 @@ class CurrentExtra(object):
     def current_raw(self, val):
         limits.checkbounds('current raw', 0, 4095, int(val))
         self.request_lock.acquire()
-        self.requests['CURRENT'] = int(val)
+        self.write_requests['CURRENT'] = int(val)
         self.request_lock.release()
 
 
@@ -1075,7 +1094,7 @@ class TorqueModeExtra(object):
     def torque_control_mode_enable_raw(self, val):
         limits.checkoneof('torque_control_mode_enable raw', [0, 1], int(val))
         self.request_lock.acquire()
-        self.requests['TORQUE_CONTROL_MODE_ENABLE'] = int(val)
+        self.write_requests['TORQUE_CONTROL_MODE_ENABLE'] = int(val)
         self.request_lock.release()
 
     # torque_mode alias for torque_control_mode_enable
@@ -1115,7 +1134,7 @@ class TorqueModeExtra(object):
     def goal_torque_raw(self):
         limits.checkbounds('goal torque raw', 0, 2047, int(val))
         self.request_lock.acquire()
-        self.requests['GOAL_TORQUE'] = int(val)
+        self.write_requests['GOAL_TORQUE'] = int(val)
         self.request_lock.release()
 
 
@@ -1140,7 +1159,7 @@ class GoalAccelerationExtra(object):
     def goal_acceleration_raw(self):
         limits.checkbounds('goal acceleration raw', 0, 254, int(val))
         self.request_lock.acquire()
-        self.requests['GOAL_ACCELERATION'] = int(val)
+        self.write_requests['GOAL_ACCELERATION'] = int(val)
         self.request_lock.release()
 
 
