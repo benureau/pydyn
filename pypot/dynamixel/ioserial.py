@@ -377,6 +377,7 @@ class DynamixelIOSerial:
             mmem[protocol.DXL_PRESENT_SPEED]    = speed
             mmem[protocol.DXL_PRESENT_LOAD]     = load
 
+
     def set_sync_positions_speeds_torque_limits(self, id_pos_speed_torque_tuples):
         """
             Synchronizes the setting of the specified positions, speeds and torque limits (in their respective units) to the motors.
@@ -390,7 +391,6 @@ class DynamixelIOSerial:
 
             """
 
-
         self._send_sync_write_packet('GOAL_POS_SPEED_TORQUE', id_pos_speed_torque_tuples)
 
         for motor_id, pos, speed, torque in id_pos_speed_torque_tuples:
@@ -398,6 +398,17 @@ class DynamixelIOSerial:
             mmem[protocol.DXL_GOAL_POSITION] = pos
             mmem[protocol.DXL_MOVING_SPEED]  = speed
             mmem[protocol.DXL_TORQUE_LIMIT]  = torque
+
+    def set_sync_speeds_torque_limits(self, id_speed_torque_tuples):
+        """See doc for set_sync_positions_speeds_torque_limits, and remove position of it."""
+
+        self._send_sync_write_packet('SPEED_TORQUE', id_speed_torque_tuples)
+
+        for motor_id, speed, torque in id_speed_torque_tuples:
+            mmem = self.motormems[motor_id]
+            mmem[protocol.DXL_MOVING_SPEED]  = speed
+            mmem[protocol.DXL_TORQUE_LIMIT]  = torque
+
 
 
     # MARK - Special cases

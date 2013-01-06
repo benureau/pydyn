@@ -10,7 +10,7 @@ import io
 import motor
 import memory
 
-debug = False
+debug = True
 
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX")
 
@@ -214,18 +214,31 @@ class DynamixelController(threading.Thread):
     def _handle_all_pst_requests(self, all_pst_requests):
         # Handling pst requests (if need be)
         sync_pst = []
+        sync_st  = []
         for m, pst_requests in zip(self.motors, all_pst_requests):
-            if debug and len(pst_requests) > 0:
-                print 'controller: pst_request:', pst_requests
-            if not m.compliant and len(pst_requests) > 0:
-                sync_pst.append((m.id,
-                                 pst_requests.get('GOAL_POSITION', m.goal_position_raw),
-                                 pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
-                                 pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
+
+            if len(pst_requests) > 0:
+                if debug:
+                    print 'controller: pst_request:', pst_requests
+
+                if not m.compliant:
+                    sync_pst.append((m.id,
+                                     pst_requests.get('GOAL_POSITION', m.goal_position_raw),
+                                     pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
+                                     pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
+
+                if m.compliant and m.mode == 'joint':
+                    if 'MOVING_SPEED' in pst_requests or 'TORQUE_LIMIT' in pst_requests:
+                        sync_st.append((m.id, pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
+                                              pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
 
 
         if len(sync_pst) > 0:
             self.io.set_sync_positions_speeds_torque_limits(sync_pst)
+
+        if len(sync_st) > 0:
+            self.io.set_sync_speeds_torque_limits(sync_st)
+
 
     def _handle_special_requests(self, all_special_requests):
         # handling the resquests

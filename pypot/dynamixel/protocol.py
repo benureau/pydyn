@@ -61,6 +61,8 @@ DXL_CONTROLS = {
     'MOVING_SPEED':               {'address': 0x20, '# data': 1, 'size': 2, 'ram': True},
     'TORQUE_LIMIT':               {'address': 0x22, '# data': 1, 'size': 2, 'ram': True},
     'GOAL_POS_SPEED_TORQUE':      {'address': 0x1E, '# data': 3, 'size': 2, 'ram': True, 'components': ['GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT']},
+    'SPEED_TORQUE':               {'address': 0x20, '# data': 2, 'size': 2, 'ram': True, 'components': ['MOVING_SPEED', 'TORQUE_LIMIT']},
+
 
     'PRESENT_POSITION':           {'address': 0x24, '# data': 1, 'size': 2, 'ram': True},
     'PRESENT_POS_SPEED_LOAD':     {'address': 0x24, '# data': 3, 'size': 2, 'ram': True, 'components': ['PRESENT_POSITION', 'PRESENT_SPEED', 'PRESENT_LOAD']},
