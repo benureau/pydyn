@@ -197,6 +197,17 @@ class DynamixelIOSerial:
 
         return mmem
 
+    def read_ram(self, motor_id):
+        mmem    = self.motormems[motor_id]
+        raw_ram = self.read(motor_id, 24, mmem.last_addr() - 24 + 1)
+        mmem._process_raw_ram(raw_ram)
+
+        extra_addr = mmem.extra_addr()
+        if extra_addr is not None:
+            addr, size = extra_addr
+            mmem.process_extra(raw_ram[addr, addr+size])
+
+
     # MARK Parameter based read/write
 
     def set(self, motor_id, control_name, value):
@@ -425,7 +436,7 @@ class DynamixelIOSerial:
             :raises: ValueError when the id is already taken
 
             """
-        if self.ping(new_motor_id):
+        if motor_id != new_motor_id and self.ping(new_motor_id):
             raise ValueError('id %d already used' % (new_motor_id))
 
         self._send_write_packet(motor_id, 'ID', new_motor_id)

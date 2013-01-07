@@ -9,6 +9,7 @@ from .. import color
 import io
 import motor
 import memory
+import protocol
 
 debug = False
 
@@ -146,7 +147,8 @@ class DynamixelController(threading.Thread):
 
     # MARK Handling Requests and Updating
 
-    def _reading_present_posspeedload(self):
+    def _reading_motors(self):
+        """ Read the motors for position, speed and load """
 
         if self.type == 'USB2AX':
             positions = self.io.get_sync_positions([m.id for m in self.motors])
@@ -281,7 +283,7 @@ class DynamixelController(threading.Thread):
             start = time.time()
 
             # reading present position, present speed, present load
-            self._reading_present_posspeedload()
+            self._reading_motors()
 
             # Dividing requests
             all_pst_requests, all_special_requests, all_other_requests, all_read_requests = self._divide_requests()
@@ -312,3 +314,30 @@ class DynamixelController(threading.Thread):
         else:
             return len_fps/(self.fps_history[len_fps-1] - self.fps_history[1])
 
+
+class DynamixelControllerFullRam(DynamixelController):
+    """ Controller that reads the entire ram of the motor at every step """
+
+    def _reading_motors(self):
+        """ Read the motors entire RAM
+
+        Note that this make USB2AX controllers sync read capability useless.
+        """
+
+        for m in self.motors:
+            try:
+                try:
+                    self.io.read_ram(m.id)
+                except ValueError as ve:
+                    print 'warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0])
+
+            except io.DynamixelCommunicationError as e:
+                print e
+                print 'warning: communication error on motor {}'.format(m.id)
+
+    def _handle_all_read_requests(self, all_read_requests):
+        """ Requests for reading ram are ignored in this class, since ram is continously updated. """
+        for m, requests in zip(self.motors, all_read_requests):
+            for request_name, value in requests.items():
+                if not protocol.REG_RAM(request_name):
+                    self.io.get(m.id, request_name)
