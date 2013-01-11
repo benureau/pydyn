@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 import glob
 
 from .. import color
@@ -6,11 +7,14 @@ from .. import color
 import pydyn.dynamixel.io
 from pydyn.dynamixel.controller import DynamixelController, DynamixelControllerFullRam
 
+
 vrep_mode = False
+
 
 def enable_vrep():
     global vrep_mode
     vrep_mode = True
+
 
 def get_available_ports():
     """
@@ -33,7 +37,8 @@ def get_available_ports():
 
     raise NotImplementedError('Unknown operating system: %s' % (op_system))
 
-def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = None, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984, full_ram = False):
+
+def create_controller(connection_type = "USB2DXL", verbose = False, motor_range = None, timeout = None, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984, full_ram = False):
     """ Return a controller outfitted with all motor found. """
 
     if timeout is None:
@@ -47,16 +52,16 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
 
     if vrep_mode:
         if verbose:
-            print 'Loading the robot from V-Rep...'
+            print('Loading the robot from V-Rep...')
         assert pydyn.dynamixel.io.vrep_available is True
         pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOVRep
         port = ipport
         if verbose:
-            print '  [{} OK {}] Trying port : {}{}:{}{}'.format(color.green, color.end, color.bold, ip, port, color.end)
+            print('  [{} OK {}] Trying port : {}{}:{}{}'.format(color.green, color.end, color.bold, ip, port, color.end))
 
     else:
         if verbose:
-            print 'Loading the robot from serial bus...'
+            print('Loading the robot from serial bus...')
         assert pydyn.dynamixel.io.serial_available is True
         pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOSerial
         ports = get_available_ports()
@@ -68,7 +73,7 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
 
         port = ports[0]
         if verbose:
-            print '  [{} OK {}] Port found : {}{}{}'.format(color.green, color.end, color.bold, port, color.end)
+            print('  [{} OK {}] Port found : {}{}{}'.format(color.green, color.end, color.bold, port, color.end))
 
     if full_ram:
         ctrl = DynamixelControllerFullRam(port, connection_type, timeout = timeout, baudrate = baudrate, ip = ip)
@@ -82,7 +87,7 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     # if verbose:
     #     print '  Scanning motors ids between {} and {}'.format(motor_range[0], motor_range[-1])
 
-    motor_ids = ctrl.discover_motors(range(motor_range[0],motor_range[-1]+1), verbose = verbose)
+    motor_ids = ctrl.discover_motors(range(motor_range[0], motor_range[-1] + 1), verbose = verbose)
     if verbose:
         print '  [{} OK {}] Scanning motor ids between {} and {}             '.format(color.green,
                 color.end, motor_range[0], motor_range[-1])

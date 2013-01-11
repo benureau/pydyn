@@ -1181,8 +1181,10 @@ class MXMotor(DynamixelMotor, PIDExtra, CurrentExtra, GoalAccelerationExtra):
 
 class MX28Motor(MXMotor):
     pass
+
 class MX64Motor(MXMotor):
     pass
+
 class MX106Motor(MXMotor):
     pass
 
