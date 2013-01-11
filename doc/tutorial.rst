@@ -1,8 +1,0 @@
-Tutorial
-========
-
-Installation
-------------
-
-Setting Up
-----------
