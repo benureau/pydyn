@@ -4,7 +4,7 @@ import array
 import serial
 import threading
 
-from pypot.utils import flatten_list, reshape_list
+from pydyn.utils import flatten_list, reshape_list
 
 import protocol
 import packet
@@ -69,10 +69,10 @@ class DynamixelIOSerial:
             .. warning:: The port can only be accessed by a single DynamixelIO instance.
 
             :param string port: the serial port to use (e.g. Unix (/dev/tty...), Windows (COM...)).
-            :param int baudrate: default for new motors: 57600, for PyPot motors: 1000000
+            :param int baudrate: default for new motors: 57600, for PyDyn motors: 1000000
             :param float timeout: read timeout in seconds
             :param blacklisted_alarms: list of blacklisted alarms that will not be triggered as :py:exc:`DynamixelMotorError`
-            :type blacklisted_alarms: list of elements of :py:const:`~pypot.dynamixel.protocol.DXL_ALARMS`
+            :type blacklisted_alarms: list of elements of :py:const:`~pydyn.dynamixel.protocol.DXL_ALARMS`
 
             :raises: IOError (when port is already used)
 

@@ -1,7 +1,7 @@
-import debugenv # only to debug local (not installed) pypot version
+import debugenv # only to debug local (not installed) pydyn version
 
 import sys, time
-import pypot.dynamixel as dyn
+import pydyn.dynamixel as dyn
 
 if len(sys.argv) == 2:
     min_id, max_id = int(sys.argv[1]), int(sys.argv[1])

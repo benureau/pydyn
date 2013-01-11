@@ -1,4 +1,4 @@
-:mod:`pypot` -- Reference API
+:mod:`pydyn` -- Reference API
 ==============================
 
 .. toctree::

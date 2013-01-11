@@ -1,7 +1,7 @@
-import debugenv # only to debug local (not installed) pypot version
+import debugenv # only to debug local (not installed) pydyn version
 
 import sys, time
-import pypot.dynamixel as dyn
+import pydyn.dynamixel as dyn
 
 ctrl = dyn.create_controller(verbose = True, motor_range = [11, 16], full_ram = True)
 

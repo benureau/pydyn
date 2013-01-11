@@ -75,7 +75,7 @@ class DynamixelMotor(object):
     def request_read(self, name):
         """ Request a specific value of the motor to be refreshed
 
-            :arg name:  the protocol name of the value. See the :py:mod:`protocol <pypot.dynamixel.protocol>` module for the list of values.
+            :arg name:  the protocol name of the value. See the :py:mod:`protocol <pydyn.dynamixel.protocol>` module for the list of values.
         """
 
         name = name.lower()
@@ -93,7 +93,7 @@ class DynamixelMotor(object):
     def request_write(self, name, value):
         """ Request a specific write on the motor
 
-            :arg name:  the protocol name of the value. See the :py:mod:`protocol <pypot.dynamixel.protocol>` module for the list of values.
+            :arg name:  the protocol name of the value. See the :py:mod:`protocol <pydyn.dynamixel.protocol>` module for the list of values.
         """
 
         name = name.lower()

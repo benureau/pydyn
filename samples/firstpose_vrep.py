@@ -1,12 +1,12 @@
-import debugenv # only to debug local (not installed) pypot version
+import debugenv # only to debug local (not installed) pydyn version
 
 import time
 
-import pypot
-import pypot.robot
-pypot.enable_vrep()
+import pydyn
+import pydyn.robot
+pydyn.enable_vrep()
 
-robot = pypot.robot.Robot(motor_range = [1, 6])
+robot = pydyn.robot.Robot(motor_range = [1, 6])
 
 robot.compliant = False
 robot.speed = 30

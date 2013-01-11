@@ -3,8 +3,8 @@ import glob
 
 from .. import color
 
-import pypot.dynamixel.io
-from pypot.dynamixel.controller import DynamixelController, DynamixelControllerFullRam
+import pydyn.dynamixel.io
+from pydyn.dynamixel.controller import DynamixelController, DynamixelControllerFullRam
 
 vrep_mode = False
 
@@ -48,8 +48,8 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     if vrep_mode:
         if verbose:
             print 'Loading the robot from V-Rep...'
-        assert pypot.dynamixel.io.vrep_available is True
-        pypot.dynamixel.io.DynamixelIO = pypot.dynamixel.io.DynamixelIOVRep
+        assert pydyn.dynamixel.io.vrep_available is True
+        pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOVRep
         port = ipport
         if verbose:
             print '  [{} OK {}] Trying port : {}{}:{}{}'.format(color.green, color.end, color.bold, ip, port, color.end)
@@ -57,8 +57,8 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
     else:
         if verbose:
             print 'Loading the robot from serial bus...'
-        assert pypot.dynamixel.io.serial_available is True
-        pypot.dynamixel.io.DynamixelIO = pypot.dynamixel.io.DynamixelIOSerial
+        assert pydyn.dynamixel.io.serial_available is True
+        pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOSerial
         ports = get_available_ports()
         if not ports:
             if verbose:
