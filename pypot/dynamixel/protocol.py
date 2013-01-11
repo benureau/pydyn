@@ -2,11 +2,11 @@
 # http://support.robotis.com/en/product/dxl_main.htm
 
 DXL_INSTRUCTIONS = {
-    'PING': 0x01,
-    'READ_DATA': 0x02,
+    'PING'      : 0x01,
+    'READ_DATA' : 0x02,
     'WRITE_DATA': 0x03,
     'SYNC_WRITE': 0x83,
-    'SYNC_READ': 0x84,
+    'SYNC_READ' : 0x84,
 }
 
 DXL_BROADCAST = 0xFE
@@ -19,65 +19,68 @@ DXL_CHECKSUM_ERROR      = 4
 DXL_OVERLOAD_ERROR      = 5
 DXL_INSTRUCTION_ERROR   = 6
 
+
 DXL_CONTROLS = {
     # EEPROM
-    'MODEL_NUMBER':               {'address': 0x00, '# data': 1, 'size': 2},
-    'VERSION':                    {'address': 0x02, '# data': 1, 'size': 1},
-    'ID':                         {'address': 0x03, '# data': 1, 'size': 1},
-    'BAUD_RATE':                  {'address': 0x04, '# data': 1, 'size': 1},
-    'RETURN_DELAY_TIME':          {'address': 0x05, '# data': 1, 'size': 1},
-    'CW_ANGLE_LIMIT':             {'address': 0x06, '# data': 1, 'size': 2},
-    'CCW_ANGLE_LIMIT':            {'address': 0x08, '# data': 1, 'size': 2},
-    'ANGLE_LIMITS':               {'address': 0x06, '# data': 2, 'size': 2, 'components': ['CW_ANGLE_LIMIT', 'CCW_ANGLE_LIMIT']},
-    'DRIVE_MODE':                 {'address': 0x0A, '# data': 1, 'size': 1}, # EX only
-    'HIGHEST_LIMIT_TEMPERATURE':  {'address': 0x0B, '# data': 1, 'size': 1},
-    'LOWEST_LIMIT_VOLTAGE':       {'address': 0x0C, '# data': 1, 'size': 1},
-    'HIGHEST_LIMIT_VOLTAGE':      {'address': 0x0D, '# data': 1, 'size': 1},
-    'VOLTAGE_LIMITS':             {'address': 0x0C, '# data': 2, 'size': 1, 'components': ['LOWEST_LIMIT_VOLTAGE', 'HIGHEST_LIMIT_VOLTAGE']},
-    'MAX_TORQUE':                 {'address': 0x0E, '# data': 1, 'size': 2},
-    'STATUS_RETURN_LEVEL':        {'address': 0x10, '# data': 1, 'size': 1},
-    'ALARM_LED':                  {'address': 0x11, '# data': 1, 'size': 1},
-    'ALARM_SHUTDOWN':             {'address': 0x12, '# data': 1, 'size': 1},
+    'MODEL_NUMBER':               {'address': 0x00, '# data': 1, 'size': 2, 'ram': False},
+    'VERSION':                    {'address': 0x02, '# data': 1, 'size': 1, 'ram': False},
+    'ID':                         {'address': 0x03, '# data': 1, 'size': 1, 'ram': False},
+    'BAUD_RATE':                  {'address': 0x04, '# data': 1, 'size': 1, 'ram': False},
+    'RETURN_DELAY_TIME':          {'address': 0x05, '# data': 1, 'size': 1, 'ram': False},
+    'CW_ANGLE_LIMIT':             {'address': 0x06, '# data': 1, 'size': 2, 'ram': False},
+    'CCW_ANGLE_LIMIT':            {'address': 0x08, '# data': 1, 'size': 2, 'ram': False},
+    'ANGLE_LIMITS':               {'address': 0x06, '# data': 2, 'size': 2, 'ram': False, 'components': ['CW_ANGLE_LIMIT', 'CCW_ANGLE_LIMIT']},
+    'DRIVE_MODE':                 {'address': 0x0A, '# data': 1, 'size': 1, 'ram': False}, # EX only
+    'HIGHEST_LIMIT_TEMPERATURE':  {'address': 0x0B, '# data': 1, 'size': 1, 'ram': False},
+    'LOWEST_LIMIT_VOLTAGE':       {'address': 0x0C, '# data': 1, 'size': 1, 'ram': False},
+    'HIGHEST_LIMIT_VOLTAGE':      {'address': 0x0D, '# data': 1, 'size': 1, 'ram': False},
+    'VOLTAGE_LIMITS':             {'address': 0x0C, '# data': 2, 'size': 1, 'ram': False, 'components': ['LOWEST_LIMIT_VOLTAGE', 'HIGHEST_LIMIT_VOLTAGE']},
+    'MAX_TORQUE':                 {'address': 0x0E, '# data': 1, 'size': 2, 'ram': False},
+    'STATUS_RETURN_LEVEL':        {'address': 0x10, '# data': 1, 'size': 1, 'ram': False},
+    'ALARM_LED':                  {'address': 0x11, '# data': 1, 'size': 1, 'ram': False},
+    'ALARM_SHUTDOWN':             {'address': 0x12, '# data': 1, 'size': 1, 'ram': False},
 
     # RAM
-    'TORQUE_ENABLE':              {'address': 0x18, '# data': 1, 'size': 1},
-    'LED':                        {'address': 0x19, '# data': 1, 'size': 1},
+    'TORQUE_ENABLE':              {'address': 0x18, '# data': 1, 'size': 1, 'ram': True},
+    'LED':                        {'address': 0x19, '# data': 1, 'size': 1, 'ram': True},
 
     # MX series
-    'D_GAIN':                     {'address': 0x1A, '# data': 1, 'size': 1},
-    'I_GAIN':                     {'address': 0x1B, '# data': 1, 'size': 1},
-    'P_GAIN':                     {'address': 0x1C, '# data': 1, 'size': 1},
-    'GAINS':                      {'address': 0x1A, '# data': 3, 'size': 1, 'components': ['D_GAINS', 'I_GAINS', 'P_GAINS']},
+    'D_GAIN':                     {'address': 0x1A, '# data': 1, 'size': 1, 'ram': True},
+    'I_GAIN':                     {'address': 0x1B, '# data': 1, 'size': 1, 'ram': True},
+    'P_GAIN':                     {'address': 0x1C, '# data': 1, 'size': 1, 'ram': True},
+    'GAINS':                      {'address': 0x1A, '# data': 3, 'size': 1, 'ram': True, 'components': ['D_GAINS', 'I_GAINS', 'P_GAINS']},
     # AX RX series
-    'CW_COMPLIANCE_MARGIN':       {'address': 0x1A, '# data': 1, 'size': 1},
-    'CCW_COMPLIANCE_MARGIN':      {'address': 0x1B, '# data': 1, 'size': 1},
-    'COMPLIANCE_MARGINS':         {'address': 0x1A, '# data': 2, 'size': 1, 'components': ['CW_COMPLIANCE_MARGIN', 'CCW_COMPLIANCE_MARGIN']},
-    'CW_COMPLIANCE_SLOPE':        {'address': 0x1C, '# data': 1, 'size': 1},
-    'CCW_COMPLIANCE_SLOPE':       {'address': 0x1D, '# data': 1, 'size': 1},
-    'COMPLIANCE_SLOPES':          {'address': 0x1C, '# data': 2, 'size': 1, 'components': ['CW_COMPLIANCE_SLOPE', 'CCW_COMPLIANCE_SLOPE']},
+    'CW_COMPLIANCE_MARGIN':       {'address': 0x1A, '# data': 1, 'size': 1, 'ram': True},
+    'CCW_COMPLIANCE_MARGIN':      {'address': 0x1B, '# data': 1, 'size': 1, 'ram': True},
+    'COMPLIANCE_MARGINS':         {'address': 0x1A, '# data': 2, 'size': 1, 'ram': True, 'components': ['CW_COMPLIANCE_MARGIN', 'CCW_COMPLIANCE_MARGIN']},
+    'CW_COMPLIANCE_SLOPE':        {'address': 0x1C, '# data': 1, 'size': 1, 'ram': True},
+    'CCW_COMPLIANCE_SLOPE':       {'address': 0x1D, '# data': 1, 'size': 1, 'ram': True},
+    'COMPLIANCE_SLOPES':          {'address': 0x1C, '# data': 2, 'size': 1, 'ram': True, 'components': ['CW_COMPLIANCE_SLOPE', 'CCW_COMPLIANCE_SLOPE']},
 
-    'GOAL_POSITION':              {'address': 0x1E, '# data': 1, 'size': 2},
-    'MOVING_SPEED':               {'address': 0x20, '# data': 1, 'size': 2},
-    'TORQUE_LIMIT':               {'address': 0x22, '# data': 1, 'size': 2},
-    'GOAL_POS_SPEED_TORQUE':      {'address': 0x1E, '# data': 3, 'size': 2, 'components': ['GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT']},
+    'GOAL_POSITION':              {'address': 0x1E, '# data': 1, 'size': 2, 'ram': True},
+    'MOVING_SPEED':               {'address': 0x20, '# data': 1, 'size': 2, 'ram': True},
+    'TORQUE_LIMIT':               {'address': 0x22, '# data': 1, 'size': 2, 'ram': True},
+    'GOAL_POS_SPEED_TORQUE':      {'address': 0x1E, '# data': 3, 'size': 2, 'ram': True, 'components': ['GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT']},
+    'SPEED_TORQUE':               {'address': 0x20, '# data': 2, 'size': 2, 'ram': True, 'components': ['MOVING_SPEED', 'TORQUE_LIMIT']},
 
-    'PRESENT_POSITION':           {'address': 0x24, '# data': 1, 'size': 2},
-    'PRESENT_POS_SPEED_LOAD':     {'address': 0x24, '# data': 3, 'size': 2, 'components': ['PRESENT_POSITION', 'PRESENT_SPEED', 'PRESENT_LOAD']},
-    'PRESENT_SPEED':              {'address': 0x26, '# data': 1, 'size': 2},
-    'PRESENT_LOAD':               {'address': 0x28, '# data': 1, 'size': 2},
-    'PRESENT_VOLTAGE':            {'address': 0x2A, '# data': 1, 'size': 1},
-    'PRESENT_TEMPERATURE':        {'address': 0x2B, '# data': 1, 'size': 1},
-    'REGISTERED':                 {'address': 0x2C, '# data': 1, 'size': 1},
-    'MOVING':                     {'address': 0x2E, '# data': 1, 'size': 1},
-    'LOCK':                       {'address': 0x2F, '# data': 1, 'size': 1},
-    'PUNCH':                      {'address': 0x30, '# data': 1, 'size': 2},
 
-    'SENSED_CURRENT':             {'address': 0x38, '# data': 1, 'size': 2}, # EX only
-    'CURRENT':                    {'address': 0x44, '# data': 1, 'size': 2}, # MX64 and MX106
+    'PRESENT_POSITION':           {'address': 0x24, '# data': 1, 'size': 2, 'ram': True},
+    'PRESENT_POS_SPEED_LOAD':     {'address': 0x24, '# data': 3, 'size': 2, 'ram': True, 'components': ['PRESENT_POSITION', 'PRESENT_SPEED', 'PRESENT_LOAD']},
+    'PRESENT_SPEED':              {'address': 0x26, '# data': 1, 'size': 2, 'ram': True},
+    'PRESENT_LOAD':               {'address': 0x28, '# data': 1, 'size': 2, 'ram': True},
+    'PRESENT_VOLTAGE':            {'address': 0x2A, '# data': 1, 'size': 1, 'ram': True},
+    'PRESENT_TEMPERATURE':        {'address': 0x2B, '# data': 1, 'size': 1, 'ram': True},
+    'REGISTERED':                 {'address': 0x2C, '# data': 1, 'size': 1, 'ram': True},
+    'MOVING':                     {'address': 0x2E, '# data': 1, 'size': 1, 'ram': True},
+    'LOCK':                       {'address': 0x2F, '# data': 1, 'size': 1, 'ram': True},
+    'PUNCH':                      {'address': 0x30, '# data': 1, 'size': 2, 'ram': True},
 
-    'TORQUE_CONTROL_MODE_ENABLE': {'address': 0x46, '# data': 1, 'size': 1}, # MX28 and MX106
-    'GOAL_TORQUE':                {'address': 0x47, '# data': 1, 'size': 2}, # MX28 and MX106
-    'GOAL_ACCELERATION':          {'address': 0x49, '# data': 1, 'size': 1}, # MX28 and MX106
+    'SENSED_CURRENT':             {'address': 0x38, '# data': 1, 'size': 2, 'ram': True}, # EX only
+    'CURRENT':                    {'address': 0x44, '# data': 1, 'size': 2, 'ram': True}, # MX64 and MX106
+
+    'TORQUE_CONTROL_MODE_ENABLE': {'address': 0x46, '# data': 1, 'size': 1, 'ram': True}, # MX28 and MX106
+    'GOAL_TORQUE':                {'address': 0x47, '# data': 1, 'size': 2, 'ram': True}, # MX28 and MX106
+    'GOAL_ACCELERATION':          {'address': 0x49, '# data': 1, 'size': 1, 'ram': True}, # MX28 and MX106
 }
 
 def REG_ADDRESS(control_name):
@@ -94,6 +97,9 @@ def REG_DATA(control_name):
 
 def REG_COMPONENTS(control_name):
     return DXL_CONTROLS[control_name].get('components', None)
+
+def REG_RAM(control_name):
+    return DXL_CONTROLS[control_name]['ram']
 
 
 # EEPROM

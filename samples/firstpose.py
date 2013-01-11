@@ -5,7 +5,7 @@ import time
 import pypot
 import pypot.robot
 
-robot = pypot.robot.Robot(motor_range = [91, 96], timeout = 0.02)
+robot = pypot.robot.Robot(motor_range = [0, 20])
 
 robot.compliant = False
 robot.speed = 30

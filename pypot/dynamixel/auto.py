@@ -4,7 +4,7 @@ import glob
 from .. import color
 
 import pypot.dynamixel.io
-from pypot.dynamixel.controller import DynamixelController
+from pypot.dynamixel.controller import DynamixelController, DynamixelControllerFullRam
 
 vrep_mode = False
 
@@ -33,7 +33,7 @@ def get_available_ports():
 
     raise NotImplementedError('Unknown operating system: %s' % (op_system))
 
-def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = None, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984):
+def create_controller(connection_type="USB2DXL", verbose = False, motor_range = None, timeout = None, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984, full_ram = False):
     """ Return a controller outfitted with all motor found. """
 
     if timeout is None:
@@ -70,7 +70,10 @@ def create_controller(connection_type="USB2DXL", verbose = False, motor_range = 
         if verbose:
             print '  [{} OK {}] Port found : {}{}{}'.format(color.green, color.end, color.bold, port, color.end)
 
-    ctrl = DynamixelController(port, connection_type, timeout = timeout, baudrate = baudrate, ip = ip)
+    if full_ram:
+        ctrl = DynamixelControllerFullRam(port, connection_type, timeout = timeout, baudrate = baudrate, ip = ip)
+    else:
+        ctrl = DynamixelController(port, connection_type, timeout = timeout, baudrate = baudrate, ip = ip)
     if verbose:
         print '  [{} OK {}] Connexion established : {}'.format(color.green, color.end, ctrl.io)
 
