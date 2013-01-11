@@ -11,7 +11,6 @@ import motor
 import memory
 import protocol
 
-debug = False
 
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX")
 
@@ -26,7 +25,7 @@ class DynamixelController(threading.Thread):
         It does not access the content of the motors memory.
     """
 
-    def __init__(self, port, connection_type, timeout = 0.05, freq = 50, baudrate = 1000000, ip = '127.0.0.1'):
+    def __init__(self, port, connection_type, timeout = 0.05, freq = 50, baudrate = 1000000, ip = '127.0.0.1', debug = False):
         """
             :param freq  the target frequence for refreshing values in Hz.
         """
@@ -34,6 +33,7 @@ class DynamixelController(threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
 
+        self.debug = debug
         self.freq = freq
         self.fps_history = deque(maxlen = 3*freq)
         self.framecount = 0
@@ -225,7 +225,7 @@ class DynamixelController(threading.Thread):
         for m, pst_requests in zip(self.motors, all_pst_requests):
 
             if len(pst_requests) > 0:
-                if debug:
+                if self.debug:
                     print 'controller: pst_request:', pst_requests
 
                 if not m.compliant:
