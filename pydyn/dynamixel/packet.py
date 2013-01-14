@@ -294,9 +294,12 @@ class DynamixelStatusPacket(DynamixelPacket):
 
         data = map(ord, list(bytes)[4:])
 
-        error = data[0]
-        parameters = data[1:-1]
-        checksum = data[-1]
+        try:
+            error = data[0]
+            parameters = data[1:-1]
+            checksum = data[-1]
+        except IndexError:
+            raise DynamixelInconsistentPacketError('Packet received with an inconsistent length', bytes)
 
         if header.packet_length != len(parameters) + 2:
             raise DynamixelInconsistentPacketError('Packet received with an inconsistent length', bytes)
