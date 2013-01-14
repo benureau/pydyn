@@ -3,10 +3,10 @@ import sys
 import glob
 
 from .. import color
+from .. import sinterface
 
 import pydyn.dynamixel.io
 from pydyn.dynamixel.controller import DynamixelController, DynamixelControllerFullRam
-
 
 vrep_mode = False
 
@@ -38,7 +38,7 @@ def get_available_ports():
     raise NotImplementedError('Unknown operating system: %s' % (op_system))
 
 
-def create_controller(connection_type = "USB2DXL", verbose = False, motor_range = None, timeout = None, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984, full_ram = False, debug = False):
+def create_controller(connection_type = "USB2DXL", verbose = False, motor_range = None, timeout = None, start = True, baudrate = 1000000, ip = '127.0.0.1', ipport = 1984, full_ram = False, debug = False, interface = False, interface_ip = '127.0.0.1', interface_port = 1984):
     """ Return a controller outfitted with all motor found. """
 
     if timeout is None:
@@ -112,5 +112,9 @@ def create_controller(connection_type = "USB2DXL", verbose = False, motor_range 
 
     if start:
         ctrl.start()
+
+    if interface:
+        pydyn.sinterface = sinterface.SInterface(ctrl, ip = interface_ip, port = interface_port)
+        pydyn.sinterface.start()
 
     return ctrl
