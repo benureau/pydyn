@@ -34,10 +34,10 @@ def get_available_ports():
         Returns the available ports found.
 
         The available ports are looked for in the following path depending on the OS:
-            * Linux : /dev/ttyACM* and /dev/ttyUSB*
-            * Mac OS : /dev/tty.usb*
+            * Linux: /dev/ttyACM* and /dev/ttyUSB*
+            * Mac OS: /dev/tty.usb*
 
-        :raises: NotImplementedError if your OS is not one of the currently supported (Linux, Mac OS).
+       :raises: NotImplementedError if your OS is not one of the currently supported (Linux, Mac OS).
 
         """
     op_system = get_os_name()
@@ -76,7 +76,7 @@ def create_controller(connection_type = "USB2DXL",
         pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOVRep
         port = ipport
         if verbose:
-            print(OK + 'Trying port : {}{}:{}{}'.format(color.bold, ip, port, color.end))
+            print(OK + 'Trying port: {}{}:{}{}'.format(color.bold, ip, port, color.end))
 
     else:
         if verbose:
@@ -94,14 +94,14 @@ def create_controller(connection_type = "USB2DXL",
 
         port = ports[0]
         if verbose:
-            print(OK + 'Port found : {}{}{}'.format(color.bold, port, color.end))
+            print(OK + 'Port found: {}{}{}'.format(color.bold, port, color.end))
 
     # Create the controller
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
     ctrl = ctrl_class(port, connection_type, timeout = timeout,
                       baudrate = baudrate, ip = ip, debug = debug)
     if verbose:
-        print(OK + 'Connexion established : {}'.format(
+        print(OK + 'Connexion established: {}'.format(
                 color.green, color.end, ctrl.io))
 
     motor_ids = ctrl.discover_motors(range(min(motor_range),
@@ -109,7 +109,7 @@ def create_controller(connection_type = "USB2DXL",
                                      verbose = verbose)
     if verbose:
         print(OK + 'Scanning motor ids between {} and {}'.format(
-                color.green, color.end, motor_range[0], motor_range[-1]))
+                min(motor_range), max(motor_range)))
 
     if len(motor_ids) == 0:
         print (FAIL + 'No motor found. Verify connections, power, USB '
@@ -117,7 +117,7 @@ def create_controller(connection_type = "USB2DXL",
         return ctrl
     else:
         if verbose:
-            print(OK + 'Motors found : {}'.format(
+            print(OK + 'Motors found: {}'.format(
                     ', '.join('{}{}{}'.format(color.cyan, m_id, color.end)
                               for m_id in motor_ids)))
 
@@ -128,7 +128,7 @@ def create_controller(connection_type = "USB2DXL",
 
     if verbose:
         print(OK + 'Loaded EEPROMs and RAMs.' + 3 * ' ')
-        print(OK + 'Models :'
+        print(OK + 'Models: '
               + ', '.join(["%s%s%s" % (color.bold, m.model, color.end)
                            for m in ctrl.motors]))
 
@@ -136,7 +136,8 @@ def create_controller(connection_type = "USB2DXL",
         ctrl.start()
 
     if interface:
-        pydyn.sinterface = sinterface.SInterface(ctrl, ip = interface_ip, port = interface_port)
+        pydyn.sinterface = sinterface.SInterface(ctrl, ip = interface_ip,
+                                                 port = interface_port)
         pydyn.sinterface.start()
 
     return ctrl
