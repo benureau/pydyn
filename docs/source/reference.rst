@@ -3,4 +3,5 @@
 
 .. toctree::
 
+   controller.rst
    motor.rst

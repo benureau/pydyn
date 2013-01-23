@@ -27,7 +27,13 @@ class DynamixelController(threading.Thread):
 
     def __init__(self, port, connection_type, timeout = 0.05, freq = 50, baudrate = 1000000, ip = '127.0.0.1', debug = False):
         """
-            :param freq  the target frequence for refreshing values in Hz.
+            :arg port:     when using serial, the device port of the connection.
+                             when using V-REP, the ip port of the connection.
+            :arg freq:     the target frequence for refreshing values in Hz.
+            :arg timeout:  the time to wait for a response from the serial port.
+            :arg baudrate: the baudrate of the serial connection. Motor will be detected when they have a matching baudrate.
+            :arg ip:       when using V-REP, the ip to connect to the V-Rep simulation.
+            :arg debug:    if True, displays debug info on the controller behavior.
         """
 
         threading.Thread.__init__(self)
@@ -49,20 +55,26 @@ class DynamixelController(threading.Thread):
         self._ctrllock = threading.Lock() # when running as usual
 
     def wait(self, loops):
+        """ Wait a number of loops. Useful to wait before a change is applied to the motors."""
         if self.is_alive():
             frame = self.framecount
             while(frame + loops >= self.framecount):
                 time.sleep(0.001)
 
     def close(self, immediately = False):
+        """ Close the serial connection
+
+            :arg immediately:  if False, wait two additional loops to purge the last orders
+        """
         if not immediately:
-            self.wait(3)
+            self.wait(2)
         self.io.close()
 
     # freq and period property, to ensure they remain coherent
 
     @property
     def freq(self):
+        """ Target frequence of the loops. """
         return self._freq
 
     @freq.setter
@@ -72,6 +84,7 @@ class DynamixelController(threading.Thread):
 
     @property
     def period(self):
+        """ Same as freq, but inverse. """
         return self._period
 
     @period.setter
@@ -82,16 +95,20 @@ class DynamixelController(threading.Thread):
     # pausing resuming the controller
 
     def pause(self):
+        """ Pause the looping """
         self._ctrllock.acquire()
         if hasattr(self.io, 'sim'):
             self.io.sim.simPauseSimulation()
 
     def resume(self):
+        """ Resume the looping after a pause. """
         if hasattr(self.io, 'sim'):
             self.io.sim.simStartSimulation()
         self._ctrllock.release()
 
     def restart(self):
+        """ Pause and resume the looping """
+        self._ctrllock.acquire()
         if hasattr(self.io, 'sim'):
             self.io.sim.simStopSimulation()
             self.io.sim.simStartSimulation()
@@ -276,6 +293,8 @@ class DynamixelController(threading.Thread):
     def run(self):
         while True:
 
+            self.framecount += 1
+
             self._pinglock.acquire()
             self._ctrllock.acquire()
             self._pinglock.release()
@@ -299,7 +318,6 @@ class DynamixelController(threading.Thread):
 
             end = time.time()
 
-            self.framecount += 1
             self.fps_history.append(end)
             dt = self._period - (end - start)
             if dt > 0:
@@ -307,7 +325,7 @@ class DynamixelController(threading.Thread):
 
     @property
     def fps(self):
-        """FPS is computed over the last 2 seconds"""
+        """ Number of loop per second over the last 2 seconds """
         len_fps = len(self.fps_history)
         if len_fps < 2:
             return 0.0
