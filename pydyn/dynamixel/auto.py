@@ -52,7 +52,6 @@ def get_available_ports():
 
 
 def create_controller(connection_type = "USB2DXL",
-                      verbose = False,
                       motor_range = (0, 253),
                       timeout = None,
                       start = True,
@@ -63,8 +62,30 @@ def create_controller(connection_type = "USB2DXL",
                       debug = False,
                       interface = False,
                       interface_ip = '127.0.0.1',
-                      interface_port = 1984):
-    """ Return a controller outfitted with all motor found. """
+                      interface_port = 1984,
+                      verbose = False,
+                      ):
+    """Guess interface, scans it and configure controller.
+
+    :arg connection_type:
+        name of connection type, see controller for supported connection types
+    :arg iterable motor_range:
+        only motors between min and max are scanned
+    :arg float timeout:
+        timeout (in s), default to OS based value
+    :arg boolean start:
+        whether to start the controller
+    :arg int baudrate:
+        the baudrate of the serial connection. Motor will be detected when
+        they have a matching baudrate.
+    :arg boolean full_ram:
+        default False, whether to load a full RAM controller (see controller).
+    :arg boolean debug:
+        default False whether to display debug messages
+    :arg boolean verbose:
+        whether to display progression messages
+    :return: controller outfitted with all motor found.
+    """
 
     if timeout is None:
         timeout = TIMEOUTS.get(get_os_name(), DEFAULT_TIMEOUT)

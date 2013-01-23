@@ -3,5 +3,6 @@
 
 .. toctree::
 
-   controller.rst
-   motor.rst
+    controller.rst
+    motor.rst
+    auto.rst
