@@ -117,7 +117,8 @@ def create_controller(connection_type = "USB2DXL",
         return ctrl
     else:
         if verbose:
-            print(OK + 'Motors found: {}'.format(
+            print(OK + '{} motor(s) found: {}'.format(
+                    len(motor_ids),
                     ', '.join('{}{}{}'.format(color.cyan, m_id, color.end)
                               for m_id in motor_ids)))
 
