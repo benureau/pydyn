@@ -30,7 +30,7 @@ default_eeprom = [
 
 # A VRep motor is immobile, and its present position is also its target position.
 default_ram = [
-    0,          # Torque enable
+    1,          # Torque enable
     0,          # Led
     0,          # D gain
     0,          # I gain
@@ -290,6 +290,7 @@ class DynamixelIOVRep(object):
 
     def _set_dummy(self, motor_id, value):
         pass
+
     def _get_dummy(self, motor_id):
         pass
 
@@ -466,6 +467,22 @@ class DynamixelIOVRep(object):
             self._get_speed(motor_id)
             self._get_load(motor_id)
 
+    def set_sync_speeds_torque_limits(self, id_speed_torque_tuples):
+        """
+            Synchronizes the setting of the specified speeds and torque limits (in their respective units) to the motors.
+
+            * The speed is expressed in dps (positive values correspond to clockwise).
+            * The torque limit is expressed as a percentage of the maximum torque.
+
+            :param id_speed_torque_tuples: each value must be expressed in its own units.
+            :type id_speed_torque_tuples: list of (motor id, speed, torque)
+
+            """
+
+        for motor_id, speed, torque in id_speed_torque_tuples:
+            self._set_speed(motor_id, speed)
+            self._set_torque_limit(motor_id, torque)
+
     def set_sync_positions_speeds_torque_limits(self, id_pos_speed_torque_tuples):
         """
             Synchronizes the setting of the specified positions, speeds and torque limits (in their respective units) to the motors.
@@ -481,8 +498,8 @@ class DynamixelIOVRep(object):
 
         for motor_id, pos, speed, torque in id_pos_speed_torque_tuples:
             self._set_position(motor_id, pos)
-            self._set_speed(motor_id, speeds)
-            self._set_torque_limitx(motor_id, torque)
+            self._set_speed(motor_id, speed)
+            self._set_torque_limit(motor_id, torque)
 
 
     # MARK - Special cases

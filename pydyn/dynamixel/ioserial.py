@@ -61,7 +61,6 @@ class DynamixelIOSerial:
     ###                       communication fails, our memory does not contain bogus
     ###                       data.
 
-
     def __init__(self, port, baudrate=1000000, timeout=1.0, blacklisted_alarms=(), **kwargs):
         """
             At instanciation, it opens the serial port and sets the communication parameters.

@@ -62,7 +62,7 @@ def create_controller(connection_type = "USB2DXL",
                       debug = False,
                       interface = False,
                       interface_ip = '127.0.0.1',
-                      interface_port = 1984,
+                      interface_port = 31415,
                       verbose = False,
                       ):
     """Guess interface, scans it and configure controller.
