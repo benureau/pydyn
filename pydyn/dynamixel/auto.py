@@ -56,6 +56,7 @@ def create_controller(connection_type = "USB2DXL",
                       timeout = None,
                       start = True,
                       baudrate = 1000000,
+                      usb_device = None,
                       ip = '127.0.0.1',
                       ipport = 1984,
                       full_ram = False,
@@ -78,6 +79,8 @@ def create_controller(connection_type = "USB2DXL",
     :arg int baudrate:
         the baudrate of the serial connection. Motor will be detected when
         they have a matching baudrate.
+    :arg string usb_device:
+        path to the usb device to use
     :arg boolean full_ram:
         default False, whether to load a full RAM controller (see controller).
     :arg boolean debug:
@@ -104,16 +107,17 @@ def create_controller(connection_type = "USB2DXL",
             print('Loading the robot from serial bus...')
         assert pydyn.dynamixel.io.serial_available is True
         pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOSerial
-        ports = get_available_ports()
-        if not ports:
-            if verbose:
-                print(FAIL + 'No standart port found. If your port has'
-                      ' a funny name, you might want to specify it '
-                      'explicetly.')
-            print 'Error; exiting.'
-            exit(1)
-
-        port = ports[0]
+        port = usb_device
+        if port is None:
+            ports = get_available_ports()
+            if not ports:
+                if verbose:
+                    print(FAIL + 'No standart port found. If your port has'
+                        ' a funny name, you might want to specify it '
+                        'explicetly.')
+                print 'Error; exiting.'
+                exit(1)
+            port = ports[0]
         if verbose:
             print(OK + 'Port found: {}{}{}'.format(color.bold, port, color.end))
 
