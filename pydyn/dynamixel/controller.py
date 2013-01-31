@@ -136,8 +136,9 @@ class DynamixelController(threading.Thread):
 
     def load_motors(self, motor_ids):
         #TODO: check for double motors
-        for motor_id in motor_ids:
-            mmem = self.io.create(motor_id)
+        mmems = self.io.create(motor_ids)
+
+        for mmem in mmems:
             m = DynamixelController.motormodel[mmem.model](mmem)
             self.motors.append(m)
 

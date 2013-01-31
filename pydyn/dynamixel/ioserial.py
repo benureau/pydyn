@@ -168,9 +168,9 @@ class DynamixelIOSerial:
         return status_packet.parameters
 
 
-    def create(self, motor_id):
+    def create(self, motor_ids):
         """
-            Load the motor memory.
+            Load the motors memory.
 
             :param list ids, the ids to create.
             :return: instances of DynamixelMemory
@@ -179,22 +179,26 @@ class DynamixelIOSerial:
             .. note:: if a memory already exist, it is recreated anyway.
             """
 
-        # reading eeprom, ram
-        raw_eeprom = self.read(motor_id, 0, 24)
-        raw_ram    = self.read(motor_id, 24, 26)
-        mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
+        mmems = []
 
-        # reading extra ram (if necessary)
-        extra_addr = mmem.extra_addr()
-        if extra_addr is not None:
-            addr, size = extra_addr
-            raw_extra = self.read(motor_id, addr, size)
-            mem.process_extra(raw_extra)
+        for motor_id in motor_ids:
+            # reading eeprom, ram
+            raw_eeprom = self.read(motor_id, 0, 24)
+            raw_ram    = self.read(motor_id, 24, 26)
+            mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
 
-        # registering the motor memory to the io
-        self.motormems[mmem.id] = mmem
+            # reading extra ram (if necessary)
+            extra_addr = mmem.extra_addr()
+            if extra_addr is not None:
+                addr, size = extra_addr
+                raw_extra = self.read(motor_id, addr, size)
+                mem.process_extra(raw_extra)
 
-        return mmem
+            # registering the motor memory to the io
+            self.motormems[mmem.id] = mmem
+            mmems.append(mmem)
+
+        return mmems
 
     def read_ram(self, motor_id):
         mmem    = self.motormems[motor_id]

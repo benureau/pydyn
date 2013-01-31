@@ -186,7 +186,7 @@ class DynamixelIOVRep(object):
             """
         pass
 
-    def create(self, motor_id):
+    def create(self, motor_ids):
         """
             Load the motor memory.
 
@@ -196,41 +196,44 @@ class DynamixelIOVRep(object):
             .. warning:: we assume ids have been checked by a previous ping.
             .. note:: if a memory already exist, it is recreated anyway.
             """
-        handle = self.id2handle[motor_id]
-        self.created_ids.append(motor_id)
+        self._set_background_fun(motor_ids)
 
-        self._set_background_fun(motor_id)
+        for motor_id in motor_ids:
+            handle = self.id2handle[motor_id]
+            self.created_ids.append(motor_id)
 
-        # copy ram, eeprom
-        raw_eeprom = default_eeprom[:]
-        raw_ram    = default_ram[:]
+            # copy ram, eeprom
+            raw_eeprom = default_eeprom[:]
+            raw_ram    = default_ram[:]
 
-        if motor_id in self.vx64:
-            raw_eeprom[protocol.REG_ADDRESS("MODEL_NUMBER")] = 80
-        raw_eeprom[protocol.REG_ADDRESS("ID")] = motor_id
-        mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
-        self.motormems[motor_id] = mmem
+            if motor_id in self.vx64:
+                raw_eeprom[protocol.REG_ADDRESS("MODEL_NUMBER")] = 80
+            raw_eeprom[protocol.REG_ADDRESS("ID")] = motor_id
+            mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
+            self.motormems[motor_id] = mmem
 
-        # updating mmem
-        self.sim.simSetJointMode(handle, 5, 0)
+            # updating mmem
+            self.sim.simSetJointMode(handle, 5, 0)
 
-        load     = self.sim.simJointGetForce(handle)[0]
-        position = self.sim.simGetJointPosition(handle)[0]
-        #velocity = self.sim.simGetJointVelocity(handle)[0]
-        self.sim.simSetJointTargetPosition(handle, position)
+            load     = self.sim.simJointGetForce(handle)[0]
+            position = self.sim.simGetJointPosition(handle)[0]
+            #velocity = self.sim.simGetJointVelocity(handle)[0]
 
-        # update position
-        pos_deg = self.rad2deg(position)
-        raw_position = conversions.deg_2raw(pos_deg, mmem)
-        mmem[protocol.REG_ADDRESS("PRESENT_POSITION")] = raw_position
-        mmem[protocol.REG_ADDRESS("GOAL_POSITION")]    = raw_position
+            # update position
+            pos_deg = self.rad2deg(position)
+            raw_position = conversions.deg_2raw(pos_deg, mmem)
+            mmem[protocol.REG_ADDRESS("PRESENT_POSITION")] = raw_position
+            mmem[protocol.REG_ADDRESS("GOAL_POSITION")]    = raw_position
 
-        # update load
-        load_percent = min(100.0, MAXTORQUE[mmem.model])
-        raw_load = conversions.present_load_2raw(load_percent, mmem)
-        mmem[protocol.REG_ADDRESS("PRESENT_LOAD")] = raw_load
+            # update load
+            load_percent = min(100.0, MAXTORQUE[mmem.model])
+            raw_load = conversions.present_load_2raw(load_percent, mmem)
+            mmem[protocol.REG_ADDRESS("PRESENT_LOAD")] = raw_load
 
-        # velocity is 0
+            # velocity is 0
+
+        #self.sim.speSetMultipleJointTargetPosition(handles, positions)
+
         return mmem
 
     # We assume RX limits
@@ -242,16 +245,19 @@ class DynamixelIOVRep(object):
     def rad2deg(val):
         return 180*val/math.pi+150
 
-    def _set_background_fun(self, motor_id):
+    def _set_background_fun(self, motor_ids):
         """
             Register all continuously called functions.
         """
-        handle = [self.id2handle[motor_id]]
+        handles = [self.id2handle[motor_id] for motor_id in motor_ids]
+        self.sim.registerBackgroundFunction("speSetMultipleJointTargetPosition", handles)
+        for handle in handles:
+            self.sim.registerBackgroundFunction("simGetJointPosition", handle)
 
-        self.sim.registerBackgroundFunction("simGetJointPosition", handle)
-        self.sim.registerBackgroundFunction("simSetJointTargetPosition", handle)
-        self.sim.registerBackgroundFunction("simSetJointForce", handle)
-        self.sim.registerBackgroundFunction("simJointGetForce", handle)
+        # self.sim.registerBackgroundFunction("simSetJointForce", handle)
+
+        # Useless for now
+        # self.sim.registerBackgroundFunction("simJointGetForce", handle)
         #self.sim.registerBackgroundFunction("simSetJointTargetVelocity", handle)
 
 
@@ -350,7 +356,6 @@ class DynamixelIOVRep(object):
         mmem[protocol.REG_ADDRESS("PRESENT_LOAD")] = raw_load
 
     def _set_torque_limit(self, motor_id, value):
-        """Impossible with current API"""
         handle = self.id2handle[motor_id]
         mmem = self.motormems[motor_id]
 
