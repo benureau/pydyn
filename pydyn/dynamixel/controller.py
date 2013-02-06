@@ -12,7 +12,7 @@ import memory
 import protocol
 
 
-CONTROLLER_TYPE = ("USB2DXL", "USB2AX")
+CONTROLLER_TYPE = ("USB2DXL", "USB2AX", "VREP")
 
 class DynamixelController(threading.Thread):
     """
@@ -136,8 +136,9 @@ class DynamixelController(threading.Thread):
 
     def load_motors(self, motor_ids):
         #TODO: check for double motors
-        for motor_id in motor_ids:
-            mmem = self.io.create(motor_id)
+        mmems = self.io.create(motor_ids)
+
+        for mmem in mmems:
             m = DynamixelController.motormodel[mmem.model](mmem)
             self.motors.append(m)
 
@@ -167,10 +168,7 @@ class DynamixelController(threading.Thread):
     def _reading_motors(self):
         """ Read the motors for position, speed and load """
 
-        if self.type == 'USB2AX':
-            positions = self.io.get_sync_positions([m.id for m in self.motors])
-
-        elif self.type == 'USB2DXL':
+        if self.type == 'USB2DXL':
             for m in self.motors:
                 try:
                     try:
@@ -181,6 +179,11 @@ class DynamixelController(threading.Thread):
                 except io.DynamixelCommunicationError as e:
                     print e
                     print 'warning: communication error on motor {}'.format(m.id)
+
+        elif self.type == 'USB2AX' or self.type == 'VREP':
+            positions = self.io.get_sync_positions([m.id for m in self.motors])
+
+
 
 
     pst_set     = set(('GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT'))

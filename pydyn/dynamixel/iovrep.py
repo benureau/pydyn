@@ -117,6 +117,7 @@ class DynamixelIOVRep(object):
 
         self.id2handle = {}
         self.handle2id = {}
+        self.handles   = []
         self.created_ids = [] # list of created motors
         self.motormems = {}
 
@@ -186,7 +187,7 @@ class DynamixelIOVRep(object):
             """
         pass
 
-    def create(self, motor_id):
+    def create(self, motor_ids):
         """
             Load the motor memory.
 
@@ -196,42 +197,49 @@ class DynamixelIOVRep(object):
             .. warning:: we assume ids have been checked by a previous ping.
             .. note:: if a memory already exist, it is recreated anyway.
             """
-        handle = self.id2handle[motor_id]
-        self.created_ids.append(motor_id)
+        self._set_background_fun(motor_ids)
 
-        self._set_background_fun(motor_id)
+        mmems = []
 
-        # copy ram, eeprom
-        raw_eeprom = default_eeprom[:]
-        raw_ram    = default_ram[:]
+        for motor_id in motor_ids:
+            handle = self.id2handle[motor_id]
+            self.created_ids.append(motor_id)
 
-        if motor_id in self.vx64:
-            raw_eeprom[protocol.REG_ADDRESS("MODEL_NUMBER")] = 80
-        raw_eeprom[protocol.REG_ADDRESS("ID")] = motor_id
-        mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
-        self.motormems[motor_id] = mmem
+            # copy ram, eeprom
+            raw_eeprom = default_eeprom[:]
+            raw_ram    = default_ram[:]
 
-        # updating mmem
-        self.sim.simSetJointMode(handle, 5, 0)
+            if motor_id in self.vx64:
+                raw_eeprom[protocol.REG_ADDRESS("MODEL_NUMBER")] = 80
+            raw_eeprom[protocol.REG_ADDRESS("ID")] = motor_id
+            mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
+            self.motormems[motor_id] = mmem
 
-        load     = self.sim.simJointGetForce(handle)[0]
-        position = self.sim.simGetJointPosition(handle)[0]
-        #velocity = self.sim.simGetJointVelocity(handle)[0]
-        self.sim.simSetJointTargetPosition(handle, position)
+            # updating mmem
+            self.sim.simSetJointMode(handle, 5, 0)
 
-        # update position
-        pos_deg = self.rad2deg(position)
-        raw_position = conversions.deg_2raw(pos_deg, mmem)
-        mmem[protocol.REG_ADDRESS("PRESENT_POSITION")] = raw_position
-        mmem[protocol.REG_ADDRESS("GOAL_POSITION")]    = raw_position
+            load     = self.sim.simJointGetForce(handle)[0]
+            position = self.sim.simGetJointPosition(handle)[0]
+            #velocity = self.sim.simGetJointVelocity(handle)[0]
 
-        # update load
-        load_percent = min(100.0, MAXTORQUE[mmem.model])
-        raw_load = conversions.present_load_2raw(load_percent, mmem)
-        mmem[protocol.REG_ADDRESS("PRESENT_LOAD")] = raw_load
+            # update position
+            pos_deg = self.rad2deg(position)
+            raw_position = conversions.deg_2raw(pos_deg, mmem)
+            mmem[protocol.REG_ADDRESS("PRESENT_POSITION")] = raw_position
+            mmem[protocol.REG_ADDRESS("GOAL_POSITION")]    = raw_position
 
-        # velocity is 0
-        return mmem
+            # update load
+            load_percent = min(100.0, MAXTORQUE[mmem.model])
+            raw_load = conversions.present_load_2raw(load_percent, mmem)
+            mmem[protocol.REG_ADDRESS("PRESENT_LOAD")] = raw_load
+
+            # velocity is 0
+
+            mmems.append(mmem)
+
+        #self.sim.speSetMultipleJointTargetPosition(handles, positions)
+
+        return mmems
 
     # We assume RX limits
     @staticmethod
@@ -242,16 +250,18 @@ class DynamixelIOVRep(object):
     def rad2deg(val):
         return 180*val/math.pi+150
 
-    def _set_background_fun(self, motor_id):
+    def _set_background_fun(self, motor_ids):
         """
             Register all continuously called functions.
         """
-        handle = [self.id2handle[motor_id]]
+        self.handles = [self.id2handle[motor_id] for motor_id in motor_ids]
+        self.sim.registerBackgroundFunction("speSetMultipleJointTargetPosition", self.handles)
+        self.sim.registerBackgroundFunction("speGetMultipleJointPosition", self.handles)
 
-        self.sim.registerBackgroundFunction("simGetJointPosition", handle)
-        self.sim.registerBackgroundFunction("simSetJointTargetPosition", handle)
-        self.sim.registerBackgroundFunction("simSetJointForce", handle)
-        self.sim.registerBackgroundFunction("simJointGetForce", handle)
+        # self.sim.registerBackgroundFunction("simSetJointForce", handle)
+
+        # Useless for now
+        # self.sim.registerBackgroundFunction("simJointGetForce", handle)
         #self.sim.registerBackgroundFunction("simSetJointTargetVelocity", handle)
 
 
@@ -295,6 +305,7 @@ class DynamixelIOVRep(object):
         pass
 
     def _set_position(self, motor_id, value):
+        raise DeprecationWarning
         handle = self.id2handle[motor_id]
         mmem = self.motormems[motor_id]
         pos_deg = conversions.raw2_deg(value, mmem)
@@ -304,21 +315,8 @@ class DynamixelIOVRep(object):
 
         mmem[protocol.REG_ADDRESS('GOAL_POSITION')] = value
 
-    # def _get_position(self, motor_ids):
-    #
-    #     handles = [self.id2handle[motor_id] for motor_id in motor_ids]
-    #     pos_rads = self.sim.simGetJointPosition(handles)[0]
-    #     for motor_id in motor_ids:
-    #         mmem = self.motormems[motor_id]
-    #         pos_rad = self.sim.simGetJointPosition([handle])[0]
-    #         pos_deg = self.rad2deg(pos_rad)
-    #
-    #     mmem[protocol.REG_ADDRESS('PRESENT_POSITION')] = conversions.deg_2raw(pos_deg, mmem)
-    #
-    #     return
-
-
     def _get_position(self, motor_id):
+        raise DeprecationWarning
         handle = self.id2handle[motor_id]
         mmem = self.motormems[motor_id]
         pos_rad = self.sim.simGetJointPosition(handle)[0]
@@ -327,6 +325,36 @@ class DynamixelIOVRep(object):
         mmem[protocol.REG_ADDRESS('PRESENT_POSITION')] = conversions.deg_2raw(pos_deg, mmem)
 
         return
+
+    def _get_sync_position(self, motor_ids):
+
+        pos_rads = self.sim.speGetMultipleJointPosition(len(self.handles), self.handles)
+        for pos_rad, handle in zip(pos_rads, self.handles):
+            motor_id = self.handle2id[handle]
+            mmem = self.motormems[motor_id]
+            pos_deg = self.rad2deg(pos_rad)
+            mmem[protocol.REG_ADDRESS('PRESENT_POSITION')] = conversions.deg_2raw(pos_deg, mmem)
+
+    def _set_sync_position(self, id_pos_pairs):
+        pos_rads = []
+
+        id_pos_dict = dict(id_pos_pairs)
+        for handle in self.handles:
+            motor_id = self.handle2id[handle]
+            mmem = self.motormems[motor_id]
+
+            value = id_pos_dict.get(motor_id, mmem[protocol.REG_ADDRESS('GOAL_POSITION')])
+            pos_deg = conversions.raw2_deg(value, mmem)
+            pos_rads.append(self.deg2rad(pos_deg))
+
+        if self.sim.speSetMultipleJointTargetPosition(len(self.handles), self.handles, pos_rads) != 0:
+            pass
+            #print 'warning: problem setting position'
+        else:
+            for motor_id, value in id_pos_pairs:
+                mmem = self.motormems[motor_id]
+                mmem[protocol.REG_ADDRESS('GOAL_POSITION')] = value
+
 
     def _get_speed(self, motor_id):
         return
@@ -341,6 +369,7 @@ class DynamixelIOVRep(object):
         pass
 
     def _get_load(self, motor_id):
+        return
         handle = self.id2handle[motor_id]
         mmem = self.motormems[motor_id]
 
@@ -350,7 +379,7 @@ class DynamixelIOVRep(object):
         mmem[protocol.REG_ADDRESS("PRESENT_LOAD")] = raw_load
 
     def _set_torque_limit(self, motor_id, value):
-        """Impossible with current API"""
+        return
         handle = self.id2handle[motor_id]
         mmem = self.motormems[motor_id]
 
@@ -358,6 +387,7 @@ class DynamixelIOVRep(object):
         self.sim.simSetJointForce(handle, torque_percent*MAXTORQUE[mmem.model])
 
     def _get_pos_speed_load(self, motor_id):
+        return
         self._get_position(motor_id)
         self._get_speed(motor_id)
         self._get_load(motor_id)
@@ -387,8 +417,7 @@ class DynamixelIOVRep(object):
             :param motor_ids: specified motor ids [0-253]
             :type motor_ids: list of ids
             """
-        for motor_id in motor_ids:
-            self._get_position(motor_id)
+        self._get_sync_position(motor_ids)
 
     def set_sync_positions(self, id_pos_pairs):
         """
@@ -397,8 +426,7 @@ class DynamixelIOVRep(object):
             :type id_pos_pairs: list of couple (motor id, position)
 
             """
-        for motor_id, value in id_pos_pairs:
-            self._set_position(motor_id, value)
+        self._set_sync_position(id_pos_pairs)
 
     set_sync_goal_position = set_sync_positions
 
@@ -460,10 +488,9 @@ class DynamixelIOVRep(object):
 
             """
 
-        pos_speed_loads = self._send_sync_read_packet(motor_ids, 'PRESENT_POS_SPEED_LOAD')
+        self._get_sync_position(motor_ids)
 
         for motor_id in motor_ids:
-            self._get_position(motor_id)
             self._get_speed(motor_id)
             self._get_load(motor_id)
 
@@ -496,8 +523,9 @@ class DynamixelIOVRep(object):
 
             """
 
+        self._set_sync_position(tuple((motor_id, pos) for motor_id, pos, speed, torque in id_pos_speed_torque_tuples))
+
         for motor_id, pos, speed, torque in id_pos_speed_torque_tuples:
-            self._set_position(motor_id, pos)
             self._set_speed(motor_id, speed)
             self._set_torque_limit(motor_id, torque)
 

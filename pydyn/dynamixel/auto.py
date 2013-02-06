@@ -94,6 +94,7 @@ def create_controller(connection_type = "USB2DXL",
         if verbose:
             print('Loading the robot from V-Rep...')
         assert pydyn.dynamixel.io.vrep_available is True
+        connection_type = "VREP"
         pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOVRep
         port = ipport
         if verbose:

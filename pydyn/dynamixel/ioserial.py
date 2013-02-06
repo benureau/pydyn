@@ -168,9 +168,9 @@ class DynamixelIOSerial:
         return status_packet.parameters
 
 
-    def create(self, motor_id):
+    def create(self, motor_ids):
         """
-            Load the motor memory.
+            Load the motors memory.
 
             :param list ids, the ids to create.
             :return: instances of DynamixelMemory
@@ -179,22 +179,26 @@ class DynamixelIOSerial:
             .. note:: if a memory already exist, it is recreated anyway.
             """
 
-        # reading eeprom, ram
-        raw_eeprom = self.read(motor_id, 0, 24)
-        raw_ram    = self.read(motor_id, 24, 26)
-        mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
+        mmems = []
 
-        # reading extra ram (if necessary)
-        extra_addr = mmem.extra_addr()
-        if extra_addr is not None:
-            addr, size = extra_addr
-            raw_extra = self.read(motor_id, addr, size)
-            mem.process_extra(raw_extra)
+        for motor_id in motor_ids:
+            # reading eeprom, ram
+            raw_eeprom = self.read(motor_id, 0, 24)
+            raw_ram    = self.read(motor_id, 24, 26)
+            mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
 
-        # registering the motor memory to the io
-        self.motormems[mmem.id] = mmem
+            # reading extra ram (if necessary)
+            extra_addr = mmem.extra_addr()
+            if extra_addr is not None:
+                addr, size = extra_addr
+                raw_extra = self.read(motor_id, addr, size)
+                mem.process_extra(raw_extra)
 
-        return mmem
+            # registering the motor memory to the io
+            self.motormems[mmem.id] = mmem
+            mmems.append(mmem)
+
+        return mmems
 
     def read_ram(self, motor_id):
         mmem    = self.motormems[motor_id]
@@ -564,8 +568,9 @@ class DynamixelIOSerial:
                 This is only the parameter set provided within the status
                 packet sent from the motor.
             """
-        if self.motormems[motor_id].status_return_level == 0:
-            raise IOError('Try to get a value from motor with a level of status return of 0')
+        # if self.motormems[motor_id].status_return_level == 0:
+        #     self._send_write_packet(motor_id, 'STATUS_RETURN_LEVEL', 2)
+        #     self.motormems[motor_id][protocol.DXL_STATUS_RETURN_LEVEL] = 2
 
         read_packet = packet.DynamixelReadDataPacket(motor_id, control_name)
         status_packet = self._send_packet(read_packet)
@@ -616,6 +621,10 @@ class DynamixelIOSerial:
             data: int, tuple
                 data to write to the motors
             """
+        # if control_name != 'STATUS_RETURN_LEVEL':
+        #     #self.motormems[motor_id][protocol.DXL_STATUS_RETURN_LEVEL] = 2
+        #     self._send_write_packet(motor_id, 'STATUS_RETURN_LEVEL', 2)
+
         data = self._code_data(data, protocol.REG_SIZE(control_name))
 
         write_packet = packet.DynamixelWriteDataPacket(motor_id, control_name, data)
