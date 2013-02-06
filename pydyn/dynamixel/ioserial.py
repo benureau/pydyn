@@ -568,8 +568,9 @@ class DynamixelIOSerial:
                 This is only the parameter set provided within the status
                 packet sent from the motor.
             """
-        if self.motormems[motor_id].status_return_level == 0:
-            raise IOError('Try to get a value from motor with a level of status return of 0')
+        # if self.motormems[motor_id].status_return_level == 0:
+        #     self._send_write_packet(motor_id, 'STATUS_RETURN_LEVEL', 2)
+        #     self.motormems[motor_id][protocol.DXL_STATUS_RETURN_LEVEL] = 2
 
         read_packet = packet.DynamixelReadDataPacket(motor_id, control_name)
         status_packet = self._send_packet(read_packet)
@@ -620,6 +621,10 @@ class DynamixelIOSerial:
             data: int, tuple
                 data to write to the motors
             """
+        # if control_name != 'STATUS_RETURN_LEVEL':
+        #     #self.motormems[motor_id][protocol.DXL_STATUS_RETURN_LEVEL] = 2
+        #     self._send_write_packet(motor_id, 'STATUS_RETURN_LEVEL', 2)
+
         data = self._code_data(data, protocol.REG_SIZE(control_name))
 
         write_packet = packet.DynamixelWriteDataPacket(motor_id, control_name, data)
