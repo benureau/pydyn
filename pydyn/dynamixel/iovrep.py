@@ -348,8 +348,10 @@ class DynamixelIOVRep(object):
             pos_rads.append(self.deg2rad(pos_deg))
 
         if self.sim.speSetMultipleJointTargetPosition(len(self.handles), self.handles, pos_rads) != 0:
-            pass
-            #print 'warning: problem setting position'
+            # do it anyway, else, the set is lost. 
+            for motor_id, value in id_pos_pairs:
+                mmem = self.motormems[motor_id]
+                mmem[protocol.REG_ADDRESS('GOAL_POSITION')] = value
         else:
             for motor_id, value in id_pos_pairs:
                 mmem = self.motormems[motor_id]
