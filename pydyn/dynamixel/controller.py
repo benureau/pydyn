@@ -97,22 +97,31 @@ class DynamixelController(threading.Thread):
     def pause(self):
         """ Pause the looping """
         self._ctrllock.acquire()
-        if hasattr(self.io, 'sim'):
-            self.io.sim.simPauseSimulation()
+        self.stop_sim()
 
     def resume(self):
         """ Resume the looping after a pause. """
-        if hasattr(self.io, 'sim'):
-            self.io.sim.simStartSimulation()
+        self.start_sim()
         self._ctrllock.release()
 
     def restart(self):
         """ Pause and resume the looping """
         self._ctrllock.acquire()
+        self.restart_sim()
+        self._ctrllock.release()
+
+    def start_sim(self):
+        if hasattr(self.io, 'sim'):
+            self.io.sim.simStartSimulation()
+
+    def restart_sim(self):
         if hasattr(self.io, 'sim'):
             self.io.sim.simStopSimulation()
             self.io.sim.simStartSimulation()
-        self._ctrllock.release()
+
+    def stop_sim(self):
+        if hasattr(self.io, 'sim'):
+            self.io.sim.simStopSimulation()
 
     # MARK Motor discovery and creation
 
