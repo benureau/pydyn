@@ -1,9 +1,9 @@
-import debugenv # only to debug local (not installed) pypot version
+import debugenv # only to debug local (not installed) pydyn version
 
 import sys, time
 
-import pypot
-import pypot.dynamixel as dyn
+import pydyn
+import pydyn.dynamixel as dyn
 
 baudrate = 1000000
 if len(sys.argv) == 2:

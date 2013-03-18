@@ -1,11 +1,11 @@
-import debugenv # only to debug local (not installed) pypot version
+import debugenv # only to debug local (not installed) pydyn version
 
 import time
 
-import pypot
-import pypot.robot
+import pydyn
+import pydyn.robot
 
-robot = pypot.robot.Robot(motor_range = [91, 96], timeout = 0.02)
+robot = pydyn.robot.Robot(motor_range = [91, 96], timeout = 0.02)
 
 print 'Press Enter when ready to capture position... ',
 raw_input()

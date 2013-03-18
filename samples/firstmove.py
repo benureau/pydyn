@@ -1,17 +1,17 @@
-import debugenv # only to debug local (not installed) pypot version
+import debugenv # only to debug local (not installed) pydyn version
 
 import sys, time
 
-import pypot
-import pypot.robot
+import pydyn
+import pydyn.robot
 
 if len(sys.argv) == 2:
     motor_id = int(sys.argv[1])
 else:
     print('usage: firstmove.py motor_id')
-    exit(1)
+    sys.exit(1)
 
-robot = pypot.robot.Robot(motor_range = [motor_id, motor_id], timeout = 0.02)
+robot = pydyn.robot.Robot(motor_range = [motor_id, motor_id], timeout = 0.02)
 
 motor = robot.m_by_id[motor_id]
 

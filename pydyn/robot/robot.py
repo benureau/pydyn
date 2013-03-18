@@ -8,20 +8,21 @@ from ..import dynamixel
 class Robot(object):
     """A simple robot with only one controller"""
 
-    def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03, start = True):
+    def __init__(self, controller=None, motor_range = range(1, 253), timeout = 0.03, start = True, full_ram = False):
         self._ctrl = controller
         if self._ctrl is None:
             self._ctrl = dynamixel.create_controller(verbose=True,
                                                      motor_range =  motor_range,
                                                      timeout = timeout,
-                                                     start = start)
+                                                     start = start,
+                                                     full_ram = full_ram)
 
 
-        self.m_by_id = {}
+        self.id2m = {}
         self.motors  = []
         for m in self._ctrl.motors:
             self.motors.append(m)
-            self.m_by_id[m.id] = m
+            self.id2m[m.id] = m
         self.motors.sort()
         self.motions = []
 
@@ -195,7 +196,7 @@ class Robot(object):
         motions_created = []
 
         for pos_i, motor_id in zip(pos, motor_ids):
-            motor = self.m_by_id[motor_id]
+            motor = self.id2m[motor_id]
             motor.speed = max_speed
 
 #            tf = tfsingle.AutoGoto(motor, pos_i, margin)
@@ -213,7 +214,7 @@ class Robot(object):
         motions_created = []
 
         for speed_i, motor_id in zip(speeds, motor_ids):
-            motor = self.m_by_id[motor_id]
+            motor = self.id2m[motor_id]
 
             tf = tfsingle.Constant(speed_i, duration)
             motion = motionctrl.SpeedController(motor, tf, freq = 30)
@@ -239,7 +240,7 @@ class Robot(object):
         motions_created = []
 
         for pos_i, motor_id in zip(pos, motor_ids):
-            motor = self.m_by_id[motor_id]
+            motor = self.id2m[motor_id]
             if max_speed is not None:
                 motor.speed = max_speed
 
@@ -263,7 +264,7 @@ class Robot(object):
         :param max_speed in degree/s. Value over 500 are not recommended.
         """
 
-        motor = self.m_by_id[motor_id]
+        motor = self.id2m[motor_id]
         motor.speed = max_speed
 
         tf = tfsingle.Sinus(period, amplitude, center_pos, duration)
@@ -281,7 +282,7 @@ class Robot(object):
         :param max_speed in degree/s. Value over 500 are not recommended.
         """
 
-        motor = self.m_by_id[motor_id]
+        motor = self.id2m[motor_id]
 
         tf = tftriple.DualSinus(motor, period, amplitude, center_pos, duration)
         motion = motionctrl.PoseSpeedTorqueController(motor, tf, freq = 30)

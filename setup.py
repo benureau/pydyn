@@ -2,12 +2,12 @@
 
 from distutils.core import setup
 
-setup(name='pypot',
-      version='0.3.0',
-      author='Haylee Fogg, Matthieu Lapeyre, Pierre Rouanet, Fabien Benureau',
+setup(name='pydyn',
+      version='1.0',
+      author=('Fabien Benureau, Pierre Rouanet, Olivier Mangin, Matthieu Lapeyre, Haylee Fogg'),
       author_email='fabien.benureau+inria@gmail.com',
-      url='https://bitbucket.org/humm/pypot-fork',
-      description='Python Library for Dynamixel Motor Control',
+      url='https://bitbucket.org/humm/pydyn-fork',
+      description='Python Library for Robot Control',
       requires=['serial'],
-      packages = ['pypot', 'pypot.robot', 'pypot.dynamixel'],
+      packages = ['pydyn', 'pydyn.robot', 'pydyn.dynamixel'],
       )

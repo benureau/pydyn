@@ -1,12 +1,12 @@
-import debugenv # only to debug local (not installed) pypot version
+import debugenv # only to debug local (not installed) pydyn version
 """An example to illustrate suspend, resume, stop and join methods."""
 
 import time
 
-import pypot
-import pypot.robot
+import pydyn
+import pydyn.robot
 
-robot = pypot.robot.SimpleRobot(motor_range = [91, 96], timeout = 0.02)
+robot = pydyn.robot.SimpleRobot(motor_range = [91, 96], timeout = 0.02)
 
 robot.compliant = False
 robot.speed = 30

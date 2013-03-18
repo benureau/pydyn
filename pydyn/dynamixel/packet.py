@@ -1,6 +1,6 @@
 import array
 
-from pypot.dynamixel.protocol import *
+from pydyn.dynamixel.protocol import *
 
 # MARK: - Generic Packet
 
@@ -138,7 +138,7 @@ class DynamixelReadDataPacket(DynamixelInstructionPacket):
             [0xFF, 0xFF, ID, 4, 0x02, ADDRESS, LENGTH_OF_DATA, CHECKSUM]
 
             :param int motor_id: motor id [0-253]
-            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~/pypot.dynamixel.protocol` file.
+            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~/pydyn.dynamixel.protocol` file.
 
             """
         parameters = (REG_ADDRESS(control_name), REG_LENGTH(control_name))
@@ -171,7 +171,7 @@ class DynamixelSyncReadDataPacket(DynamixelInstructionPacket):
 
             :param motor_ids: motor ids [0-253]
             :type motor_ids: list of int
-            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~pypot.dynamixel.protocol` file.
+            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~pydyn.dynamixel.protocol` file.
 
             """
         parameters = [REG_ADDRESS(control_name), REG_LENGTH(control_name)] + list(motor_ids)
@@ -187,7 +187,7 @@ class DynamixelWriteDataPacket(DynamixelInstructionPacket):
 
         The name of the control to write must be provided. It must correspond to
         one of the values provided by the DXL_CONTROLS dictionary presents in the
-        :py:mod:`~pypot.dynamixel.protocol` file.
+        :py:mod:`~pydyn.dynamixel.protocol` file.
 
         The data to write must also be provided and match the required data length.
 
@@ -200,7 +200,7 @@ class DynamixelWriteDataPacket(DynamixelInstructionPacket):
             [0xFF, 0xFF, ID, LEN(DATA) + 3, 0x03, ADDRESS, DATA, CHECKSUM]
 
             :param int motor_id: motor id [0-253]
-            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~pypot.dynamixel.protocol` file.
+            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~pydyn.dynamixel.protocol` file.
             :param data: data to write, the length of the data must match the control length
             :type data: list of int
 
@@ -222,7 +222,7 @@ class DynamixelSyncWriteDataPacket(DynamixelInstructionPacket):
 
         The name of the control to read must be provided. It must correspond to
         one of the values provided by the DXL_CONTROLS dictionary presents in the
-        :py:mod:`~pypot.dynamixel.protocol` file.
+        :py:mod:`~pydyn.dynamixel.protocol` file.
 
         Instead of providing a motor id, you can here provide a list of motor ids.
 
@@ -241,7 +241,7 @@ class DynamixelSyncWriteDataPacket(DynamixelInstructionPacket):
             ID N, DATA 1, DATA 2, ...,
             CHECKSUM]
 
-            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~pypot.dynamixel.protocol` file.
+            :param string control_name: The name of the control to read must be provided. It must correspond to one of the values provided by the DXL_CONTROLS dictionary presents in the :py:mod:`~pydyn.dynamixel.protocol` file.
             :param data: data to be written. The length of the data must match the control length * the number of motors. The motor ids are directly given in the data for convenience.
             :type data: list of (id, data 1, data 2, ..., data N)
 
@@ -294,9 +294,12 @@ class DynamixelStatusPacket(DynamixelPacket):
 
         data = map(ord, list(bytes)[4:])
 
-        error = data[0]
-        parameters = data[1:-1]
-        checksum = data[-1]
+        try:
+            error = data[0]
+            parameters = data[1:-1]
+            checksum = data[-1]
+        except IndexError:
+            raise DynamixelInconsistentPacketError('Packet received with an inconsistent length', bytes)
 
         if header.packet_length != len(parameters) + 2:
             raise DynamixelInconsistentPacketError('Packet received with an inconsistent length', bytes)

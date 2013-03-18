@@ -17,7 +17,7 @@ def raw2_alarm_codes(value):
     """This unpack a single integer into a list of error code"""
     limits.checkbounds('alarm code raw', 0, 127, value)
 
-    return numpy.unpackbits(numpy.asarray(value, dtype=numpy.uint8))
+    return numpy.unpackbits(numpy.asarray(value, dtype=numpy.uint8))[:0:-1]
 
 def raw2_alarm_names(value):
     """This unpack a single integer into a list of error names"""
@@ -27,7 +27,7 @@ def raw2_alarm_names(value):
 def alarm_names_2raw(value):
     b = 0
     for a in value:
-        b += 2 ** (7 - DXL_ALARMS.index(a))
+        b += 2 ** DXL_ALARMS.index(a)
     return b
 
 def alarm_codes_2raw(value):
@@ -35,11 +35,3 @@ def alarm_codes_2raw(value):
     for c in value:
         b += 2 ** c
     return b
-
-def alarm_code_2name(value):
-    """value is a integer representing a single alarmcode"""
-    return DXL_ALARMS[value]
-
-def name2_alarm_code(value):
-    """value is a integer representing a single alarmcode"""
-    return DXL_ALARMS.index(value)

@@ -8,7 +8,7 @@ import numpy
 
 sys.path.append(os.path.join(os.getcwd(), '..'))
 
-import pypot.dynamixel
+import pydyn.dynamixel
 
 raise DeprecationError
 
@@ -16,14 +16,14 @@ timeout = 0.03
 ids_range = 0, 100
 
 if __name__ == '__main__':
-    ports = pypot.dynamixel.get_available_ports()
+    ports = pydyn.dynamixel.get_available_ports()
     if not ports:
         print 'No port found :-('
         sys.exit(1)
 
     port = ports[0]
     print 'Try to connect on ', port
-    dxl_io = pypot.dynamixel.DynamixelIO(port, timeout=timeout)
+    dxl_io = pydyn.dynamixel.DynamixelIO(port, timeout=timeout)
     
     print 'Connexion established :', dxl_io
     

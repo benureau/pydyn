@@ -1,6 +1,8 @@
-:mod:`pypot` -- Reference API
+:mod:`pydyn` -- Reference API
 ==============================
 
 .. toctree::
 
-   motor.rst
+    controller.rst
+    motor.rst
+    auto.rst

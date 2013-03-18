@@ -77,6 +77,14 @@ class DynamixelMemory(object):
         if self.modelclass == 'EX':
             return 56, 2
 
+    def last_addr(self):
+        """Last address of the RAM"""
+        extra = self.extra_addr()
+        if extra is None:
+            return 24+26 - 1
+        else:
+            return extra[0]+extra[1] - 1
+
     def process_extra(self, rex):
         if self.modelclass == 'MX':
             self[68+0] = rex[0] + (rex[1] << 8)
@@ -106,9 +114,9 @@ class DynamixelMemory(object):
         self[18] = rep[18]
 
         if len(rep) >= 24:
-            self._memory_data[19] = rep[19]  # undocumented
-            self._memory_data[20] = rep[20] + (rep[21] << 8)
-            self._memory_data[22] = rep[22] + (rep[23] << 8)
+            self[19] = rep[19]  # undocumented
+            self[20] = rep[20] + (rep[21] << 8)
+            self[22] = rep[22] + (rep[23] << 8)
 
     def cache_ram(self, raw_ram):
         """
@@ -153,7 +161,7 @@ class DynamixelMemory(object):
         self[24+24] = rram[24] + (rram[25] << 8)
 
         if len(rram) >= 28:
-            self._memory_data[24+26] = rram[26] + (rram[27] << 8)
+            self[24+26] = rram[26] + (rram[27] << 8)
 
     def next_addr(self, addr):
         if self._memory_data[addr+1] is None:

@@ -1,7 +1,7 @@
 :mod:`motor` -- Motor class
 ===========================
 
-.. automodule:: pypot.dynamixel.motor
+.. automodule:: pydyn.dynamixel.motor
 
 The motor classes all inherit from the :class:`DynamixelMotor` class. The end-user class use multiple inheritance to adapt to the model specificities.
 
