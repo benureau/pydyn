@@ -1,5 +1,5 @@
-import protocol
-import memsave
+from . import protocol
+from . import memsave
 
 class DynamixelUnsupportedMotorError(Exception):
     def __init__(self, motor_id, model_number):

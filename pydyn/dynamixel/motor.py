@@ -21,10 +21,10 @@
 import threading
 import collections
 
-import protocol
-import conversions as conv
-import limits
 from .. import color
+from . import protocol
+from . import conversions as conv
+from . import limits
 
 class DynamixelMotor(object):
     def __init__(self, memory):

@@ -116,7 +116,7 @@ def create_controller(connection_type = "USB2DXL",
                     print(FAIL + 'No standart port found. If your port has'
                         ' a funny name, you might want to specify it '
                         'explicetly.')
-                print 'Error; exiting.'
+                print('Error; exiting.')
                 exit(1)
             port = ports[0]
         if verbose:

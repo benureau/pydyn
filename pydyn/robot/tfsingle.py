@@ -1,6 +1,6 @@
 import math
 
-import timedf
+from . import timedf
 
 class Constant(timedf.TimedFunction):
     """Implements a constant timed function of specific duration.

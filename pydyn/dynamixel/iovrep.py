@@ -6,9 +6,9 @@ import math
 
 import pyvrep
 
-import protocol
-import memory
-import conversions
+from . import protocol
+from . import memory
+from . import conversions
 
 default_eeprom = [
     44, 39, # Model = 10028
@@ -311,7 +311,7 @@ class DynamixelIOVRep(object):
         pos_deg = conversions.raw2_deg(value, mmem)
         pos_rad = self.deg2rad(pos_deg)
         if self.sim.simSetJointTargetPosition(handle, pos_rad) == -1:
-            print 'warning: problem setting position'
+            print('warning: problem setting position')
 
         mmem[protocol.REG_ADDRESS('GOAL_POSITION')] = value
 
@@ -348,7 +348,7 @@ class DynamixelIOVRep(object):
             pos_rads.append(self.deg2rad(pos_deg))
 
         if self.sim.speSetMultipleJointTargetPosition(len(self.handles), self.handles, pos_rads) != 0:
-            # do it anyway, else, the set is lost. 
+            # do it anyway, else, the set is lost.
             for motor_id, value in id_pos_pairs:
                 mmem = self.motormems[motor_id]
                 mmem[protocol.REG_ADDRESS('GOAL_POSITION')] = value

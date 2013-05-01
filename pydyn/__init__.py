@@ -1,3 +1,3 @@
-import dynamixel
-import robot
-from dynamixel import enable_vrep
+from . import robot
+from . import dynamixel
+from .dynamixel import enable_vrep

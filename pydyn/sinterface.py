@@ -109,7 +109,7 @@ class SInterface(threading.Thread):
     def run(self):
 
         if not available:
-            print "error importing sockit. socket interface disabled."
+            print("error importing sockit. socket interface disabled.")
             return
 
         while True:

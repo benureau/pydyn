@@ -1,6 +1,6 @@
 import array
 
-from pydyn.dynamixel.protocol import *
+from .protocol import *
 
 # MARK: - Generic Packet
 

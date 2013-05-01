@@ -1,6 +1,6 @@
-import limits
-import protocol
-import alarms
+from . import limits
+from . import protocol
+from . import alarms
 
 # for details, see http://support.robotis.com/en/product/dynamixel/
 

@@ -1,6 +1,6 @@
 import math
 
-import timedf
+from . import timedf
 
 class DualSinus(timedf.TimedTripleFunction):
     """A sinus function that also controls max speed"""

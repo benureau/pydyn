@@ -1,12 +1,13 @@
+from .ioserial import *
 
 try:
-    from ioserial import *
+    from .ioserial import *
     serial_available = True
 except ImportError:
     serial_available = False
 
 try:
-    from iovrep import *
+    from .iovrep import *
     vrep_available = True
 except ImportError:
     vrep_available = False

@@ -6,12 +6,12 @@ import threading
 
 from pydyn.utils import flatten_list, reshape_list
 
-import protocol
-import packet
-import limits
-import memory
+from . import protocol
+from . import packet
+from . import limits
+from . import memory
 
-import alarms as conv # the only conversion needed in I/O
+from . import alarms as conv # the only conversion needed in I/O
 
 # MARK: - Byte conversions
 

@@ -6,10 +6,10 @@ import copy
 
 from .. import color
 
-import io
-import motor
-import memory
-import protocol
+from . import io
+from . import motor
+from . import memory
+from . import protocol
 
 
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX", "VREP")
@@ -132,8 +132,8 @@ class DynamixelController(threading.Thread):
         found_ids = []
         for m_id in motor_ids:
             if verbose:
-                print '  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
-                        motor_ids[0], motor_ids[-1], m_id),
+                print('  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
+                        motor_ids[0], motor_ids[-1], m_id)),
                 sys.stdout.flush()
             if self.io.ping(m_id):
                 found_ids.append(m_id)
@@ -183,11 +183,11 @@ class DynamixelController(threading.Thread):
                     try:
                         self.io.get(m.id, 'PRESENT_POS_SPEED_LOAD')
                     except ValueError as ve:
-                        print 'warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0])
+                        print('warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0]))
 
                 except io.DynamixelCommunicationError as e:
-                    print e
-                    print 'warning: communication error on motor {}'.format(m.id)
+                    print(e)
+                    print('warning: communication error on motor {}'.format(m.id))
 
         elif self.type == 'USB2AX' or self.type == 'VREP':
             positions = self.io.get_sync_positions([m.id for m in self.motors])
@@ -255,7 +255,7 @@ class DynamixelController(threading.Thread):
 
             if len(pst_requests) > 0:
                 if self.debug:
-                    print 'controller: pst_request:', pst_requests
+                    print('controller: pst_request:', pst_requests)
 
                 if not m.compliant:
                     sync_pst.append((m.id,
@@ -285,7 +285,7 @@ class DynamixelController(threading.Thread):
                 elif request_name == 'MODE':
                     self.io.change_mode(motor.id, value)
                 else:
-                    print 'REQUEST_NAME', value
+                    print('REQUEST_NAME', value)
                     raise NotImplementedError
 
 
@@ -313,17 +313,20 @@ class DynamixelController(threading.Thread):
 
             start = time.time()
 
-            # reading present position, present speed, present load
-            self._reading_motors()
+            try:
+                # reading present position, present speed, present load
+                self._reading_motors()
 
-            # Dividing requests
-            all_pst_requests, all_special_requests, all_other_requests, all_read_requests = self._divide_requests()
+                # Dividing requests
+                all_pst_requests, all_special_requests, all_other_requests, all_read_requests = self._divide_requests()
 
-            # Handling requests
-            self._handle_all_other_requests(all_other_requests)
-            self._handle_all_pst_requests(all_pst_requests)
-            self._handle_special_requests(all_special_requests)
-            self._handle_all_read_requests(all_special_requests)
+                # Handling requests
+                self._handle_all_other_requests(all_other_requests)
+                self._handle_all_pst_requests(all_pst_requests)
+                self._handle_special_requests(all_special_requests)
+                self._handle_all_read_requests(all_special_requests)
+            except io.DynamixelCommunicationError:
+                print("error ignored")
 
             self._ctrllock.release()
             time.sleep(0.0001) # timeout to allow lock acquiring by other party
@@ -359,11 +362,11 @@ class DynamixelControllerFullRam(DynamixelController):
                 try:
                     self.io.read_ram(m.id)
                 except ValueError as ve:
-                    print 'warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0])
+                    print('warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0]))
 
             except io.DynamixelCommunicationError as e:
-                print e
-                print 'warning: communication error on motor {}'.format(m.id)
+                print(e)
+                print('warning: communication error on motor {}'.format(m.id))
 
     def _handle_all_read_requests(self, all_read_requests):
         """ Requests for reading ram are ignored in this class, since ram is continously updated. """
