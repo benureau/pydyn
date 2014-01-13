@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import time
 import array
 import serial
 import threading
@@ -79,7 +80,8 @@ class DynamixelIOSerial:
         if port in self.__open_ports:
             raise IOError('Port already used (%s)!' % (port))
 
-        self._serial = serial.Serial(port, baudrate, timeout=timeout)
+        self._timeout = timeout
+        self._serial = serial.Serial(port, baudrate, timeout=timeout, stopbits=serial.STOPBITS_TWO)
         self.__open_ports.append(port)
         self.flush()
 
@@ -529,9 +531,15 @@ class DynamixelIOSerial:
                 return
 
             read_bytes = list(self._serial.read(packet.DynamixelPacketHeader.LENGTH))
-            if not read_bytes:
-                raise DynamixelTimeoutError(instruction_packet)
-
+            maxtries = int(0.02/max(self._timeout, 0.001))
+            tries = 0
+            while read_bytes == []:
+                if tries >= maxtries:
+                    raise DynamixelTimeoutError(instruction_packet)                
+                time.sleep(0.001)
+                read_bytes = list(self._serial.read(packet.DynamixelPacketHeader.LENGTH))
+                tries += 1
+                
             try:
                 header = packet.DynamixelPacketHeader.from_bytes(read_bytes)
                 read_bytes += self._serial.read(header.packet_length)

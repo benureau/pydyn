@@ -10,6 +10,8 @@ try:
     from .iovrep import *
     vrep_available = True
 except ImportError:
+    import traceback
+    traceback.print_exc()
     vrep_available = False
 
 if serial_available:

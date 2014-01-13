@@ -57,29 +57,12 @@ class DynamixelIOVRep(object):
     """
         This class emulate a low-level communication with the joints of a VRep instance.
 
-        This class handles low-level IO communication by providing access to the
-        different registers in the motors.
         Users can use high-level access such as position, load, torque to control
         the motors.
 
-        You can access two different area space of the dynamixel registers:
-            * the EEPROM area
-            * the RAM area
-
-        When values are written to the EEPROM, they are conserved after cycling the power.
-        The values written to the RAM are lost when cycling the power.
-
         In this modules, all values are raw, integer values. Conversion to human values
         are made through the motor interface.
-
-        Also, this module does minimal checking about if values make sense or are legal.
-        The Motor instance is responsible for that. It makes everything simpler here, and
-        problems are catched faster by the Motor instances. Plus, if you really want to go
-        crazy, you can.
-
-        .. warning:: When accessing EEPROM registers the motor enters a "busy" mode and should not be accessed before about 100ms.
-
-        """
+    """
 
     __open_ports = []
     __sims       = []
@@ -244,11 +227,19 @@ class DynamixelIOVRep(object):
     # We assume RX limits
     @staticmethod
     def deg2rad(val):
-        return math.pi*(val-150)/180
+        return math.pi*(val-150.0)/180.0
 
     @staticmethod
     def rad2deg(val):
-        return 180*val/math.pi+150
+        return 180.0*val/math.pi+150.0
+
+    @staticmethod
+    def rawdps2rads(val):
+        return math.pi*val/180.0*6*0.111
+
+    @staticmethod
+    def rads2rawspeed(val):
+        return round(val*180.0/math.pi/6/0.111 + 1024)
 
     def _set_background_fun(self, motor_ids):
         """
@@ -262,13 +253,15 @@ class DynamixelIOVRep(object):
 
         # Useless for now
         # self.sim.registerBackgroundFunction("simJointGetForce", handle)
-        #self.sim.registerBackgroundFunction("simSetJointTargetVelocity", handle)
+        self.sim.registerBackgroundFunction("simSetDynamicMotorUpperLimitVelocity", self.handles)
+        self.sim.registerBackgroundFunction("speSetMultipleDynamicMotorUpperLimitVelocity", self.handles)
 
 
     # MARK Parameter based read/write
 
     supported_set = {'GOAL_POSITION' : '_set_position',
-                     'TORQUE_LIMIT'  : '_set_torque_limit'
+                     'TORQUE_LIMIT'  : '_set_torque_limit',
+                     'MOVING_SPEED'  : '_set_moving_speed'
                     }
 
     supported_get = {'PRESENT_POSITION'       : '_get_position',
@@ -357,18 +350,47 @@ class DynamixelIOVRep(object):
                 mmem = self.motormems[motor_id]
                 mmem[protocol.REG_ADDRESS('GOAL_POSITION')] = value
 
+    def _set_sync_speed(self, id_pos_pairs):
+        return
+        speeds_rads = []
+
+        id_speed_dict = dict(id_speed_pairs)
+        for handle in self.handles:
+            motor_id = self.handle2id[handle]
+            mmem = self.motormems[motor_id]
+
+            value = id_speed_dict.get(motor_id, mmem[protocol.REG_ADDRESS('MOVING_SPEED')])
+            rads_value = self.rawdps2rads(value)
+
+            speed_rads.append(rads_value)
+
+        if self.sim.speSetMultipleDynamicMotorUpperLimitVelocity(len(self.handles), self.handles, speed_rads) != 0:
+            # do it anyway, else, the set is lost.
+            for motor_id, value in id_speed_pairs:
+                mmem = self.motormems[motor_id]
+                mmem[protocol.REG_ADDRESS('MOVING_SPEED')] = value
+        else:
+            for motor_id, value in id_speed_pairs:
+                mmem = self.motormems[motor_id]
+                mmem[protocol.REG_ADDRESS('MOVING_SPEED')] = value
+
+    def _set_speed(self, motor_id, speed):
+        handle = self.id2handle[motor_id]
+        mmem = self.motormems[motor_id]
+        rads_speed = self.rawdps2rads(speed)
+        if self.sim.simSetDynamicMotorUpperLimitVelocity(handle, rads_speed) == -1:
+            print('warning: problem setting position')
+
+        mmem[protocol.REG_ADDRESS('MOVING_SPEED')] = speed
+
 
     def _get_speed(self, motor_id):
         return
         handle = self.id2handle[motor_id]
         mmem = self.motormems[motor_id]
         vel_rad = self.sim.simGetJointVelocity(handle)[0]
-        vel_deg = self.rad2deg(pos_rad)
 
-        mmem[protocol.REG_ADDRESS('PRESENT_POSITION')] = conversions.deg_2raw(pos_deg, mmem)
-
-    def _set_speed(self, motor_id, value):
-        pass
+        mmem[protocol.REG_ADDRESS('MOVING_SPEED')] = self.rads2rawspeed(vel_deg, mmem)
 
     def _get_load(self, motor_id):
         return
@@ -526,6 +548,7 @@ class DynamixelIOVRep(object):
             """
 
         self._set_sync_position(tuple((motor_id, pos) for motor_id, pos, speed, torque in id_pos_speed_torque_tuples))
+        self._set_sync_speed(tuple((motor_id, speed) for motor_id, pos, speed, torque in id_pos_speed_torque_tuples))
 
         for motor_id, pos, speed, torque in id_pos_speed_torque_tuples:
             self._set_speed(motor_id, speed)

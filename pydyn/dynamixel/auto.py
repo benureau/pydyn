@@ -10,8 +10,8 @@ from pydyn.dynamixel.controller import (DynamixelController,
                                         DynamixelControllerFullRam)
 
 vrep_mode = False
-TIMEOUTS = {'Darwin': .02,
-            'Linux': .005
+TIMEOUTS = {'Darwin': 0,
+            'Linux': 0
             }
 DEFAULT_TIMEOUT = .01
 
@@ -43,7 +43,7 @@ def get_available_ports():
     op_system = get_os_name()
 
     if op_system == 'Darwin':
-        return glob.glob('/dev/tty.usb*')
+        return glob.glob('/dev/cu.usb*') + glob.glob('/dev/tty.usb*')
 
     elif op_system == 'Linux':
         return glob.glob('/dev/ttyACM*') + glob.glob('/dev/ttyUSB*')
@@ -58,7 +58,7 @@ def create_controller(connection_type = "USB2DXL",
                       baudrate = 1000000,
                       usb_device = None,
                       ip = '127.0.0.1',
-                      ipport = 1984,
+                      ipport = 1986,
                       full_ram = False,
                       debug = False,
                       interface = False,
