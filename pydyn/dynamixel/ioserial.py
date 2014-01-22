@@ -531,15 +531,15 @@ class DynamixelIOSerial:
                 return
 
             read_bytes = list(self._serial.read(packet.DynamixelPacketHeader.LENGTH))
-            maxtries = int(0.02/max(self._timeout, 0.001))
+            maxtries = int(0.05/max(self._timeout, 0.001))
             tries = 0
             while read_bytes == []:
                 if tries >= maxtries:
-                    raise DynamixelTimeoutError(instruction_packet)                
-                time.sleep(0.001)
+                    raise DynamixelTimeoutError(instruction_packet)
+                time.sleep(0.01)
                 read_bytes = list(self._serial.read(packet.DynamixelPacketHeader.LENGTH))
                 tries += 1
-                
+
             try:
                 header = packet.DynamixelPacketHeader.from_bytes(read_bytes)
                 read_bytes += self._serial.read(header.packet_length)
