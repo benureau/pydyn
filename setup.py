@@ -10,5 +10,5 @@ setup(name='pydyn',
       url='https://bitbucket.org/humm/pydyn-fork',
       description='Python Library for Robot Control',
       requires=['serial'],
-      packages = ['pydyn', 'pydyn.robot', 'pydyn.dynamixel'],
+      packages = ['pydyn', 'pydyn.robot', 'pydyn.msets', 'pydyn.dynamixel'],
       )
