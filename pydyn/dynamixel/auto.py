@@ -126,8 +126,10 @@ def create_controller(connection_type = "USB2DXL",
 
     # Create the controller
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
-    ctrl = ctrl_class(connection_type, port=port, timeout = timeout,
-                      baudrate = baudrate, ip = ip, debug = debug)
+    ctrl = ctrl_class(connection_type, port=port, timeout=timeout,
+                      baudrate=baudrate, ip=ip, debug=debug)
+
+
     if verbose:
         print(OK + 'Connexion established: {}{}'.format(
                 color.green, color.end, ctrl.io))

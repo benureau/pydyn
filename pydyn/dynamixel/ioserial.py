@@ -88,7 +88,7 @@ class DynamixelIOSerial:
         self._serial.setBaudRate(baudrate)
         self._serial.setTimeouts(timeout, timeout)
         self._serial.setLatencyTimer(2)
-        atexit.register(self._serial.close)
+        #atexit.register(self._serial.close)
 
         #self._serial = serial.Serial(port, baudrate, timeout=timeout, stopbits=serial.STOPBITS_TWO)
         self.__open_ports.append(port)
@@ -102,7 +102,6 @@ class DynamixelIOSerial:
 
     def close(self):
         if hasattr(self, '_serial'):
-            self._lock.acquire()
             try:
                 self.__open_ports.remove(self._serial.port)
                 self._serial.close()
@@ -163,12 +162,9 @@ class DynamixelIOSerial:
             assert len(data) % 6 == 0, "broadcast_ping data is of lenght {}".format(len(data))
             motors = []
             for i in range(int(len(data)/6)):
-                try:
-                    packet.DynamixelStatusPacket.from_bytes(data[6*i:6*(i+1)])
-                except DynamixelInconsistentPacketError:
-                    raise IOError
+                packet.DynamixelStatusPacket.from_bytes(data[6*i:6*(i+1)])
                 motors.append(ord(data[6*i+2]))
-        except DynamixelInconsistentPacketError, AssertionError:
+        except packet.DynamixelInconsistentPacketError, AssertionError:
             raise IOError
         finally:
             self._serial.setTimeouts(self._timeout, self._timeout)

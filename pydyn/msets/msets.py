@@ -4,7 +4,7 @@ from .. import dynamixel
 
 class MotorSet(object):
 
-    def __init__(self, motor_range=(0, 254), verbose=False):
+    def __init__(self, motor_range=(0, 253), verbose=False):
         self.dyn  = dynamixel.create_controller(motor_range = motor_range,
                                                 verbose = verbose)
         self.motors = self.dyn.motors

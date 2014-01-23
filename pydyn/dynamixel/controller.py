@@ -3,6 +3,7 @@ import time
 import sys
 from collections import OrderedDict, deque
 import copy
+import atexit
 
 from .. import color
 
@@ -25,7 +26,7 @@ class DynamixelController(threading.Thread):
         It does not access the content of the motors memory.
     """
 
-    def __init__(self, connection_type, port = None, timeout = 50, freq = 50, baudrate = 1000000, ip = '127.0.0.1', debug = False):
+    def __init__(self, connection_type, port=None, timeout=50, freq=50, baudrate=1000000, ip='127.0.0.1', debug=False):
         """
             :arg port:     when using serial, the device port of the connection.
                              when using V-REP, the ip port of the connection.
@@ -51,8 +52,29 @@ class DynamixelController(threading.Thread):
         self.io = io.DynamixelIO(port=port, timeo=timeout, baudrate=baudrate, ip=ip)
         self.motors = []
 
+        def stop_and_close():
+            self.stop()
+            try:
+                self.join(0.5)
+            except RuntimeError:
+                pass
+            self.io.close()
+        atexit.register(stop_and_close)
+
+        # atexit.register(self.join, 0.5)
+        # atexit.register(self.stop)
+
         self._pinglock = threading.Lock() # when discovering motors
         self._ctrllock = threading.Lock() # when running as usual
+
+        self._stop = threading.Event()
+
+    def stop(self):
+        """Stop the thread after the end of the current loop"""
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
 
     def wait(self, loops):
         """ Wait a number of loops. Useful to wait before a change is applied to the motors."""
@@ -67,9 +89,10 @@ class DynamixelController(threading.Thread):
             :arg immediately:  if False, wait two additional loops to purge the last orders
         """
         try:
-            if not immediately:
-                self.wait(2)
+            self.stop()
+            self._ctrllock.acquire()
             self.io.close()
+            self._ctrllock.release()
         except Exception:
             pass
 
@@ -309,9 +332,10 @@ class DynamixelController(threading.Thread):
 
 
     def run(self):
-        while True:
+        while not self.stopped():
 
             self.framecount += 1
+
 
             self._pinglock.acquire()
             self._ctrllock.acquire()
@@ -343,6 +367,8 @@ class DynamixelController(threading.Thread):
             dt = self._period - (end - start)
             if dt > 0:
                 time.sleep(dt)
+
+        self.close()
 
     @property
     def fps(self):
