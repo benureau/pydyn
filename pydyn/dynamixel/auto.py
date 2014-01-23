@@ -2,6 +2,8 @@ import os
 import sys
 import glob
 
+import ftd2xx
+
 from .. import color
 from .. import sinterface
 
@@ -110,7 +112,7 @@ def create_controller(connection_type = "USB2DXL",
         pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOSerial
         port = usb_device
         if port is None:
-            ports = get_available_ports()
+            ports = ftd2xx.listDevices()
             if not ports:
                 if verbose:
                     print(FAIL + 'No standart port found. If your port has'
@@ -124,10 +126,10 @@ def create_controller(connection_type = "USB2DXL",
 
     # Create the controller
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
-    ctrl = ctrl_class(port, connection_type, timeout = timeout,
+    ctrl = ctrl_class(connection_type, port=port, timeout = timeout,
                       baudrate = baudrate, ip = ip, debug = debug)
     if verbose:
-        print(OK + 'Connexion established: {}'.format(
+        print(OK + 'Connexion established: {}{}'.format(
                 color.green, color.end, ctrl.io))
 
     motor_ids = ctrl.discover_motors(range(min(motor_range),

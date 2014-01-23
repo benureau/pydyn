@@ -25,7 +25,7 @@ class DynamixelController(threading.Thread):
         It does not access the content of the motors memory.
     """
 
-    def __init__(self, port, connection_type, timeout = 0.05, freq = 50, baudrate = 1000000, ip = '127.0.0.1', debug = False):
+    def __init__(self, connection_type, port = None, timeout = 50, freq = 50, baudrate = 1000000, ip = '127.0.0.1', debug = False):
         """
             :arg port:     when using serial, the device port of the connection.
                              when using V-REP, the ip port of the connection.
@@ -48,7 +48,7 @@ class DynamixelController(threading.Thread):
             raise ValueError('Unknown controller type: %s' % (connection_type))
 
         self.type = connection_type
-        self.io = io.DynamixelIO(port, timeout = timeout, baudrate = baudrate, ip = ip)
+        self.io = io.DynamixelIO(port=port, timeo=timeout, baudrate=baudrate, ip=ip)
         self.motors = []
 
         self._pinglock = threading.Lock() # when discovering motors
@@ -61,14 +61,17 @@ class DynamixelController(threading.Thread):
             while(frame + loops >= self.framecount):
                 time.sleep(0.001)
 
-    def close(self, immediately = False):
+    def close(self, immediately=True):
         """ Close the serial connection
 
             :arg immediately:  if False, wait two additional loops to purge the last orders
         """
-        if not immediately:
-            self.wait(2)
-        self.io.close()
+        try:
+            if not immediately:
+                self.wait(2)
+            self.io.close()
+        except Exception:
+            pass
 
     # freq and period property, to ensure they remain coherent
 
@@ -130,13 +133,16 @@ class DynamixelController(threading.Thread):
         self._ctrllock.acquire()
 
         found_ids = []
-        for m_id in motor_ids:
-            if verbose:
-                print('  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
-                        motor_ids[0], motor_ids[-1], m_id)),
-                sys.stdout.flush()
-            if self.io.ping(m_id):
-                found_ids.append(m_id)
+        try:
+            found_ids = self.io.broadcast_ping()
+        except (AssertionError, AttributeError, IOError):
+            for m_id in motor_ids:
+                if verbose:
+                    print('  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
+                            motor_ids[0], motor_ids[-1], m_id)),
+                    sys.stdout.flush()
+                if self.io.ping(m_id):
+                    found_ids.append(m_id)
 
         self._pinglock.release()
         self._ctrllock.release()

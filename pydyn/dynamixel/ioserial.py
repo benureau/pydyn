@@ -2,8 +2,10 @@
 
 import time
 import array
-import serial
 import threading
+import atexit
+
+import ftd2xx
 
 from pydyn.utils import flatten_list, reshape_list
 
@@ -62,7 +64,7 @@ class DynamixelIOSerial:
     ###                       communication fails, our memory does not contain bogus
     ###                       data.
 
-    def __init__(self, port, baudrate=1000000, timeout=1.0, blacklisted_alarms=(), **kwargs):
+    def __init__(self, port=None, baudrate=1000000, timeout=20, blacklisted_alarms=(), **kwargs):
         """
             At instanciation, it opens the serial port and sets the communication parameters.
 
@@ -81,7 +83,14 @@ class DynamixelIOSerial:
             raise IOError('Port already used (%s)!' % (port))
 
         self._timeout = timeout
-        self._serial = serial.Serial(port, baudrate, timeout=timeout, stopbits=serial.STOPBITS_TWO)
+        self.baudrate = baudrate
+        self._serial = ftd2xx.open()
+        self._serial.setBaudRate(baudrate)
+        self._serial.setTimeouts(timeout, timeout)
+        self._serial.setLatencyTimer(2)
+        atexit.register(self._serial.close)
+
+        #self._serial = serial.Serial(port, baudrate, timeout=timeout, stopbits=serial.STOPBITS_TWO)
         self.__open_ports.append(port)
         self.flush()
 
@@ -105,9 +114,7 @@ class DynamixelIOSerial:
         self.close()
 
     def __repr__(self):
-        return "<DXL IO: port='%s' baudrate=%d timeout=%.g>" % (self._serial.port,
-                                                                self._serial.baudrate,
-                                                                self._serial.timeout)
+        return "<dxl io: serial='{}' baudrate={}>".format(self._serial.getDeviceInfo()['serial'], None)
 
 
     def flush(self):
@@ -117,8 +124,7 @@ class DynamixelIOSerial:
             .. note:: You can use this method after a communication issue (such as a timeout) to refresh the communication bus.
 
             """
-        self._serial.flushInput()
-        self._serial.flushOutput()
+        self._serial.purge()
 
 
     # MARK: - Motor general functions
@@ -137,6 +143,7 @@ class DynamixelIOSerial:
 
         ping_packet = packet.DynamixelPingPacket(motor_id)
 
+
         try:
             self._send_packet(ping_packet)
             return True
@@ -144,6 +151,30 @@ class DynamixelIOSerial:
         except DynamixelTimeoutError:
             return False
 
+    def broadcast_ping(self):
+
+        try:
+            self._serial.setTimeouts(200, 200)
+            ping = packet.DynamixelPingPacket(254)
+            self._send_packet(ping, receive_status_packet=False)
+
+
+            data = self._serial.read(6*253) # We get that ourselves
+            assert len(data) % 6 == 0, "broadcast_ping data is of lenght {}".format(len(data))
+            motors = []
+            for i in range(int(len(data)/6)):
+                try:
+                    packet.DynamixelStatusPacket.from_bytes(data[6*i:6*(i+1)])
+                except DynamixelInconsistentPacketError:
+                    raise IOError
+                motors.append(ord(data[6*i+2]))
+        except DynamixelInconsistentPacketError, AssertionError:
+            raise IOError
+        finally:
+            self._serial.setTimeouts(self._timeout, self._timeout)
+
+
+        return motors
 
     def scan(self, ids=xrange(254)):
         """
