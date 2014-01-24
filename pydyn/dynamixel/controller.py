@@ -159,6 +159,9 @@ class DynamixelController(threading.Thread):
         try:
             found_ids = self.io.broadcast_ping()
         except (AssertionError, AttributeError, IOError):
+            pass
+
+        if found_ids == []:
             for m_id in motor_ids:
                 if verbose:
                     print('  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
