@@ -9,6 +9,7 @@ class MotorSet(object):
                                                 verbose = verbose)
         self.motors = self.dyn.motors
         self._range_bounds = None
+        self.zero_pose = np.array([0.0]*len(self.motors))
 
     def close(self):
         pass
@@ -20,7 +21,7 @@ class MotorSet(object):
     @range_bounds.setter
     def range_bounds(self, rbounds):
         assert len(rbounds) == len(self.motors)
-        self._range_bounds = tuple((max(52, lb), min(247, hb)) for lb, hb in rbounds)
+        self._range_bounds = tuple((max(-100, lb), min(100, hb)) for lb, hb in rbounds)
 
     def _clip(self, pose):
         if self._range_bounds is not None:
@@ -41,11 +42,11 @@ class MotorSet(object):
 
     @property
     def pose(self):
-        return np.array([m.position for m in self.motors])
+        return np.array([m.position - zp for m, zp in zip(self.motors, self.zero_pose)])
 
     @pose.setter
     def pose(self, _pose):
-        for m, p in zip(self.motors, self._clip(_pose)):
+        for m, p in zip(self.motors, self._clip(np.array(_pose)) + self.zero_pose):
             m.position = p
 
     @property
@@ -70,4 +71,13 @@ class MotorSet(object):
     def max_torque(self, val):
         for m in self.motors:
             m.max_torque = val
+
+    @property
+    def zero_pose(self):
+        return self._zero_pose
+
+    @zero_pose.setter
+    def zero_pose(self, val):
+        assert all(p>=0 for p in val)
+        self._zero_pose = np.array(val)
 
