@@ -170,6 +170,10 @@ class DynamixelController(threading.Thread):
                 if self.io.ping(m_id):
                     found_ids.append(m_id)
 
+        def in_mids(a):
+            return a in motor_ids
+        found_ids = filter(in_mids, found_ids)
+
         self._pinglock.release()
         self._ctrllock.release()
 
@@ -214,9 +218,12 @@ class DynamixelController(threading.Thread):
                 try:
                     try:
                         self.io.get(m.id, 'PRESENT_POS_SPEED_LOAD')
-                    except ValueError as ve:
-                        print('warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0]))
-
+                    except (ValueError, io.DynamixelTimeoutError, io.DynamixelCommunicationError) as ve:
+                        print('[{}] warning: reading status of motor {} failed with : {}'.format(self.framecount, m.id, ve))
+                        self.io._serial.purge()
+                        self.io._serial.resetDevice()
+                        self.io._serial.setTimeouts(self.io._timeout, self.io._timeout)
+                        self.io._serial.setLatencyTimer(5)
                 except io.DynamixelCommunicationError as e:
                     print(e)
                     print('warning: communication error on motor {}'.format(m.id))

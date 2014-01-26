@@ -82,11 +82,12 @@ class DynamixelIOSerial:
         if port in self.__open_ports:
             raise IOError('Port already used (%s)!' % (port))
 
-        self._timeout = timeout
+        self._timeout = 20
         self.baudrate = baudrate
         self._serial = ftd2xx.open()
+        self._serial.purge()
         self._serial.setBaudRate(baudrate)
-        self._serial.setTimeouts(timeout, timeout)
+        self._serial.setTimeouts(self._timeout, self._timeout)
         self._serial.setLatencyTimer(2)
         #atexit.register(self._serial.close)
 
@@ -157,7 +158,6 @@ class DynamixelIOSerial:
             ping = packet.DynamixelPingPacket(254)
             self._send_packet(ping, receive_status_packet=False)
 
-
             data = self._serial.read(6*253) # We get that ourselves
             assert len(data) % 6 == 0, "broadcast_ping data is of lenght {}".format(len(data))
             motors = []
@@ -165,10 +165,11 @@ class DynamixelIOSerial:
                 packet.DynamixelStatusPacket.from_bytes(data[6*i:6*(i+1)])
                 motors.append(ord(data[6*i+2]))
         except packet.DynamixelInconsistentPacketError, AssertionError:
+            import traceback
+            traceback.print_exc()
             raise IOError
         finally:
             self._serial.setTimeouts(self._timeout, self._timeout)
-
 
         return motors
 

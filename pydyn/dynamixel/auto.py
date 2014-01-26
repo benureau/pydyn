@@ -55,7 +55,7 @@ def get_available_ports():
 
 def create_controller(connection_type = "USB2DXL",
                       motor_range = (0, 253),
-                      timeout = None,
+                      timeout = 20,
                       start = True,
                       baudrate = 1000000,
                       usb_device = None,
