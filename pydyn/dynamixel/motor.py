@@ -821,7 +821,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @property
     def cw_compliance_margin(self):
-        return conv.raw2_cw_compliance_margin(self.mmem[protocol.DXL_CW_COMPLIANCE_MARGIN], self.mmem)
+        return conv.raw2_compliance_margin(self.mmem[protocol.DXL_CW_COMPLIANCE_MARGIN], self.mmem)
 
     @property
     def cw_compliance_margin_raw(self):
@@ -830,7 +830,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @cw_compliance_margin.setter
     def cw_compliance_margin(self, val):
-        self.cw_compliance_margin_raw = conv.cw_compliance_margin_2raw(val, self.mmem)
+        self.cw_compliance_margin_raw = conv.compliance_margin_2raw(val, self.mmem)
 
     @cw_compliance_margin_raw.setter
     def cw_compliance_margin_raw(self, val):
@@ -842,7 +842,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @property
     def ccw_compliance_margin(self):
-        return conv.raw2_ccw_compliance_margin(self.mmem[protocol.DXL_CCW_COMPLIANCE_MARGIN], self.mmem)
+        return conv.raw2_compliance_margin(self.mmem[protocol.DXL_CCW_COMPLIANCE_MARGIN], self.mmem)
 
     @property
     def ccw_compliance_margin_raw(self):
@@ -850,7 +850,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @ccw_compliance_margin.setter
     def ccw_compliance_margin(self, val):
-        self.ccw_compliance_margin_raw = conv.ccw_compliance_margin_2raw(val, self.mmem)
+        self.ccw_compliance_margin_raw = conv.compliance_margin_2raw(val, self.mmem)
 
     @ccw_compliance_margin_raw.setter
     def ccw_compliance_margin_raw(self, val):
@@ -874,7 +874,7 @@ class ComplianceMarginSlopeExtra(object):
         self.compliance_margins_raw = val
 
     @compliance_margins_raw.setter
-    def compliance_margin_raw(self, val):
+    def compliance_margins_raw(self, val):
         limits.checkbounds('ccw compliance margin', 0, 255, int(val[0]))
         limits.checkbounds('ccw compliance margin', 0, 255, int(val[1]))
         self.request_lock.acquire()
@@ -886,7 +886,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @property
     def cw_compliance_slope(self):
-        return conv.raw2_cw_compliance_slope(self.mmem[protocol.DXL_CW_COMPLIANCE_slope], self.mmem)
+        return conv.raw2_compliance_slope(self.mmem[protocol.DXL_CW_COMPLIANCE_slope], self.mmem)
 
     @property
     def cw_compliance_slope_raw(self):
@@ -894,7 +894,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @cw_compliance_slope.setter
     def cw_compliance_slope(self, val):
-        self.cw_compliance_slope_raw = conv.cw_compliance_slope_2raw(val, self.mmem)
+        self.cw_compliance_slope_raw = conv.compliance_slope_2raw(val, self.mmem)
 
     @cw_compliance_slope_raw.setter
     def cw_compliance_slope_raw(self, val):
@@ -914,7 +914,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @ccw_compliance_slope.setter
     def ccw_compliance_slope(self, val):
-        self.ccw_compliance_slope_raw = conv.ccw_compliance_slope_2raw(val, self.mmem)
+        self.ccw_compliance_slope_raw = conv.compliance_slope_2raw(val, self.mmem)
 
     @ccw_compliance_slope_raw.setter
     def ccw_compliance_slope_raw(self, val):
@@ -938,7 +938,7 @@ class ComplianceMarginSlopeExtra(object):
         self.compliance_slopes_raw = val
 
     @compliance_slopes_raw.setter
-    def compliance_slope_raw(self, val):
+    def compliance_slopes_raw(self, val):
         limits.checkbounds('ccw compliance slope', 0, 255, int(val[0]))
         limits.checkbounds('ccw compliance slope', 0, 255, int(val[1]))
         self.request_lock.acquire()
