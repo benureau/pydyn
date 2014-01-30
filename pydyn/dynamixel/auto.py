@@ -41,7 +41,7 @@ def get_available_ports():
 
        :raises: NotImplementedError if your OS is not one of the currently supported (Linux, Mac OS).
 
-        """
+    """
     op_system = get_os_name()
 
     if op_system == 'Darwin':
@@ -55,6 +55,7 @@ def get_available_ports():
 
 def create_controller(connection_type = "USB2DXL",
                       motor_range = (0, 253),
+                      serial_id = None,
                       timeout = 20,
                       start = True,
                       baudrate = 1000000,
@@ -120,13 +121,21 @@ def create_controller(connection_type = "USB2DXL",
                         'explicetly.')
                 print('Error; exiting.')
                 exit(1)
-            port = ports[0]
+            else:
+                if serial_id is not None:
+                    for devnum, sid in enumerate(ports):
+                        if sid == serial_id:
+                            port = serial_id
+                            serial_devnum = devnum
+                else:
+                    port = ports[0]
+                    serial_devnum = 0
         if verbose:
             print(OK + 'Port found: {}{}{}'.format(color.bold, port, color.end))
 
     # Create the controller
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
-    ctrl = ctrl_class(connection_type, port=port, timeout=timeout,
+    ctrl = ctrl_class(connection_type, port=serial_devnum, timeout=timeout,
                       baudrate=baudrate, ip=ip, debug=debug)
 
 
@@ -138,7 +147,7 @@ def create_controller(connection_type = "USB2DXL",
                                            max(motor_range) + 1),
                                      verbose = verbose)
     if verbose:
-        print(OK + 'Scanning motor ids between {} and {}'.format(
+        print(OK + 'Scanning motor ids between {} and {}...   '.format(
                 min(motor_range), max(motor_range)))
 
     if len(motor_ids) == 0:

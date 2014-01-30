@@ -161,7 +161,7 @@ class DynamixelController(threading.Thread):
         except (AssertionError, AttributeError, IOError):
             pass
 
-        if found_ids == []:
+        if True and found_ids == []:
             for m_id in motor_ids:
                 if verbose:
                     print('  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
@@ -223,7 +223,7 @@ class DynamixelController(threading.Thread):
                         self.io._serial.purge()
                         self.io._serial.resetDevice()
                         self.io._serial.setTimeouts(self.io._timeout, self.io._timeout)
-                        self.io._serial.setLatencyTimer(5)
+                        self.io._serial.setLatencyTimer(2)
                 except io.DynamixelCommunicationError as e:
                     print(e)
                     print('warning: communication error on motor {}'.format(m.id))

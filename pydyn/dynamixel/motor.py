@@ -87,7 +87,7 @@ class DynamixelMotor(object):
             return
 
         self.request_lock.acquire()
-        self.read_request[protocol.REG_ADDRESS(name.upper())] = True
+        self.read_requests[protocol.REG_ADDRESS(name.upper())] = True
         self.request_lock.release()
 
     def request_write(self, name, value):
@@ -453,7 +453,7 @@ class DynamixelMotor(object):
     def status_return_level(self, val):
         limits.checkoneof('compliant', [0, 1, 2], int(val))
         self.request_lock.acquire()
-        self.write_requests['RETURN_STATUS_LEVEL'] = int(val)
+        self.write_requests['STATUS_RETURN_LEVEL'] = int(val)
         self.request_lock.release()
 
 
@@ -875,7 +875,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @compliance_margins_raw.setter
     def compliance_margins_raw(self, val):
-        limits.checkbounds('ccw compliance margin', 0, 255, int(val[0]))
+        limits.checkbounds('cw compliance margin',  0, 255, int(val[0]))
         limits.checkbounds('ccw compliance margin', 0, 255, int(val[1]))
         self.request_lock.acquire()
         self.write_requests['COMPLIANCE_MARGINS'] = int(val[0]), int(val[1])
@@ -886,7 +886,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @property
     def cw_compliance_slope(self):
-        return conv.raw2_compliance_slope(self.mmem[protocol.DXL_CW_COMPLIANCE_slope], self.mmem)
+        return conv.raw2_compliance_slope(self.mmem[protocol.DXL_CW_COMPLIANCE_SLOPE], self.mmem)
 
     @property
     def cw_compliance_slope_raw(self):
@@ -906,7 +906,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @property
     def ccw_compliance_slope(self):
-        return conv.raw2_ccw_compliance_slope(self.mmem[protocol.DXL_CCW_COMPLIANCE_slope], self.mmem)
+        return conv.raw2_compliance_slope(self.mmem[protocol.DXL_CCW_COMPLIANCE_SLOPE], self.mmem)
 
     @property
     def ccw_compliance_slope_raw(self):
@@ -939,7 +939,7 @@ class ComplianceMarginSlopeExtra(object):
 
     @compliance_slopes_raw.setter
     def compliance_slopes_raw(self, val):
-        limits.checkbounds('ccw compliance slope', 0, 255, int(val[0]))
+        limits.checkbounds('cw compliance slope',  0, 255, int(val[0]))
         limits.checkbounds('ccw compliance slope', 0, 255, int(val[1]))
         self.request_lock.acquire()
         self.write_requests['COMPLIANCE_SLOPES'] = int(val[0]), int(val[1])

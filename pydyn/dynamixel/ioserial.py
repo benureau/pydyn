@@ -64,7 +64,7 @@ class DynamixelIOSerial:
     ###                       communication fails, our memory does not contain bogus
     ###                       data.
 
-    def __init__(self, port=None, baudrate=1000000, timeout=20, blacklisted_alarms=(), **kwargs):
+    def __init__(self, port=0, baudrate=1000000, timeout=20, blacklisted_alarms=(), **kwargs):
         """
             At instanciation, it opens the serial port and sets the communication parameters.
 
@@ -82,10 +82,10 @@ class DynamixelIOSerial:
         if port in self.__open_ports:
             raise IOError('Port already used (%s)!' % (port))
 
-        self._timeout = 20
+        self._timeout = 40
         self.baudrate = baudrate
-        self._serial = ftd2xx.open()
-        self._serial.purge()
+        self._serial = ftd2xx.open(dev=port)
+        #self._serial.purge()
         self._serial.setBaudRate(baudrate)
         self._serial.setTimeouts(self._timeout, self._timeout)
         self._serial.setLatencyTimer(2)
@@ -93,7 +93,7 @@ class DynamixelIOSerial:
 
         #self._serial = serial.Serial(port, baudrate, timeout=timeout, stopbits=serial.STOPBITS_TWO)
         self.__open_ports.append(port)
-        self.flush()
+        #self.flush()
 
         self.blacklisted_alarms = blacklisted_alarms
 
@@ -154,7 +154,7 @@ class DynamixelIOSerial:
     def broadcast_ping(self):
 
         try:
-            self._serial.setTimeouts(200, 200)
+            self._serial.setTimeouts(400, 400)
             ping = packet.DynamixelPingPacket(254)
             self._send_packet(ping, receive_status_packet=False)
 

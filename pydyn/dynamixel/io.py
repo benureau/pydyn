@@ -13,10 +13,10 @@ except ImportError:
     vrep_available = False
 
 if serial_available:
-    print("io is set as serial")
+    #print("io is set as serial")
     DynamixelIO = DynamixelIOSerial
 elif vrep_available:
-    print("io is set as a vrep socket")
+    #print("io is set as a vrep socket")
     DynamixelIO = DynamixelIOVRep
 else:
     raise ImportError("No I/O available (serial or vrep). Make sure pyserial or pyvrep is correctly setup.")

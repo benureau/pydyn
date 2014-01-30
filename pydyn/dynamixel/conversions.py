@@ -371,11 +371,11 @@ def gains_2raw(gains, mmem = None):
 
 def compliance_margin_2raw(value, mmem = None):
     limits.checkbounds('compliance margin', 0, raw2_deg(255, mmem), value)
-    return raw2_deg(value, mmem)
+    return deg_2raw(value, mmem)
 
 def raw2_compliance_margin(value, mmem = None):
     limits.checkbounds('compliance margin raw', 0, 255, value)
-    return deg_2raw(value, mmem)
+    return raw2_deg(value, mmem)
 
 
 # MARK Compliance Slopes

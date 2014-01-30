@@ -5,6 +5,7 @@ DXL_INSTRUCTIONS = {
     'PING'      : 0x01,
     'READ_DATA' : 0x02,
     'WRITE_DATA': 0x03,
+    'RESET'     : 0x06,
     'SYNC_WRITE': 0x83,
     'SYNC_READ' : 0x84,
 }
