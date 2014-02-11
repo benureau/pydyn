@@ -2,6 +2,8 @@ try:
     from .ioserial import *
     serial_available = True
 except ImportError:
+    import traceback
+    traceback.print_exc()
     serial_available = False
 
 try:

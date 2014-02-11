@@ -2,14 +2,17 @@ import os
 import sys
 import glob
 
-import ftd2xx
 
 from .. import color
 from .. import sinterface
 
-import pydyn.dynamixel.io
-from pydyn.dynamixel.controller import (DynamixelController,
-                                        DynamixelControllerFullRam)
+from . import io
+from .controller import (DynamixelController,
+                         DynamixelControllerFullRam)
+
+if io.use_ftd2xx:
+    import ftd2xx
+
 
 vrep_mode = False
 TIMEOUTS = {'Darwin': 0,
@@ -99,9 +102,9 @@ def create_controller(connection_type = "USB2DXL",
     if vrep_mode:
         if verbose:
             print('Loading the robot from V-Rep...')
-        assert pydyn.dynamixel.io.vrep_available is True
+        assert io.vrep_available is True
         connection_type = "VREP"
-        pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOVRep
+        io.DynamixelIO = io.DynamixelIOVRep
         port = ipport
         if verbose:
             print(OK + 'Trying port: {}{}:{}{}'.format(color.bold, ip, port, color.end))
@@ -109,11 +112,14 @@ def create_controller(connection_type = "USB2DXL",
     else:
         if verbose:
             print('Loading the robot from serial bus...')
-        assert pydyn.dynamixel.io.serial_available is True
-        pydyn.dynamixel.io.DynamixelIO = pydyn.dynamixel.io.DynamixelIOSerial
+        assert io.serial_available is True
+        io.DynamixelIO = io.DynamixelIOSerial
         port = usb_device
         if port is None:
-            ports = ftd2xx.listDevices()
+            if io.use_ftd2xx:
+                ports = ftd2xx.listDevices()
+            else:
+                ports = get_available_ports()
             if not ports:
                 if verbose:
                     print(FAIL + 'No standart port found. If your port has'
@@ -122,20 +128,23 @@ def create_controller(connection_type = "USB2DXL",
                 print('Error; exiting.')
                 exit(1)
             else:
-                if serial_id is not None:
+                serial_devnum = 0
+                if io.use_ftd2xx and serial_id is not None:
                     for devnum, sid in enumerate(ports):
                         if sid == serial_id:
                             port = serial_id
                             serial_devnum = devnum
                 else:
                     port = ports[0]
-                    serial_devnum = 0
         if verbose:
             print(OK + 'Port found: {}{}{}'.format(color.bold, port, color.end))
 
+    if io.use_ftd2xx:
+        port = serial_devnum
+
     # Create the controller
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
-    ctrl = ctrl_class(connection_type, port=serial_devnum, timeout=timeout,
+    ctrl = ctrl_class(connection_type, port=port, timeout=timeout,
                       baudrate=baudrate, ip=ip, debug=debug)
 
 

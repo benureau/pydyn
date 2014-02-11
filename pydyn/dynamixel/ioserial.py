@@ -5,7 +5,11 @@ import array
 import threading
 import atexit
 
-import ftd2xx
+use_ftd2xx = False
+if use_ftd2xx:
+    import ftd2xx
+else:
+    import serial
 
 from pydyn.utils import flatten_list, reshape_list
 
@@ -82,13 +86,18 @@ class DynamixelIOSerial:
         if port in self.__open_ports:
             raise IOError('Port already used (%s)!' % (port))
 
-        self._timeout = 40
+        self._timeout = 50
         self.baudrate = baudrate
-        self._serial = ftd2xx.open(dev=port)
+
         #self._serial.purge()
-        self._serial.setBaudRate(baudrate)
-        self._serial.setTimeouts(self._timeout, self._timeout)
-        self._serial.setLatencyTimer(2)
+        if use_ftd2xx:
+            self._serial = ftd2xx.open(dev=port)
+            self._serial.setBaudRate(baudrate)
+            self._serial.setTimeouts(self._timeout, self._timeout)
+            self._serial.setLatencyTimer(2)
+        else:
+            self._serial = serial.Serial(port, 1000000, timeout=timeout/1000.0)
+
         #atexit.register(self._serial.close)
 
         #self._serial = serial.Serial(port, baudrate, timeout=timeout, stopbits=serial.STOPBITS_TWO)
@@ -114,7 +123,10 @@ class DynamixelIOSerial:
         self.close()
 
     def __repr__(self):
-        return "<dxl io: serial='{}' baudrate={}>".format(self._serial.getDeviceInfo()['serial'], None)
+        if use_ftd2xx:
+            return "<dxl io: serial='{}' baudrate={}>".format(self._serial.getDeviceInfo()['serial'], None)
+        else:
+            return "<dxl io: serial='{}' baudrate={}>".format(self._serial.port, self._serial.baudrate)
 
 
     def flush(self):
@@ -124,7 +136,10 @@ class DynamixelIOSerial:
             .. note:: You can use this method after a communication issue (such as a timeout) to refresh the communication bus.
 
             """
-        self._serial.purge()
+        if use_ftd2xx:
+            self._serial.purge()
+        else:
+            self._serial.flush()
 
 
     # MARK: - Motor general functions
@@ -154,7 +169,11 @@ class DynamixelIOSerial:
     def broadcast_ping(self):
 
         try:
-            self._serial.setTimeouts(400, 400)
+            if use_ftd2xx:
+                self._serial.setTimeouts(400, 400)
+            else:
+                self._serial.timeout=400/1000.0
+
             ping = packet.DynamixelPingPacket(254)
             self._send_packet(ping, receive_status_packet=False)
 
@@ -169,7 +188,10 @@ class DynamixelIOSerial:
             traceback.print_exc()
             raise IOError
         finally:
-            self._serial.setTimeouts(self._timeout, self._timeout)
+            if use_ftd2xx:
+                self._serial.setTimeouts(self._timeout, self._timeout)
+            else:
+                self._serial.timeout=self._timeout/1000.0
 
         return motors
 
