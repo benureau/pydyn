@@ -25,6 +25,11 @@ try:
 except ImportError:
     _pyftdi_available = False
 
+
+class PortNotFoundError(Exception):
+    def __init__(self, port):
+        self.port = port
+
 USB_DEVICES    = {'USB2Serial', 'USB2Dynamixel', 'USB2AX', 'CM-513', 'CM-700',
                   'CM-900', 'OpenCM9.04', 'CM-100', 'CM-100A'}
 SERIAL_DEVICES = {'SerialPort', 'CM-5', 'CM-510'}
@@ -37,7 +42,7 @@ def available_ports():
     """
     return list_ports.list_ports_by_vid_pid()
 
-def filter_ports(ports, device_type, port_path=None, serial_id=None):
+def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
     """
     Filter ports description based on device_type, port, or serial_id:
     * POSIX compliant (Linux, *BSD, HURD):
@@ -66,8 +71,8 @@ def filter_ports(ports, device_type, port_path=None, serial_id=None):
     if port_path is None and serial_id is None:
 
         if plat == 'Darwin':
-            regex = re.compile('tty.Bluetooth.*')
-            ports = [port for port in ports if regex.search(port[0]) is None]
+            regex = re.compile('.*\.Bluetooth.*')
+            ports = [port for port in ports if regex.search(port['port']) is None]
 
         elif plat == 'Windows':
             # TODO
@@ -92,8 +97,8 @@ class Serial(object):
     Offer a pyserial-like API that switch to pyftdi when the hardware supports it.
     """
 
-    def __init__(self, port=None, device_type='Any', serial_id=None,
-                 baudrate=1000000, timeout=20, latency=2,
+    def __init__(self, port_path=None, device_type='Any', serial_id=None,
+                 baudrate=1000000, timeout=20, latency=2, verbose=False,
                  **kwargs):
         """
         Create a serial port.
@@ -117,8 +122,19 @@ class Serial(object):
         """
 
         ports = available_ports()
-        ports = filter_ports(ports, device_type, port, serial_id)
-        port_desc = ports[0] # taking the first one
+        ports = filter_ports(ports, device_type=device_type,
+                                      port_path=port_path,
+                                      serial_id=serial_id)
+        try:
+            port_desc = ports[0] # taking the first one
+        except IndexError:
+            raise PortNotFoundError(port, device_type, serial_id)
+
+        # TODO: property to allow reconfiguration
+        self.port = port_desc['port']
+        self.baudrate = baudrate
+        self.timeout = timeout
+        self.latency = latency
 
         self._device_type = device_type
 
@@ -144,12 +160,19 @@ class Serial(object):
                 pass
 
         if self._serial is None: # pyftdi didn't succeed, trying pyserial
-            port = port_desc['port']
-            self._serial = serial.Serial(port, baudrate=baudrate,
+            self._serial = serial.Serial(self.port, baudrate=baudrate,
                                          timeout=timeout/1000.0, **kwargs)
 
         if device_type in ['CM-5', 'CM-510']:
             self._toss_mode()
+
+    def __repr__(self):
+        if self._ftdi_ctrl:
+            return "usbftdi(port={}, bps={}, timeout={}, latency)".format(
+                     self.port, self.baudrate, self.timeout, self.latency)
+        else:
+            return "serial(port={}, bps={}, timeout={})".format(
+                           self.port, self.baudrate, self.timeout)
 
     def _toss_mode(self):
         """Activate the toss mode in the CM-5 and CM-510."""
