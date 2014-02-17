@@ -1,24 +1,30 @@
 # -*- coding: utf-8 -*-
+"""
+Motor communication module
+
+Handle communication request of type :
+    * get value of 'PRESENT_POSITION' of motor with id 13
+    * set value of 'GOAL_POSITION' of motor 13 at 743
+
+Notably, this module does do any checks on the values of the write requests,
+excepts that it fits into the size of the motor adress.
+It does not either do any conversion, this is done at high level.
+"""
 
 import time
 import array
 import threading
 import atexit
+import itertools
 
-use_ftd2xx = False
-if use_ftd2xx:
-    import ftd2xx
-else:
-    import serial
+from ..io import ftdiserial
 
-from pydyn.utils import flatten_list, reshape_list
+from ..dynamixel import protocol
+from ..dynamixel import packet
+from ..dynamixel import memory
 
-from . import protocol
-from . import packet
-from . import limits
-from . import memory
+from ..dynamixel import alarms as conv # the only conversion needed in I/O
 
-from . import alarms as conv # the only conversion needed in I/O
 
 # MARK: - Byte conversions
 
@@ -28,83 +34,69 @@ def integer_to_two_bytes(value):
 def two_bytes_to_integer(value):
     return int(value[0] + (value[1] << 8))
 
+def reshape_list(l, size_of_chunk):
+    return list(itertools.izip_longest(*([iter(l)] * size_of_chunk)))
 
-class DynamixelIOSerial:
+def flatten_list(l):
+    return list(itertools.chain.from_iterable(l))
+
+
+# MARK: - DynamixelComSerial class
+
+class DynamixelComSerial:
     """
-        This class handles the low-level communication with robotis motors.
+    This class handles the low-level communication with robotis motors.
 
-        Using a USB communication device such as USB2DYNAMIXEL or USB2AX,
-        you can open serial communication with robotis motors (MX, RX, AX)
-        using communication protocols TTL or RS485.
+    Using a USB communication device such as USB2DYNAMIXEL or USB2AX,
+    you can open serial communication with robotis motors (MX, AX, RX)
+    using communication protocols TTL for the first two and RS485 for the
+    latter.
 
-        This class handles low-level IO communication by providing access to the
-        different registers in the motors.
-        Users can use high-level access such as position, load, torque to control
-        the motors.
+    This class handles low-level IO communication by providing access to the
+    different registers in the motors.
+    Users can use high-level access such as position, load, torque to control
+    the motors.
 
-        You can access two different area space of the dynamixel registers:
-            * the EEPROM area
-            * the RAM area
+    You can access two different area space of the dynamixel registers:
+        * the EEPROM area
+        * the RAM area
 
-        When values are written to the EEPROM, they are conserved after cycling the power.
-        The values written to the RAM are lost when cycling the power.
+    When values are written to the EEPROM, they are conserved after cycling the power.
+    The values written to the RAM are lost when cycling the power.
 
-        In this modules, all values are raw, integer values. Conversion to human values
-        are made through the motor interface.
+    In this modules, all values are raw, integer values. Conversion to human values
+    are made at higher level, through the motor interface.
 
-        Also, this module does minimal checking about if values make sense or are legal.
-        The Motor instance is responsible for that. It makes everything simpler here, and
-        problems are catched faster by the Motor instances. Plus, if you really want to go
-        crazy, you can.
+    Also, this module does minimal checking about if values make sense or are legal.
+    The Motor instance is responsible for that. It makes everything simpler here, and
+    problems are catched earlier by the Motor instances. Plus, if you really want to
+    go crazy experimenting on non-legal value, you can by accessing this level.
 
-        .. warning:: When accessing EEPROM registers the motor enters a "busy" mode and should not be accessed before about 100ms.
+    .. warning:: When accessing EEPROM registers the motor enters a "busy" mode and
+                 should not be accessed before about 100ms. [#TODO: is that really true ?]
 
-        """
+    """
 
-    __open_ports = []
+    # __open_ports = []
 
-    ### Note to developpers : if you make change, make sure the update to mmem are
+    ### Note to developpers : if you make changes, make sure the update to mmem are
     ###                       done after the serial communication. That way, if the
     ###                       communication fails, our memory does not contain bogus
     ###                       data.
 
-    def __init__(self, port=0, baudrate=1000000, timeout=20, blacklisted_alarms=(), **kwargs):
+    def __init__(self, sio, **kwargs):
         """
-            At instanciation, it opens the serial port and sets the communication parameters.
-
-            .. warning:: The port can only be accessed by a single DynamixelIO instance.
-
-            :param string port: the serial port to use (e.g. Unix (/dev/tty...), Windows (COM...)).
-            :param int baudrate: default for new motors: 57600, for PyDyn motors: 1000000
-            :param float timeout: read timeout in seconds
-            :param blacklisted_alarms: list of blacklisted alarms that will not be triggered as :py:exc:`DynamixelMotorError`
+        :param sio:  a functional, opened serial io instance.
             :type blacklisted_alarms: list of elements of :py:const:`~pydyn.dynamixel.protocol.DXL_ALARMS`
 
             :raises: IOError (when port is already used)
 
             """
-        if port in self.__open_ports:
-            raise IOError('Port already used (%s)!' % (port))
+        # if port in self.__open_ports:
+        #     raise IOError('Port already used (%s)!' % (port))
 
-        self._timeout = 50
-        self.baudrate = baudrate
-
-        #self._serial.purge()
-        if use_ftd2xx:
-            self._serial = ftd2xx.open(dev=port)
-            self._serial.setBaudRate(baudrate)
-            self._serial.setTimeouts(self._timeout, self._timeout)
-            self._serial.setLatencyTimer(2)
-        else:
-            self._serial = serial.Serial(port, 1000000, timeout=timeout/1000.0)
-
-        #atexit.register(self._serial.close)
-
-        #self._serial = serial.Serial(port, baudrate, timeout=timeout, stopbits=serial.STOPBITS_TWO)
-        self.__open_ports.append(port)
-        #self.flush()
-
-        self.blacklisted_alarms = blacklisted_alarms
+        self.sio = sio
+        # self.__open_ports.append(port)
 
         self._lock = threading.RLock()
 
@@ -113,34 +105,14 @@ class DynamixelIOSerial:
     def close(self):
         if hasattr(self, '_serial'):
             try:
-                self.__open_ports.remove(self._serial.port)
-                self._serial.close()
-            except:
+                #self.__open_ports.remove(self.sio.port)
+                self.sio.close()
+            except Exception:
                 pass
 
     def __del__(self):
         """ Automatically closes the serial communication on destruction. """
         self.close()
-
-    def __repr__(self):
-        if use_ftd2xx:
-            return "<dxl io: serial='{}' baudrate={}>".format(self._serial.getDeviceInfo()['serial'], None)
-        else:
-            return "<dxl io: serial='{}' baudrate={}>".format(self._serial.port, self._serial.baudrate)
-
-
-    def flush(self):
-        """
-            Flush the serial communication (both input and output).
-
-            .. note:: You can use this method after a communication issue (such as a timeout) to refresh the communication bus.
-
-            """
-        if use_ftd2xx:
-            self._serial.purge()
-        else:
-            self._serial.flush()
-
 
     # MARK: - Motor general functions
 
@@ -158,7 +130,6 @@ class DynamixelIOSerial:
 
         ping_packet = packet.DynamixelPingPacket(motor_id)
 
-
         try:
             self._send_packet(ping_packet)
             return True
@@ -168,16 +139,14 @@ class DynamixelIOSerial:
 
     def broadcast_ping(self):
 
+        timeout_bak = self.sio.timeout
         try:
-            if use_ftd2xx:
-                self._serial.setTimeouts(400, 400)
-            else:
-                self._serial.timeout=400/1000.0
+            self.sio.timeout = 400
 
             ping = packet.DynamixelPingPacket(254)
             self._send_packet(ping, receive_status_packet=False)
 
-            data = self._serial.read(6*253) # We get that ourselves
+            data = self.sio.read(6*253) # We get that ourselves
             assert len(data) % 6 == 0, "broadcast_ping data is of lenght {}".format(len(data))
             motors = []
             for i in range(int(len(data)/6)):
@@ -188,10 +157,7 @@ class DynamixelIOSerial:
             traceback.print_exc()
             raise IOError
         finally:
-            if use_ftd2xx:
-                self._serial.setTimeouts(self._timeout, self._timeout)
-            else:
-                self._serial.timeout=self._timeout/1000.0
+            self.sio.timeout = timeout_bak
 
         return motors
 
@@ -322,7 +288,7 @@ class DynamixelIOSerial:
             return
 
         if angle_limits is None:
-            angle_limits = (0, limits.position_range[mmem.modelclass][1])
+            angle_limits = (0, protocol.POSITION_RANGES[mmem.modelclass][1])
 
         self.set_angle_limits(motor_id, *angle_limits)
 
@@ -571,7 +537,7 @@ class DynamixelIOSerial:
 
             """
         with self._lock:
-            nbytes = self._serial.write(instruction_packet.to_bytes())
+            nbytes = self.sio.write(instruction_packet.to_bytes())
             if nbytes != len(instruction_packet):
                 raise DynamixelCommunicationError('Packet not correctly sent',
                                                   instruction_packet,
@@ -580,19 +546,19 @@ class DynamixelIOSerial:
             if not receive_status_packet:
                 return
 
-            read_bytes = list(self._serial.read(packet.DynamixelPacketHeader.LENGTH))
-            maxtries = int(0.05/max(self._timeout, 0.001))
+            read_bytes = list(self.sio.read(packet.DynamixelPacketHeader.LENGTH))
+            maxtries = 2 #int(50/max(self.sio._timeout, 2))
             tries = 0
             while read_bytes == []:
                 if tries >= maxtries:
                     raise DynamixelTimeoutError(instruction_packet)
                 time.sleep(0.01)
-                read_bytes = list(self._serial.read(packet.DynamixelPacketHeader.LENGTH))
+                read_bytes = list(self.sio.read(packet.DynamixelPacketHeader.LENGTH))
                 tries += 1
 
             try:
                 header = packet.DynamixelPacketHeader.from_bytes(read_bytes)
-                read_bytes += self._serial.read(header.packet_length)
+                read_bytes += self.sio.read(header.packet_length)
                 status_packet = packet.DynamixelStatusPacket.from_bytes(read_bytes)
 
             except packet.DynamixelInconsistentPacketError as e:
@@ -602,7 +568,6 @@ class DynamixelIOSerial:
 
             if status_packet.error != 0:
                 alarms = conv.raw2_alarm_names(status_packet.error)
-                alarms = filter(lambda a: a not in self.blacklisted_alarms, alarms)
 
                 if len(alarms):
                     raise DynamixelMotorError(status_packet.motor_id, alarms)
