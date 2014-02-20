@@ -61,7 +61,6 @@ _axrx_models  = frozenset(('AX-12', 'AX-18', 'AX-12W', 'RX-10', 'RX-24F', 'RX-28
 # this list is in sorted by starting addr
 CTRL_LIST = [
     # EEPROM
-    #Control(name='EEPROM',                     addr= 0, sizes=(24,),   ram=False, models=_all_models),
     Control(name='MODEL_NUMBER',               addr= 0, sizes=(2,),    ram=False, models=_all_models),
     Control(name='VERSION',                    addr= 2, sizes=(1,),    ram=False, models=_all_models),
     Control(name='ID',                         addr= 3, sizes=(1,),    ram=False, models=_all_models),
@@ -69,43 +68,34 @@ CTRL_LIST = [
     Control(name='RETURN_DELAY_TIME',          addr= 5, sizes=(1,),    ram=False, models=_all_models),
     Control(name='CW_ANGLE_LIMIT',             addr= 6, sizes=(2,),    ram=False, models=_all_models),
     Control(name='CCW_ANGLE_LIMIT',            addr= 8, sizes=(2,),    ram=False, models=_all_models),
-    Control(name='ANGLE_LIMITS',               addr= 6, sizes=(2,2),   ram=False, models=_all_models),
     Control(name='DRIVE_MODE',                 addr=10, sizes=(1,),    ram=False, models=set('EX-106+')),
     Control(name='HIGHEST_LIMIT_TEMPERATURE',  addr=11, sizes=(1,),    ram=False, models=_all_models),
     Control(name='LOWEST_LIMIT_VOLTAGE',       addr=12, sizes=(1,),    ram=False, models=_all_models),
     Control(name='HIGHEST_LIMIT_VOLTAGE',      addr=13, sizes=(1,),    ram=False, models=_all_models),
-    Control(name='VOLTAGE_LIMITS',             addr=12, sizes=(1,1),   ram=False, models=_all_models),
     Control(name='MAX_TORQUE',                 addr=14, sizes=(2,),    ram=False, models=_all_models),
     Control(name='STATUS_RETURN_LEVEL',        addr=16, sizes=(1,),    ram=False, models=_all_models),
     Control(name='ALARM_LED',                  addr=17, sizes=(1,),    ram=False, models=_all_models),
     Control(name='ALARM_SHUTDOWN',             addr=18, sizes=(1,),    ram=False, models=_all_models),
 
     #RAM
-    #Control(name='RAM',                        addr=24, sizes=(26,),   ram=False, models=_all_models),
     Control(name='TORQUE_ENABLE',              addr=24, sizes=(1,),    ram=True, models=_all_models),
     Control(name='LED',                        addr=25, sizes=(1,),    ram=True, models=_all_models),
 
     Control(name='D_GAIN',                     addr=26, sizes=(1,),    ram=True, models=_mx_models),
     Control(name='I_GAIN',                     addr=27, sizes=(1,),    ram=True, models=_mx_models),
     Control(name='P_GAIN',                     addr=28, sizes=(1,),    ram=True, models=_mx_models),
-    Control(name='GAINS',                      addr=26, sizes=(1,1,1), ram=True, models=_mx_models),
 
     Control(name='CW_COMPLIANCE_MARGIN',       addr=26, sizes=(1,),    ram=True, models=_axrx_models),
     Control(name='CCW_COMPLIANCE_MARGIN',      addr=27, sizes=(1,),    ram=True, models=_axrx_models),
-    Control(name='COMPLIANCE_MARGINS',         addr=26, sizes=(1,1),   ram=True, models=_axrx_models),
     Control(name='CW_COMPLIANCE_SLOPE',        addr=28, sizes=(1,),    ram=True, models=_axrx_models),
     Control(name='CCW_COMPLIANCE_SLOPE',       addr=29, sizes=(1,),    ram=True, models=_axrx_models),
-    Control(name='COMPLIANCE_SLOPES',          addr=28, sizes=(1,1),   ram=True, models=_axrx_models),
 
     Control(name='GOAL_POSITION',              addr=30, sizes=(2,),    ram=True, models=_all_models),
     Control(name='MOVING_SPEED',               addr=32, sizes=(2,),    ram=True, models=_all_models),
     Control(name='TORQUE_LIMIT',               addr=34, sizes=(2,),    ram=True, models=_all_models),
-    Control(name='GOAL_POS_SPEED_TORQUE',      addr=30, sizes=(2,2,2), ram=True, models=_all_models),
-    Control(name='SPEED_TORQUE',               addr=32, sizes=(2,2),   ram=True, models=_all_models),
     Control(name='PRESENT_POSITION',           addr=36, sizes=(2,),    ram=True, models=_all_models),
     Control(name='PRESENT_SPEED',              addr=38, sizes=(2,),    ram=True, models=_all_models),
     Control(name='PRESENT_LOAD',               addr=40, sizes=(2,),    ram=True, models=_all_models),
-    Control(name='PRESENT_POS_SPEED_LOAD',     addr=36, sizes=(2,2,2), ram=True, models=_all_models),
 
     Control(name='PRESENT_VOLTAGE',            addr=42, sizes=(1,),    ram=True, models=_all_models),
     Control(name='PRESENT_TEMPERATURE',        addr=43, sizes=(1,),    ram=True, models=_all_models),
@@ -122,8 +112,10 @@ CTRL_LIST = [
     Control(name='GOAL_ACCELERATION',          addr=73, sizes=(1,),    ram=True, models=_mx_models)
 ]
 
-def _whole_memory_ctrl(name, start, end):
-    """Create automatically a control for a whole part of memory"""
+
+# two functions to automatize creation of compound controls
+def _memory_chunk_ctrl(name, models, start, end):
+    """Create automatically a control for a part of memory"""
     assert start >= 0
     sizes_d = {}
     ram = True
@@ -146,10 +138,34 @@ def _whole_memory_ctrl(name, start, end):
             sizes.append(1)
             cursor += 1
     assert sum(sizes) == end - start
-    return Control(name=name, addr=start, sizes=sizes, ram=ram, models=_all_models)
+    return Control(name=name, addr=start, sizes=tuple(sizes), ram=ram, models=models)
 
-CTRL_LIST.append(_whole_memory_ctrl('EEPROM',  0, 24))
-CTRL_LIST.append(_whole_memory_ctrl('RAM',    24, 74))
+CTRL = {ctrl.name: ctrl for ctrl in CTRL_LIST}
+def _ctrl_from_ctrl_names(name, models, ctrl_names):
+    """Create a compound control for multiple, consecutive controls"""
+    ctrls=[CTRL[cname] for cname in ctrl_names]
+    for i in range(len(ctrl_names)-1): # assert continuity
+        assert ctrls[i].addr + sum(ctrls[i].sizes) == ctrls[i+1].addr
+
+    sizes = ()
+    ram = True
+    for ctrl in ctrls:
+        sizes += ctrl.sizes
+        ram = ram and ctrl.ram
+    return Control(name=name, addr=ctrls[0].addr, sizes=sizes, ram=ram, models=models)
+
+
+CTRL_LIST.append(_ctrl_from_ctrl_names('VOLTAGE_LIMITS',         _all_models, ['LOWEST_LIMIT_VOLTAGE', 'HIGHEST_LIMIT_VOLTAGE']))
+CTRL_LIST.append(_ctrl_from_ctrl_names('ANGLE_LIMITS',           _all_models, ['CW_ANGLE_LIMIT', 'CCW_ANGLE_LIMIT']))
+CTRL_LIST.append(_ctrl_from_ctrl_names('GAINS',                   _mx_models, ['D_GAIN', 'I_GAIN', 'P_GAIN']))
+CTRL_LIST.append(_ctrl_from_ctrl_names('COMPLIANCE_MARGINS',    _axrx_models, ['CW_COMPLIANCE_MARGIN', 'CCW_COMPLIANCE_MARGIN']))
+CTRL_LIST.append(_ctrl_from_ctrl_names('COMPLIANCE_SLOPES',     _axrx_models, ['CW_COMPLIANCE_SLOPE', 'CCW_COMPLIANCE_SLOPE']))
+CTRL_LIST.append(_ctrl_from_ctrl_names('GOAL_POS_SPEED_TORQUE',  _all_models, ['GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT']))
+CTRL_LIST.append(_ctrl_from_ctrl_names('SPEED_TORQUE',           _all_models, ['MOVING_SPEED', 'TORQUE_LIMIT']))
+CTRL_LIST.append(_ctrl_from_ctrl_names('PRESENT_POS_SPEED_LOAD', _all_models, ['PRESENT_POSITION', 'PRESENT_SPEED', 'PRESENT_LOAD']))
+
+CTRL_LIST.append(_memory_chunk_ctrl('EEPROM', _all_models,  0, 24))
+CTRL_LIST.append(_memory_chunk_ctrl('RAM',    _all_models, 24, 74))
 
 CTRL = {ctrl.name: ctrl for ctrl in CTRL_LIST}
 assert len(CTRL_LIST) == len(CTRL)
