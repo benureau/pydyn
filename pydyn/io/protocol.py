@@ -54,6 +54,14 @@ MODELS = {
     10064: 'VX-64', # VREP
 }
 
+POSITION_RANGES = {
+    'EX' : (4095.0, 250.92),
+    'MX' : (4095.0, 360.0),
+    'AX' : (1023.0, 300.0),
+    'RX' : (1023.0, 300.0),
+    'VX' : (1023.0, 300.0),
+}
+
 _all_models   = frozenset(MODELS.values())
 _mx_models    = frozenset(('MX-12', 'MX-28', 'MX-64', 'MX-106'))
 _axrx_models  = frozenset(('AX-12', 'AX-18', 'AX-12W', 'RX-10', 'RX-24F', 'RX-28', 'RX-64'))
@@ -233,10 +241,4 @@ COMPLIANCE_SLOPES          = CTRL['COMPLIANCE_SLOPES']
 GOAL_POS_SPEED_TORQUE      = CTRL['GOAL_POS_SPEED_TORQUE']
 PRESENT_POS_SPEED_LOAD     = CTRL['PRESENT_POS_SPEED_LOAD']
 
-POSITION_RANGES = {
-    'EX' : (4095.0, 250.92),
-    'MX' : (4095.0, 360.0),
-    'AX' : (1023.0, 300.0),
-    'RX' : (1023.0, 300.0),
-    'VX' : (1023.0, 300.0),
-}
+

@@ -82,7 +82,7 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
 
     if serial_id is not None:
         ports = [port for port in ports if 'iSerial' in port and port['iSerial'] == serial_id]
-        assert len(ports) <= 1
+        print(ports)
 
     if port_path is None and serial_id is None:
 
@@ -101,7 +101,7 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
             elif device_type in USB_DEVICES:
                 ports = [port for port in ports if regex.search(port[0]) is None]
 
-    port = list({port['port']:port}.values())
+    ports = list({port['port']:port for port in ports}.values())
     return ports
 
 
@@ -115,7 +115,7 @@ class Serial(object):
     """
 
     def __init__(self, port_path=None, device_type='Any', serial_id=None,
-                 baudrate=1000000, timeout=20, latency=2, verbose=False,
+                 baudrate=1000000, timeout=20, latency=2,
                  enable_pyftdi=True, **kwargs):
         """
         Create a serial port.
@@ -193,6 +193,10 @@ class Serial(object):
     def __del__(self):
         """Destructor, close port when serial port instance is freed."""
         self.close()
+
+    @property
+    def support_sync_read(self):
+        return self._device_type == 'USB2AX'
 
     @property
     def timeout(self):

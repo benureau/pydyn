@@ -5,4 +5,4 @@ different back-end can be implemented. Currently there is a
     * vrep backend (with simulated motors)
 """
 
-from . import ftdiserial
+from . import serialio

@@ -11,11 +11,13 @@ HEADER_SIZE = 4
 def check_header(motor_id, data):
     """Check that an header is consistent"""
     data = bytearray(data)
-    assert len(data) == 4 and data[0] == data[1] == 255 and motor_id == data[2]
+    assert len(data) == 4, "header size ({}) is wrong (!=4)".format(len(data))
+    assert data[0] == data[1] == 255, "header prefix ({}) is wrong (!= [255, 255])".format(list(data[:2]))
+    assert motor_id == data[2], "motor_id ({}) is wrong (!={})".format(data[2], motor_id)
 
-class DynamixelPacketError(Exception):
+class PacketError(Exception):
     """Thrown when a status packet is not consistent"""
-    def __init__(self, data, msg):
+    def __init__(self, msg, data):
         """Details about the error in the msg"""
         Exception.__init__(self)
         self.data = data
@@ -80,13 +82,13 @@ class StatusPacket(Packet):
         Packet.__init__(self, data)
         try: # checking consistency
             if self.length != len(self.data) - 4:
-                raise DynamixelPacketError(self.data,
-                      "length should be {}, but is {}.".format(self.length, len(self.data)-4))
-            if self.data[-1] == self.checksum(data[2:-1]):
-                raise DynamixelPacketError(self.data,
-                      "checksum should be {}, but is {}.".format(self.checksum(data[2:-1]), self.data[-1]))
+                raise PacketError("length should be {}, but is {}.".format(
+                                  self.length, len(self.data)-4), self.data)
+            if self.data[-1] != self.checksum(self.data[2:-1]):
+                raise PacketError("checksum should be {}, but is {}.".format(
+                                  self.checksum(self.data[2:-1]), self.data[-1]), self.data)
         except (IndexError, AssertionError):
-            raise DynamixelPacketError(self.data, "corrupted packet")
+            raise PacketError("corrupted packet", self.data)
 
     @property
     def error(self):
