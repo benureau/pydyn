@@ -115,7 +115,7 @@ class Serial(object):
     """
 
     def __init__(self, port_path=None, device_type='Any', serial_id=None,
-                 baudrate=1000000, timeout=20, latency=2,
+                 baudrate=1000000, timeout=10, latency=1,
                  enable_pyftdi=True, **kwargs):
         """
         Create a serial port.
@@ -150,10 +150,9 @@ class Serial(object):
         except IndexError:
             raise PortNotFoundError(port_path, device_type, serial_id)
 
-        # TODO: property to allow reconfiguration
-        self.baudrate = baudrate
+        self._baudrate = baudrate
         self._timeout = timeout
-        self.latency = latency
+        self._latency = latency
 
         self._device_type = device_type
 
@@ -212,6 +211,29 @@ class Serial(object):
         else:
             self._serial.timeout = val/1000.0
 
+    @property
+    def baudrate(self):
+        return self._baudrate
+
+    @baudrate.setter
+    def baudrate(self, val):
+        if self._ftdi_ctrl:
+            self._serial.set_baudrate(baudrate)
+        else:
+            self._serial.baudrate = baudrate
+
+    @property
+    def latency(self):
+        return self._latency
+
+    @latency.setter
+    def latency(self, val):
+        """Setting latency will not have any effect on pyserial connections"""
+        self._latency = val
+        if self._ftdi_ctrl:
+            self._serial.set_latency_timer(latency)
+
+
     def _toss_mode(self):
         """Activate the toss mode in the CM-5 and CM-510."""
         self.write('t\r')
@@ -242,7 +264,10 @@ class Serial(object):
             return self._serial.read(size=size)
 
     def close(self):
-        """Close the serial port"""
+        """Close the serial port
+        """
         if self._serial is not None:
-            return self._serial.close()
-
+            if self._ftdi_ctrl:
+                self._serial.purge_buffers()
+            self._serial.close()
+        self._serial = None
