@@ -219,8 +219,6 @@ class Serial(object):
         self.read(100)
         time.sleep(0.1)
 
-
-
     def flush(self):
         """Flush of file like objects. In this case, wait until all data is written."""
         self._serial.flush()

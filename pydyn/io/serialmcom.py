@@ -25,7 +25,7 @@ from ..dynamixel import alarms as conv # the only conversion needed in I/O
 # MARK: - Dxl Error
 
 class CommunicationError(Exception):
-    """Thrown when a status packet arrived corrupted"""
+    """Thrown when a status packet arrived corrupted."""
     def __init__(self, msg, inst_packet, status_packet):
         self.msg = msg
         self.inst_packet    = inst_packet
@@ -135,7 +135,7 @@ class DynamixelComSerial(object):
         :raises: ValueError if the motor id is out of the possible ids range.
         """
         if not 0 <= motor_id <= 253:
-            raise ValueError('Motor id must be in [0, 253]!')
+            raise ValueError('Motor id must be in [0, 253]')
 
         ping_packet = packet.InstructionPacket(motor_id, pt.PING)
 
@@ -144,6 +144,9 @@ class DynamixelComSerial(object):
             return True
 
         except TimeoutError:
+            return False
+        except CommunicationError as e:
+            print(e)
             return False
 
     def ping_broadcast(self):
@@ -182,14 +185,12 @@ class DynamixelComSerial(object):
 
     def scan(self, ids=range(254)):
         """
-            Finds the ids of all the motors connected to the bus.
+        Finds the ids of all the motors connected to the bus.
 
-            :param list ids: the range of ids to search
-            :return: list of ids found
-
-            """
+        :param list ids: the range of ids to search
+        :return: list of ids found
+        """
         return [mid for mid in ids if self.ping(mid)]
-
 
     def read(self, motor_id, addr, size):
         """
@@ -216,38 +217,17 @@ class DynamixelComSerial(object):
 
         mmems = []
 
-        for motor_id in motor_ids:
-            # reading eeprom, ram
-            raw_eeprom = self.read(motor_id, 0, 24)
-            raw_ram    = self.read(motor_id, 24, 26)
-            mmem = memory.DynamixelMemory(raw_eeprom, raw_ram)
-
-            # reading extra ram (if necessary)
-            extra_addr = mmem.extra_addr()
-            if extra_addr is not None:
-                addr, size = extra_addr
-                raw_extra = self.read(motor_id, addr, size)
-                mmem._process_extra(raw_extra)
-
-            # registering the motor memory to the io
+        for mid in motor_ids:
+            mmem = memory.DynamixelMemory(mid)
             self.motormems[mmem.id] = mmem
+            self.get(pt.EEPROM, [mid])
+            self.get(pt.RAM,    [mid])
+
             mmems.append(mmem)
 
         return mmems
 
-    def read_ram(self, motor_id):
-        mmem    = self.motormems[motor_id]
-        raw_ram = self.read(motor_id, 24, mmem.last_addr() - 24 + 1)
-        mmem._process_raw_ram(raw_ram)
-
-        extra_addr = mmem.extra_addr()
-        if extra_addr is not None:
-            addr, size = extra_addr
-            mmem.process_extra(raw_ram[addr, addr+size])
-
-
     # MARK Parameter based read/write
-
 
     def set(self, control, motor_ids, valuess):
         """Send a write instruction and update memory
@@ -295,15 +275,13 @@ class DynamixelComSerial(object):
         :param int new_motor_id: new motor id
         :raises: ValueError when the id is already taken
         """
-        if motor_id != new_motor_id and self.ping(new_motor_id):
+        if (motor_id != new_motor_id and
+            (new_motor_id in self.motormem or self.ping(new_motor_id))):
             raise ValueError('id %d already used' % (new_motor_id))
 
         self._send_write_packet(motor_id, 'ID', new_motor_id)
 
-        mmem = self.motormems.pop(motor_id)
-        mmem[pt.ID] = new_motor_id
-        mmem.id = new_motor_id
-        self.motormems[new_motor_id] = mmem
+        self.motormems[new_motor_id] = self.motormems.pop(motor_id)
 
     def get_status_return_level(self, motor_id):
         """
@@ -329,24 +307,6 @@ class DynamixelComSerial(object):
             else:
                 raise e
 
-    def lock_eeprom(self, motor_id):
-        """ Prevents the modification of the EEPROM area.
-
-            .. warning:: Once the EEPROM is locked, you can't unlock it unless you
-                         cycle the power.
-        """
-        self._send_write_packet(pt.LOCK, motor_id, (1,))
-        self.motormems[motor_id][pt.LOCK.addr] = 1
-
-    def unlock_eeprom(self, motor_id):
-        """
-            .. warning:: You can't unlock the EEPROM once it's locked.
-        """
-        raise DeprecationWarning('to unlock the eeprom, you should cycle power')
-        #self._send_write_packet(pt.LOCK, motor_id, (0,))
-        #self.motormems[motor_id][pt.LOCK.addr] = 0
-
-
     # MARK: - Low level communication
 
     def _send_packet(self, inst_packet, receive=True):
@@ -367,7 +327,7 @@ class DynamixelComSerial(object):
                     packet.check_header(inst_packet.motor_id, data)
                 except AssertionError as e:
                     raise CommunicationError(e.args[0],
-                                             inst_packet, bytearray(data))
+                                             inst_packet, list(bytearray(data)))
 
                 try:
                     data += self.sio.read(ord(data[3]))
@@ -437,29 +397,31 @@ class DynamixelComSerial(object):
     # MARK : - Parameter encoding/decoding
 
     @staticmethod
-    def _to_values(control, values):
+    def _to_values(control, params):
         """
         Transform parameters of a status packet in one and two bytes values
         """
-        assert sum(control.sizes) == len(values), "{} should have length {} but has {}".format(list(values), sum(control.sizes), len(values))
-        itv = values.__iter__()
-        return [itv.next() if s == 1 else (itv.next() + itv.next() << 8)
-                for s in control.sizes]
+        assert sum(control.sizes) == len(params), "{} should have length {} but has {}".format(list(values), sum(control.sizes), len(values))
+        itp, values = params.__iter__(), []
+        for s in control.sizes:
+            values.append(itp.next())
+            if s == 2:
+                values[-1] += itp.next() << 8
+        return values
 
     @staticmethod
-    def _to_params(control, params):
+    def _to_params(control, values):
         """
         Transform one bytes and two bytes values into parameters for
         an instruction packet
         """
-        print(params)
-        assert len(control.sizes) == len(params), "{} and {} don't have the same length".format(control.sizes, list(params))
-        data = []
-        for d, s in zip(params, control.sizes):
+        assert len(control.sizes) == len(values), "{} and {} don't have the same length".format(control.sizes, list(params))
+        params = []
+        for v, s in zip(values, control.sizes):
             if s == 1:
-                data.append(d)
+                params.append(v)
             elif s == 2:
-                data.append(d % 255)
-                data.append(d >> 8)
-        return data
+                params.append(v % 255)
+                params.append(v >> 8)
+        return params
 
