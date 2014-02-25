@@ -224,7 +224,7 @@ GOAL_ACCELERATION          = CTRL['GOAL_ACCELERATION']
 
 # EEPROM bundles
 ANGLE_LIMITS               = CTRL['ANGLE_LIMITS']
-VOLTAGE_LIMITS             = CTRL['EEPROM']
+VOLTAGE_LIMITS             = CTRL['VOLTAGE_LIMITS']
 
 # RAM bundles
 GAINS                      = CTRL['GAINS']
