@@ -1,58 +1,58 @@
+from ..refs import protocol as pt
 from . import limits
-from . import protocol
 from . import alarms
 
 # for details, see http://support.robotis.com/en/product/dynamixel/
 
 # MARK Dynamic
 
-def raw2_value(name, value, mmem = None):
+def raw2_value(name, value, mmem=None):
     return globals()['raw2_' + name.lower()](int(value), mmem)
 
-def value_2raw(name, value, mmem = None):
+def value_2raw(name, value, mmem=None):
     return globals()[name.lower()+'_2raw'](value, mmem)
 
 
 # MARK Model Number
 
-def raw2_model_number(value, mmem = None):
+def raw2_model_number(value, mmem=None):
     limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107, 10028, 10064], value)
     return int(value)
 
-def model_number_2raw(value, mmem = None):
+def model_number_2raw(value, mmem=None):
     limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107, 10028, 10064], value)
     return int(value)
 
 
 # MARK Firmware
 
-def raw2_version(value, mmem = None):
+def raw2_version(value, mmem=None):
     limits.checkbounds('version', 0, 253, value)
     return int(value)
 
-def version_2raw(value, mmem = None):
+def version_2raw(value, mmem=None):
     limits.checkbounds('version', 0, 253, value)
     return int(value)
 
 
 # MARK ID
 
-def raw2_id(value, mmem = None):
+def raw2_id(value, mmem=None):
     limits.checkbounds('id', 0, 253, value)
     return int(value)
 
-def id_2raw(value, mmem = None):
+def id_2raw(value, mmem=None):
     limits.checkbounds('id', 0, 253, value)
     return int(value)
 
 
 # MARK Status Return Level
 
-def raw2_status_return_level(value, mmem = None):
+def raw2_status_return_level(value, mmem=None):
     limits.checkoneof('status return level', [0, 1, 2], value)
     return int(value)
 
-def status_return_level_2raw(value, mmem = None):
+def status_return_level_2raw(value, mmem=None):
     limits.checkoneof('status return level', [0, 1, 2], value)
     return int(value)
 
@@ -93,7 +93,7 @@ def raw2_baudrate_mx(value):
 
 def baudrate_mx_2raw(value):
     try:
-        return max_baudrate[int(value)]
+        return mx_baudrate[int(value)]
     except KeyError:
         return int(2000000.0/value - 1)
 
@@ -114,12 +114,12 @@ def raw2_baud_rate(value, mmem):
 
 # MARK Return delay time
 
-def return_delay_time_2raw(value, mmem = None):
+def return_delay_time_2raw(value, mmem=None):
     """in microseconds"""
     limits.checkbounds('return delay time', 0, 508, value)
     return int(value/2)
 
-def raw2_return_delay_time(value, mmem = None):
+def raw2_return_delay_time(value, mmem=None):
     """in microseconds"""
     limits.checkbounds('return delay time raw', 0, 254, value)
     return 2*value
@@ -127,12 +127,12 @@ def raw2_return_delay_time(value, mmem = None):
 
 # MARK Voltage
 
-def voltage_2raw(value, mmem = None):
+def voltage_2raw(value, mmem=None):
     """Return the voltage in volt"""
     limits.checkbounds('voltage', 0, 25.5, value)
     return int(10.0*value)
 
-def raw2_voltage(value, mmem = None):
+def raw2_voltage(value, mmem=None):
     """Return the voltage in volt"""
     limits.checkbounds('voltage raw', 0, 255, value)
     return value/10.0
@@ -149,12 +149,12 @@ raw2_present_voltage = raw2_voltage
 
 # MARK Torque
 
-def raw2_torque(value, mmem = None):
+def raw2_torque(value, mmem=None):
     """Return the torque in percent"""
     limits.checkbounds('torque', 0, 1023, value)
     return 100.0*value/1023.0
 
-def torque_2raw(value, mmem = None):
+def torque_2raw(value, mmem=None):
     limits.checkbounds('torque raw', 0, 100, value)
     return int(value/100.0*1023)
 
@@ -171,18 +171,18 @@ raw2_punch = raw2_torque
 # MARK Position
 
 def raw2_deg(value, mmem):
-    max_pos, max_deg = limits.position_range[mmem.modelclass]
+    max_pos, max_deg = pt.POSITION_RANGES[mmem.modelclass]
     limits.checkbounds('position raw', 0, max_pos, value)
     return (value / max_pos) * max_deg
 
 def deg_2raw(value, mmem):
-    max_pos, max_deg = limits.position_range[mmem.modelclass]
+    max_pos, max_deg = pt.POSITION_RANGES[mmem.modelclass]
     limits.checkbounds('position', -0.001, max_deg + 0.001, value)
-    return round((value / max_deg) * max_pos)
+    return int(round((value / max_deg) * max_pos))
 
 def safedeg_2raw(value, mmem):
-    min_angle = raw2_deg(mmem[protocol.DXL_CW_ANGLE_LIMIT], mmem)
-    max_angle = raw2_deg(mmem[protocol.DXL_CCW_ANGLE_LIMIT], mmem)
+    min_angle = raw2_deg(mmem[pt.CW_ANGLE_LIMIT], mmem)
+    max_angle = raw2_deg(mmem[pt.CCW_ANGLE_LIMIT], mmem)
     limits.checkbounds('safe position', min_angle - 0.001, max_angle + 0.001, value)
     return deg_2raw(value, mmem)
 
@@ -298,14 +298,14 @@ raw2_present_speed = raw2_cwccwdps
 
 # MARK Load
 
-def raw2_present_load(value, mmem = None):
+def raw2_present_load(value, mmem=None):
     """return the load into signed torque percent"""
     limits.checkbounds('load raw', 0, 2047, value)
     direction = ((value >> 10) * 2) - 1
 
     return direction * raw2_torque(value % 1024)
 
-def present_load_2raw(value, mmem = None):
+def present_load_2raw(value, mmem=None):
     limits.checkbounds('load', -100, 100, value)
 
     if value > 0:
@@ -320,31 +320,31 @@ MAX_P_GAIN = 254.0 / 8.0
 MAX_I_GAIN = 254.0 * 1000.0 / 2048.0
 MAX_D_GAIN = 254.0 * 4.0 / 1000.0
 
-def raw2_d_gain(raw, mmem = None):
+def raw2_d_gain(raw, mmem=None):
     limits.checkbounds('p_gain raw', 0, 254, raw)
     return 0.004 * raw
 
-def raw2_i_gain(raw, mmem = None):
+def raw2_i_gain(raw, mmem=None):
     limits.checkbounds('i_gain raw', 0, 254, raw)
     return raw / 2.048
 
-def raw2_p_gain(raw, mmem = None):
+def raw2_p_gain(raw, mmem=None):
     limits.checkbounds('d_gain raw', 0, 254, raw)
     return 0.125 * raw
 
-def d_gain_2raw(value, mmem = None):
+def d_gain_2raw(value, mmem=None):
     limits.checkbounds('p_gain', 0, MAX_P_GAIN, value)
     return int(250.0 * value)
 
-def i_gain_2raw(value, mmem = None):
+def i_gain_2raw(value, mmem=None):
     limits.checkbounds('i_gain', 0, MAX_I_GAIN, value)
     return int(2.048 * value)
 
-def p_gain_2raw(value, mmem = None):
+def p_gain_2raw(value, mmem=None):
     limits.checkbounds('d_gain', 0, MAX_D_GAIN, value)
     return int(8.0 * value)
 
-def raw2_gains(gains, mmem = None):
+def raw2_gains(gains, mmem=None):
     """
         Return real values of PID gains according to
         http://support.robotis.com/en/images/product/dynamixel/mx_series/
@@ -357,37 +357,37 @@ def raw2_gains(gains, mmem = None):
     if not len(gains) == 3 :
         raise ValueError('Gains should have 3 values')
 
-    return raw2_dgain(gains[0]), raw2_dgain(gains[1]), raw2_dgain(gains[2])
+    return raw2_d_gain(gains[0]), raw2_i_gain(gains[1]), raw2_p_gain(gains[2])
 
-def gains_2raw(gains, mmem = None):
+def gains_2raw(gains, mmem=None):
 
     if not len(gains) == 3 :
         raise ValueError('Gains should have 3 values')
 
-    return dgain_2raw(gains[0]), igain_2raw(gains[1]), pgain_2raw(gains[2])
+    return d_gain_2raw(gains[0]), i_gain_2raw(gains[1]), p_gain_2raw(gains[2])
 
 
 # MARK Compliance Margins
 
-def compliance_margin_2raw(value, mmem = None):
+def compliance_margin_2raw(value, mmem=None):
     limits.checkbounds('compliance margin', 0, raw2_deg(255, mmem), value)
     return deg_2raw(value, mmem)
 
-def raw2_compliance_margin(value, mmem = None):
+def raw2_compliance_margin(value, mmem=None):
     limits.checkbounds('compliance margin raw', 0, 255, value)
     return raw2_deg(value, mmem)
 
 
 # MARK Compliance Slopes
 
-def raw2_compliance_slope(value, mmem = None):
+def raw2_compliance_slope(value, mmem=None):
     limits.checkbounds('compliance slope raw', 0, 254, value)
     for i in xrange(7, -1, -1):
         if (value >> i) == 1:
             return i
     return 0
 
-def compliance_slope_2raw(value, mmem = None):
+def compliance_slope_2raw(value, mmem=None):
     limits.checkbounds('compliance slope', 0, 7, value)
     return 2**int(value)
 
@@ -405,29 +405,29 @@ alarm_shutdown_2raw = alarm_names_2raw
 
 # MARK Temperature
 
-def present_temperature_2raw(value, mmem = None):
+def present_temperature_2raw(value, mmem=None):
     return int(value)
 
-def raw2_present_temperature(value, mmem = None):
+def raw2_present_temperature(value, mmem=None):
     return value
 
-def highest_limit_temperature_2raw(value, mmem = None):
+def highest_limit_temperature_2raw(value, mmem=None):
     limits.checkbounds('present_temperature', 10, 99, value)
     return int(value)
 
-def raw2_highest_limit_temperature(value, mmem = None):
+def raw2_highest_limit_temperature(value, mmem=None):
     limits.checkbounds('present_temperature', 10, 99, value)
     return value
 
 
 # MARK Goal Torque
 
-def goal_torque_2raw(value, mmem = None):
+def goal_torque_2raw(value, mmem=None):
     """in A"""
     limits.checkbounds('goal torque', -4.6035, 4.6035, value)
     return int(value/0.0045 + 1024)
 
-def raw2_goal_torque(value, mmem = None):
+def raw2_goal_torque(value, mmem=None):
     """in A"""
     # it says that goal torque can't be bigger than torque limit
     # but since each have different units, it's difficult
@@ -438,12 +438,12 @@ def raw2_goal_torque(value, mmem = None):
 
 # MARK Goal Acceleration
 
-def goal_acceleration_2raw(value, mmem = None):
+def goal_acceleration_2raw(value, mmem=None):
     """in degree/s**2"""
     limits.checkbounds('goal acceleration', 0, 2180.082, value)
     return int(value*8.583)
 
-def raw2_goal_acceleration(value, mmem = None):
+def raw2_goal_acceleration(value, mmem=None):
     """in degree/s**2"""
     limits.checkbounds('goal acceleration raw', 0, 254, value)
     return value/8.583
@@ -451,22 +451,22 @@ def raw2_goal_acceleration(value, mmem = None):
 
 # MARK Current
 
-def current_2raw(value, mmem = None):
+def current_2raw(value, mmem=None):
     """in A"""
     limits.checkbounds('current', -9.216, 9.2115, value)
     return int(value/0.0045 + 2048)
 
-def raw2_current(value, mmem = None):
+def raw2_current(value, mmem=None):
     """in A"""
     limits.checkbounds('current raw', 0, 4095, value)
     return 0.0045 * (value - 2048)
 
-def sensed_current_2raw(value, mmem = None):
+def sensed_current_2raw(value, mmem=None):
     """in A - should not be useful (since you can't write sensed current)"""
     limits.checkbounds('sensed current', -5.12, 5.11, value)
     return int(value/0.01 + 512)
 
-def raw2_sensed_current(value, mmem = None):
+def raw2_sensed_current(value, mmem=None):
     """in A"""
     limits.checkbounds('sensed current raw', 0, 1023, value)
     return 0.01 * (value - 512)
@@ -474,11 +474,11 @@ def raw2_sensed_current(value, mmem = None):
 
 # Mark Boolean
 
-def bool_2raw(value, mmem = None):
+def bool_2raw(value, mmem=None):
     limits.checkoneof('boolean value raw', [0, 1], value)
     return int(value)
 
-def raw2_bool(value, mmem = None):
+def raw2_bool(value, mmem=None):
     limits.checkoneof('boolean value', [False, True], value)
     return bool(value)
 
