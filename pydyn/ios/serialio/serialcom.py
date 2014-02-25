@@ -53,10 +53,10 @@ class MotorError(Exception):
         self.mid = mid
         self.alarms = alarms
 
-    def __repr__(self):
-        return 'Motor %d triggered alarm%s: %s' % (self.mid,
-                                                   's' if len(self.alarms) > 1 else '',
-                                                   self.alarms if len(self.alarms) > 1 else self.alarms[0])
+    def __str__(self):
+        return 'Motor {} triggered alarm{}: {}'.format(self.mid,
+                    's' if len(self.alarms) > 1 else '',
+                    self.alarms if len(self.alarms) > 1 else self.alarms[0])
 
 
 # MARK: - SerialCom class
@@ -281,10 +281,10 @@ class SerialCom(object):
         :raises:  ValueError when the id is already taken
         """
         if (mid != new_mid and
-            (new_mid in self.motormem or self.ping(new_mid))):
+            (new_mid in self.motormems or self.ping(new_mid))):
             raise ValueError('id %d already used' % (new_mid))
 
-        self._send_write_packet(mid, 'ID', new_mid)
+        self._send_write_packet(pt.ID, mid, [new_mid])
 
         self.motormems[new_mid] = self.motormems.pop(mid)
 
