@@ -281,31 +281,31 @@ class DynamixelController(threading.Thread):
         # Handling pst requests (if need be)
         sync_pst = []
         sync_st  = []
-        pst_motor_ids = []
+        pst_mids = []
         pst_valuess   = []
-        st_motor_ids = []
+        st_mids = []
         st_valuess   = []
         for m, pst_reqs in zip(self.motors, all_pst_requests):
 
             if len(pst_reqs) > 0:
                 if not m.compliant:
-                    pst_motor_ids.append(m.id)
+                    pst_mids.append(m.id)
                     pst_valuess.append((pst_reqs.get(pt.GOAL_POSITION, m.goal_position_raw),
                                        pst_reqs.get(pt.MOVING_SPEED,  m.moving_speed_raw),
                                        pst_reqs.get(pt.TORQUE_LIMIT,  m.torque_limit_raw)))
 
                 elif m.mode == 'joint':
-                    st_motor_ids.append(m.id)
+                    st_mids.append(m.id)
                     if pt.MOVING_SPEED in pst_reqs or pt.TORQUE_LIMIT in pst_reqs:
                         st_valuess.append((pst_reqs.get(pt.MOVING_SPEED, m.moving_speed_raw),
                                           pst_reqs.get(pt.TORQUE_LIMIT, m.torque_limit_raw)))
 
 
         if len(pst_valuess) > 0:
-            self.com.set(pt.GOAL_POS_SPEED_TORQUE, motor_ids, pst_valuess)
+            self.com.set(pt.GOAL_POS_SPEED_TORQUE, mids, pst_valuess)
 
         if len(st_valuess) > 0:
-            self.com.set(pt.GOAL_POS_SPEED_TORQUE, motor_ids, st_valuess)
+            self.com.set(pt.GOAL_POS_SPEED_TORQUE, mids, st_valuess)
 
 
     def _handle_special_requests(self, all_special_requests):

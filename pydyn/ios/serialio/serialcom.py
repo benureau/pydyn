@@ -45,12 +45,12 @@ class TimeoutError(Exception):
         self.inst_packet    = inst_packet
 
 class MotorError(Exception):
-    def __init__(self, motor_id, alarms):
-        self.motor_id = motor_id
+    def __init__(self, mid, alarms):
+        self.mid = mid
         self.alarms = alarms
 
     def __repr__(self):
-        return 'Motor %d triggered alarm%s: %s' % (self.motor_id,
+        return 'Motor %d triggered alarm%s: %s' % (self.mid,
                                                    's' if len(self.alarms) > 1 else '',
                                                    self.alarms if len(self.alarms) > 1 else self.alarms[0])
 
@@ -127,17 +127,17 @@ class SerialCom(object):
 
     # MARK: - Motor general functions
 
-    def ping(self, motor_id):
+    def ping(self, mid):
         """Pings the motor with the specified id.
 
-        :param int motor_id: specified motor id [0-253]
+        :param int mid: specified motor id [0-253]
         :return: bool
         :raises: ValueError if the motor id is out of the possible ids range.
         """
-        if not 0 <= motor_id <= 253:
+        if not 0 <= mid <= 253:
             raise ValueError('Motor id must be in [0, 253]')
 
-        ping_packet = packet.InstructionPacket(motor_id, pt.PING)
+        ping_packet = packet.InstructionPacket(mid, pt.PING)
 
         try:
             self._send_packet(ping_packet)
@@ -192,7 +192,7 @@ class SerialCom(object):
         """
         return [mid for mid in ids if self.ping(mid)]
 
-    def read(self, motor_id, addr, size):
+    def read(self, mid, addr, size):
         """
         Read arbitrary data from a motor
 
@@ -200,24 +200,22 @@ class SerialCom(object):
         :param size:     how much from adress.
         :return:         list of integers with asked size
         """
-        inst_packet = packet.InstructionPacket(motor_id, pt.READ_DATA, (addr, size))
+        inst_packet = packet.InstructionPacket(mid, pt.READ_DATA, (addr, size))
         status_packet = self._send_packet(inst_packet)
         return status_packet.params
 
-    def create(self, motor_ids):
+    def create(self, mids):
         """
         Load the motors memory.
 
-        :param list ids, the ids to create.
+        :param mids:  list of the motor ids to create.
         :return: instances of DynamixelMemory
 
-        .. warning:: we assume the motor id has been checked by a previous ping.
         .. note:: if a memory already exist, it is recreated anyway.
         """
-
         mmems = []
 
-        for mid in motor_ids:
+        for mid in mids:
             mmem = memory.DynamixelMemory(mid)
             self.motormems[mmem.id] = mmem
             self.get(pt.EEPROM, [mid])
@@ -229,61 +227,62 @@ class SerialCom(object):
 
     # MARK Parameter based read/write
 
-    def set(self, control, motor_ids, valuess):
+    def set(self, control, mids, valuess):
         """Send a write instruction and update memory
 
-        :param control:    the control involved
-        :param motor_ids:  ids of motors. If more than one, do a sync_write.
-        :param valuess:    list of sequence of values. list length should be
-                           the same as motor_ids, each sequence shape should
-                           match the control.sizes parameter.
+        :param control:  the control involved
+        :param mids:     ids of motors. If more than one, do a sync_write.
+        :param valuess:  list of sequence of values. list length should be
+                         the same as mids, each sequence shape should
+                         match the control.sizes parameter.
         """
-        assert len(motor_ids) > 0
-        if len(motor_ids) > 1 and sum(control.sizes) <= 6:
-            self._send_sync_write_packet(control, motor_ids, valuess)
+        assert len(mids) > 0
+        if len(mids) > 1 and sum(control.sizes) <= 6:
+            self._send_sync_write_packet(control, mids, valuess)
         else:
-            for motor_id, values in zip(motor_ids, valuess):
-                self._send_write_packet(control, motor_id, values)
+            for mid, values in zip(mids, valuess):
+                self._send_write_packet(control, mid, values)
 
-    def get(self, control, motor_ids):
+    def get(self, control, mids):
         """Send a read instruction and update memory
 
-        :param control:    the control involved
-        :param motor_ids:  ids of motors. If more than one, and the io supports
-                           it, do a sync write.
+        :param control:  the control involved
+        :param mids:     ids of motors. If more than one, and the io supports
+                         it, do a sync write.
         """
-        assert len(motor_ids) > 0
-        if len(motor_ids) == 1:
-            self._send_read_packet(control, motor_ids[0])
+        assert len(mids) > 0
+        if len(mids) == 1:
+            self._send_read_packet(control, mids[0])
         else:
-            if self.sio.support_sync_read:
-                self._send_sync_read_packet(control, motor_ids)
+            if (self.sio.support_sync_read
+                and sum(control.sizes) <= 6 and len(mids) <= 30): # TODO split in several sync_read instead of reverting to read packets
+                self._send_sync_read_packet(control, mids)
             else:
-                for motor_id in motor_ids:
-                    self._send_read_packet(control, motor_id)
+                for mid in mids:
+                    self._send_read_packet(control, mid)
 
     # MARK - Special cases
 
-    def change_id(self, motor_id, new_motor_id):
+    def change_id(self, mid, new_mid):
         """
         Changes the id of the motor.
 
         Each motor must have a unique id on the bus.
         The range of possible ids is [0, 253].
 
-        :param int motor_id: current motor id
-        :param int new_motor_id: new motor id
-        :raises: ValueError when the id is already taken
+        :param int mid:      current motor id
+        :param int new_mid:  new motor id
+        :raises:  ValueError when the id is already taken
         """
-        if (motor_id != new_motor_id and
-            (new_motor_id in self.motormem or self.ping(new_motor_id))):
-            raise ValueError('id %d already used' % (new_motor_id))
+        if (mid != new_mid and
+            (new_mid in self.motormem or self.ping(new_mid))):
+            raise ValueError('id %d already used' % (new_mid))
 
-        self._send_write_packet(motor_id, 'ID', new_motor_id)
+        self._send_write_packet(mid, 'ID', new_mid)
 
-        self.motormems[new_motor_id] = self.motormems.pop(motor_id)
+        self.motormems[new_mid] = self.motormems.pop(mid)
 
-    def get_status_return_level(self, motor_id):
+    def get_status_return_level(self, mid):
         """
         Returns the level of status return.
 
@@ -292,18 +291,18 @@ class SerialCom(object):
             * 1 : return status packet only for the read instruction
             * 2 : always return a status packet
 
-        :param int motor_id: specified motor id [0-253]
+        :param int mid:  specified motor id [0-253]
 
-        .. note:: if the EEPROM has been properly loaded, executing this
+        .. note::  if the EEPROM has been properly loaded, executing this
                    is a waste of a good serial packet.
         """
 
         try:
-            status_return_level = self._send_read_packet(pt.STATUS_RETURN_LEVEL, motor_id)
-            self.motormems[motor_id][pt.STATUS_RETURN_LEVEL] = status_return_level
+            status_return_level = self._send_read_packet(pt.STATUS_RETURN_LEVEL, mid)
+            self.motormems[mid][pt.STATUS_RETURN_LEVEL] = status_return_level
         except TimeoutError as e:
-            if self.ping(motor_id):
-                self.motormems[motor_id][pt.STATUS_RETURN_LEVEL] = 0
+            if self.ping(mid):
+                self.motormems[mid][pt.STATUS_RETURN_LEVEL] = 0
             else:
                 raise e
 
@@ -324,7 +323,7 @@ class SerialCom(object):
                     raise TimeoutError(inst_packet)
 
                 try:
-                    packet.check_header(inst_packet.motor_id, data)
+                    packet.check_header(inst_packet.mid, data)
                 except AssertionError as e:
                     raise CommunicationError(e.args[0],
                                              inst_packet, list(bytearray(data)))
@@ -340,59 +339,59 @@ class SerialCom(object):
                 if status_packet.error != 0:
                     alarms = conv.raw2_alarm_names(status_packet.error)
                     if len(alarms):
-                        raise MotorError(status_packet.motor_id, alarms)
+                        raise MotorError(status_packet.mid, alarms)
 
                 return status_packet
 
-    def _update_memory(self, control, motor_id, values):
+    def _update_memory(self, control, mid, values):
         """Update the memory of the motors"""
         offset = 0
         for size, value in zip(control.sizes, values):
-            self.motormems[motor_id][control.addr+offset] = value
+            self.motormems[mid][control.addr+offset] = value
             offset += size
-        self.motormems[motor_id].update() # could be more selective, but this would be useless optimization.
+        self.motormems[mid].update() # could be more selective, but this would be useless optimization.
 
-    def _send_read_packet(self, control, motor_id):
+    def _send_read_packet(self, control, mid):
         """Send a read packet and update memory if successful."""
-        if self.motormems[motor_id].status_return_level == 0:
+        if self.motormems[mid].status_return_level == 0:
             print(('warning, status_return_level of motor {} is at 0, '
-                   'no reads possible').format(motor_id))
+                   'no reads possible').format(mid))
 
         else:
-            read_packet = packet.InstructionPacket(motor_id, pt.READ_DATA, (control.addr, sum(control.sizes)))
+            read_packet = packet.InstructionPacket(mid, pt.READ_DATA, (control.addr, sum(control.sizes)))
             status_packet = self._send_packet(read_packet, receive=True)
 
             if status_packet:
                 values = self._to_values(control, status_packet.params)
-                self._update_memory(control, motor_id, values)
+                self._update_memory(control, mid, values)
                 return values
 
-    def _send_sync_read_packet(self, control, motor_ids):
+    def _send_sync_read_packet(self, control, mids):
         raise NotImplementedError
 
-    def _send_write_packet(self, control, motor_id, values):
+    def _send_write_packet(self, control, mid, values):
         """Send a write packet and update memory optimistically if no error."""
         params = self._to_params(control, values)
 
-        write_packet = packet.InstructionPacket(motor_id, pt.WRITE_DATA, [control.addr] + params)
+        write_packet = packet.InstructionPacket(mid, pt.WRITE_DATA, [control.addr] + params)
 
-        self._send_packet(write_packet, receive=self.motormems[motor_id].status_return_level == 2)
-        self._update_memory(control, motor_id, values)
+        self._send_packet(write_packet, receive=self.motormems[mid].status_return_level == 2)
+        self._update_memory(control, mid, values)
 
-    def _send_sync_write_packet(self, control, motor_ids, valuess):
+    def _send_sync_write_packet(self, control, mids, valuess):
         """
         Parameters layout is (details: http://support.robotis.com/en/product/dynamixel/communication/dxl_instruction.htm):
         [start addr, length of data to write, id0, param0id0, param1id1, ...,
                                                  id1, param0id1, param2id2, ...]
         """
         params = itertools.chain.from_iterable((
-                    [motor_id]+self._to_params(control, values)
-                    for motor_id, values in zip(motor_ids, valuess)))
+                    [mid]+self._to_params(control, values)
+                    for mid, values in zip(mids, valuess)))
 
         sync_write_packet = packet.InstructionPacket(pt.BROADCAST, pt.SYNC_WRITE, [control.addr]+list(params))
         self._send_packet(sync_write_packet, receive=False)
-        for motor_id, values in zip(motor_ids, valuess):
-            self._update_memory(control, motor_id, values)
+        for mid, values in zip(mids, valuess):
+            self._update_memory(control, mid, values)
 
     # MARK : - Parameter encoding/decoding
 

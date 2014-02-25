@@ -8,7 +8,7 @@ class TestPackets(unittest.TestCase):
 
     def test_connection(self):
         p = packet.InstructionPacket(3, pt.PING)
-        self.assertEqual(p.motor_id, 3)
+        self.assertEqual(p.mid, 3)
         self.assertEqual(p.instruction, pt.PING)
         self.assertEqual(p.length, len(p.params) + 2)
         self.assertTrue(len(p) == p.length + 4 == 6)

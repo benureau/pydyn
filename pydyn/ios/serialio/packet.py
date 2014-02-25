@@ -8,12 +8,12 @@ and easily misused. All the checking is done in the motor com part.
 """
 
 HEADER_SIZE = 4
-def check_header(motor_id, data):
+def check_header(mid, data):
     """Check that an header is consistent"""
     data = bytearray(data)
     assert len(data) == 4, "header size ({}) is wrong (!=4)".format(len(data))
     assert data[0] == data[1] == 255, "header prefix ({}) is wrong (!= [255, 255])".format(list(data[:2]))
-    assert motor_id == data[2], "motor_id ({}) is wrong (!={})".format(data[2], motor_id)
+    assert mid == data[2], "mid ({}) is wrong (!={})".format(data[2], mid)
 
 class PacketError(Exception):
     """Thrown when a status packet is not consistent"""
@@ -44,7 +44,7 @@ class Packet(RawPacket):
         return 255-(sum(data)%256)
 
     @property
-    def motor_id(self):
+    def mid(self):
         return self.data[2]
 
     @property
@@ -61,8 +61,8 @@ class InstructionPacket(Packet):
     Layout is (details: http://support.robotis.com/en/product/dxl_main.htm):
     [0xff, 0xff, id, length, instruction, param1, param2, ... paramN, checksum]
     """
-    def __init__(self, motor_id, instruction, params=()):
-        data = [0xff, 0xff, motor_id, len(params)+2, instruction]
+    def __init__(self, mid, instruction, params=()):
+        data = [0xff, 0xff, mid, len(params)+2, instruction]
         data.extend(params)
         data.append(self.checksum(data[2:]))
         Packet.__init__(self, data)
