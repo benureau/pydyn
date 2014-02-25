@@ -1,5 +1,5 @@
 from ..refs import protocol as pt
-from . import limits
+from ..refs import limits
 from . import alarms
 
 # for details, see http://support.robotis.com/en/product/dynamixel/
@@ -171,12 +171,12 @@ raw2_punch = raw2_torque
 # MARK Position
 
 def raw2_deg(value, mmem):
-    max_pos, max_deg = pt.POSITION_RANGES[mmem.modelclass]
+    max_pos, max_deg = limits.POSITION_RANGES[mmem.modelclass]
     limits.checkbounds('position raw', 0, max_pos, value)
     return (value / max_pos) * max_deg
 
 def deg_2raw(value, mmem):
-    max_pos, max_deg = pt.POSITION_RANGES[mmem.modelclass]
+    max_pos, max_deg = limits.POSITION_RANGES[mmem.modelclass]
     limits.checkbounds('position', -0.001, max_deg + 0.001, value)
     return int(round((value / max_deg) * max_pos))
 

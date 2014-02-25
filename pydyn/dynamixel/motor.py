@@ -44,8 +44,8 @@ import collections
 
 from .. import color
 from ..refs import protocol as pt
+from ..refs import limits
 from . import conversions as conv
-from . import limits
 
 class DynamixelMotor(object):
     def __init__(self, memory):
@@ -277,7 +277,7 @@ class DynamixelMotor(object):
 
     @cw_angle_limit_raw.setter
     def cw_angle_limit_raw(self, val):
-        limits.checkbounds('cw_angle_limit', 0, pt.POSITION_RANGES[self.modelclass], val)
+        limits.checkbounds('cw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], val)
         if int(val[0]) > int(self.ccw_angle_limit_raw):
             raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], self.ccw_angle_limit_raw))
         if val != 0 or val != self.ccw_angle_limit_raw:
@@ -298,7 +298,7 @@ class DynamixelMotor(object):
 
     @ccw_angle_limit_raw.setter
     def ccw_angle_limit_raw(self, val):
-        limits.checkbounds('ccw_angle_limit', 0, pt.POSITION_RANGES[self.modelclass], val)
+        limits.checkbounds('ccw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], val)
         if val != 0 or val != self.cw_angle_limit_raw:
             self._joint_angle_limits_raw = (val, self.cw_angle_limit_raw)
         self._register_write(pt.CCW_ANGLE_LIMIT, val)
@@ -318,8 +318,8 @@ class DynamixelMotor(object):
 
     @angle_limits_raw.setter
     def angle_limits_raw(self, val):
-        limits.checkbounds('cw_angle_limit', 0, pt.POSITION_RANGES[self.modelclass], int(val[0]))
-        limits.checkbounds('ccw_angle_limit', 0, pt.POSITION_RANGES[self.modelclass], int(val[1]))
+        limits.checkbounds('cw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], int(val[0]))
+        limits.checkbounds('ccw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], int(val[1]))
         assert len(val) == 2
         if val[0] > val[1]:
             raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], val[1]))

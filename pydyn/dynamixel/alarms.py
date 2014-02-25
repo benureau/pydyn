@@ -1,7 +1,7 @@
 # MARK: - Alarm conversions
 
 import numpy
-from . import limits
+from ..refs import limits
 
 DXL_ALARMS = [
     "Input Voltage Error",

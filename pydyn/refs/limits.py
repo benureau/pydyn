@@ -1,3 +1,17 @@
+from . import protocol as pt
+
+POSITION_RANGES = {
+    'EX' : (4095.0, 250.92),
+    'MX' : (4095.0, 360.0),
+    'AX' : (1023.0, 300.0),
+    'RX' : (1023.0, 300.0),
+    'VX' : (1023.0, 300.0),
+}
+
+
+
+
+
 # MARK Bound functions
 
 def checkbounds(name, lower, upper, val):
@@ -17,13 +31,4 @@ def checkbounds_mode(name, lower, upper, val, mode):
 def checkoneof(name, collection, val):
     if not val in collection:
         raise ValueError('{} should be in {} but is {}'.format(name, collection, val))
-
-
-position_range = {
-    'EX' : (4095.0, 250.92),
-    'MX' : (4095.0, 360.0),
-    'AX' : (1023.0, 300.0),
-    'RX' : (1023.0, 300.0),
-    'VX' : (1023.0, 300.0),
-}
 
