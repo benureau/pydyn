@@ -1,9 +1,9 @@
-from pydyn.io import serialmcom
-from pydyn.dynamixel import memory
+from ..serialio import serialcom
+from ...dynamixel import memory
 
 from . import fakememory
 
-class FakeCom(serialmcom.DynamixelComSerial):
+class FakeCom(serialcom.SerialCom):
 
     def __init__(self, support_sync_read=False):
         self._fakemems = {}

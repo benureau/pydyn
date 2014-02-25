@@ -11,8 +11,8 @@ from .. import color
 from .controller import (DynamixelController,
                          DynamixelControllerFullRam)
 
-from ..io import serialio
-from ..io import serialmcom
+from ..ios.serialio import serialio
+from ..ios.serialio import serialcom
 
 
 TIMEOUTS = {'Darwin': 0,
@@ -69,7 +69,7 @@ def create_controller(device_type = 'USB2Serial',
         print('Error; exiting.')
         exit(1)
 
-    mcom = serialmcom.DynamixelComSerial(sio)
+    mcom = serialcom.SerialCom(sio)
 
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
     ctrl = ctrl_class(mcom)

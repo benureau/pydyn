@@ -15,11 +15,11 @@ import threading
 import itertools
 #import atexit
 
-from . import protocol as pt
+from ...refs import protocol as pt
+from ...dynamixel import memory
+from ...dynamixel import alarms as conv # the only conversion needed in I/O
 from . import packet
-from ..dynamixel import memory
 
-from ..dynamixel import alarms as conv # the only conversion needed in I/O
 
 
 # MARK: - Dxl Error
@@ -55,9 +55,9 @@ class MotorError(Exception):
                                                    self.alarms if len(self.alarms) > 1 else self.alarms[0])
 
 
-# MARK: - DynamixelComSerial class
+# MARK: - SerialCom class
 
-class DynamixelComSerial(object):
+class SerialCom(object):
     """
     This class handles the low-level communication with robotis motors.
 

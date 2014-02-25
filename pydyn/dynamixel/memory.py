@@ -3,7 +3,7 @@ Motor memory. Keeps a cached image of the motor memory.
 It is only as uptodate as the last read of each address.
 """
 
-from ..io import protocol as pt
+from ..refs import protocol as pt
 from . import memsave
 
 class DynamixelMemory(object):

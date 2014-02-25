@@ -1,8 +1,8 @@
 import unittest
 
 import env
-from pydyn.io import packet
-from pydyn.io import protocol as pt
+from pydyn.ios.serialio import packet
+from pydyn.refs import protocol as pt
 
 class TestPackets(unittest.TestCase):
 
