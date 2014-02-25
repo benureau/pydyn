@@ -228,7 +228,7 @@ class Serial(object):
 
     @latency.setter
     def latency(self, val):
-        """Setting latency will not have any effect on pyserial connections"""
+        """In ms. Supported only by pyftdi."""
         self._latency = val
         if self._ftdi_ctrl:
             self._serial.set_latency_timer(latency)
@@ -242,8 +242,20 @@ class Serial(object):
         time.sleep(0.1)
 
     def flush(self):
-        """Flush of file like objects. In this case, wait until all data is written."""
-        self._serial.flush()
+        """Flush of file like objects. In this case, wait until all data is written.
+
+        Supported only by pyserial.
+        """
+        if not self._ftdi_ctrl:
+            self._serial.flush()
+
+    def purge(self):
+        """purge and discard read and write buffers"""
+        if self._ftdi_ctrl:
+            self._serial.purge_buffers()
+        else:
+            self._serial.flushInput()
+            self._serial.flushOutput()
 
     def write(self, data):
         """Write data on the serial port"""

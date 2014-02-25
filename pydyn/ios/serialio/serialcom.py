@@ -32,7 +32,7 @@ class CommunicationError(Exception):
         self.status_packet = status_packet
 
     def __str__(self):
-        return "CommunictionError('{}', {}, {})".format(self.msg, list(self.inst_packet.data), self.status_packet)
+        return "CommunicationError('{}', {}, {})".format(self.msg, list(self.inst_packet.data), self.status_packet)
 
 class TimeoutError(Exception):
     """Thrown when no status packet has arrived when timeout kicks in.
@@ -95,6 +95,8 @@ class SerialCom(object):
 
     """
     CommunicationError = CommunicationError
+    TimeoutError = TimeoutError
+    MotorError = MotorError
 
     # __open_ports = [] # TODO: unified interface
 
@@ -329,6 +331,7 @@ class SerialCom(object):
                 try:
                     packet.check_header(inst_packet.mid, data)
                 except AssertionError as e:
+                    self.sio.purge()
                     raise CommunicationError(e.args[0],
                                              inst_packet, list(bytearray(data)))
 
@@ -337,6 +340,7 @@ class SerialCom(object):
                     status_packet = packet.StatusPacket(data)
 
                 except packet.PacketError as e:
+                    self.sio.purge()
                     raise CommunicationError(e.msg, inst_packet,
                                              list(bytearray(data)))
 
@@ -418,13 +422,13 @@ class SerialCom(object):
         Transform one bytes and two bytes values into parameters for
         an instruction packet
         """
-        assert len(control.sizes) == len(values), "{} and {} don't have the same length".format(control.sizes, list(params))
+        assert len(control.sizes) == len(values), "{} and {} don't have the same length".format(control.sizes, list(values))
         params = []
         for v, s in zip(values, control.sizes):
             if s == 1:
                 params.append(v)
             elif s == 2:
-                params.append(v % 255)
+                params.append(v % 256)
                 params.append(v >> 8)
         return params
 
