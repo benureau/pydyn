@@ -31,3 +31,6 @@ class TestAlarmCodes(unittest.TestCase):
     def test_on_examples(self):
         for code, name_list in EXAMPLES:
             self.assertEqual(set(name_list), set(raw2_alarm_names(code)))
+
+if __name__ == '__main__':
+    unittest.main()

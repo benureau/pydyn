@@ -22,3 +22,6 @@ class TestFake(unittest.TestCase):
         ctrl = controller.DynamixelController(mcom)
         mids = ctrl.discover_motors(verbose=False)
         ctrl.load_motors(mids)
+
+if __name__ == '__main__':
+    unittest.main()
