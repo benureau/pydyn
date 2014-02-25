@@ -7,34 +7,30 @@ import atexit
 
 from .. import color
 
-from . import io
-from . import motor
+from ..io import protocol as pt
 from . import memory
-from . import protocol
+from . import motor
 
 
 CONTROLLER_TYPE = ("USB2DXL", "USB2AX", "VREP")
 
 class DynamixelController(threading.Thread):
     """
-        The Controller is in charge of handling the read and write request of the motors.
-        It is not a data conduit, it merely call io function that update the value of the
-        motor cached memory and of the hardware.
+    The Controller is in charge of handling the read and write request of the motors.
+    It is not a data conduit, it merely call the io function that update the hardware
+    and the motor cached memory. It does not access the content of the motors memory.
 
-        The Controller is also responsible for instanciating Motor instances.
+    The Controller is also responsible for instanciating Motor instances.
 
-        It does not access the content of the motors memory.
+    The Controller is not responsible for instanciating the motor communication object,
+    it expects a functionnal instance.
     """
 
-    def __init__(self, connection_type, port=None, timeout=50, freq=50, baudrate=1000000, ip='127.0.0.1', debug=False):
+    def __init__(self, motorcom, freq=60, debug=False):
         """
-            :arg port:     when using serial, the device port of the connection.
-                             when using V-REP, the ip port of the connection.
-            :arg freq:     the target frequence for refreshing values in Hz.
-            :arg timeout:  the time to wait for a response from the serial port.
-            :arg baudrate: the baudrate of the serial connection. Motor will be detected when they have a matching baudrate.
-            :arg ip:       when using V-REP, the ip to connect to the V-Rep simulation.
-            :arg debug:    if True, displays debug info on the controller behavior.
+        :arg motorcom:  motor communication object
+        :arg freq:      the target frequence for refreshing values in Hz.
+        :arg debug:     if True, displays debug info on the controller behavior.
         """
 
         threading.Thread.__init__(self)
@@ -45,11 +41,7 @@ class DynamixelController(threading.Thread):
         self.fps_history = deque(maxlen = 3*freq)
         self.framecount = 0
 
-        if connection_type not in CONTROLLER_TYPE:
-            raise ValueError('Unknown controller type: %s' % (connection_type))
-
-        self.type = connection_type
-        self.io = io.DynamixelIO(port=port, timeo=timeout, baudrate=baudrate, ip=ip)
+        self.mcom = motorcom
         self.motors = []
 
         def stop_and_close():
@@ -58,14 +50,11 @@ class DynamixelController(threading.Thread):
                 self.join(0.5)
             except RuntimeError:
                 pass
-            self.io.close()
+            self.mcom.close()
         atexit.register(stop_and_close)
 
-        # atexit.register(self.join, 0.5)
-        # atexit.register(self.stop)
-
         self._pinglock = threading.Lock() # when discovering motors
-        self._ctrllock = threading.Lock() # when running as usual
+        self._ctrllock = threading.Lock() # when running the control loop
 
         self._stop = threading.Event()
 
@@ -90,8 +79,10 @@ class DynamixelController(threading.Thread):
         """
         try:
             self.stop()
+            if not immediately:
+                self.join(0.1)
             self._ctrllock.acquire()
-            self.io.close()
+            self.mcom.close()
             self._ctrllock.release()
         except Exception:
             pass
@@ -137,27 +128,27 @@ class DynamixelController(threading.Thread):
         self._ctrllock.release()
 
     def start_sim(self):
-        if hasattr(self.io, 'sim'):
-            self.io.sim.simStartSimulation()
+        if hasattr(self.mcom, 'sim'):
+            self.mcom.sim.simStartSimulation()
 
     def restart_sim(self):
-        if hasattr(self.io, 'sim'):
-            self.io.sim.simStopSimulation()
-            self.io.sim.simStartSimulation()
+        if hasattr(self.mcom, 'sim'):
+            self.mcom.sim.simStopSimulation()
+            self.mcom.sim.simStartSimulation()
 
     def stop_sim(self):
-        if hasattr(self.io, 'sim'):
-            self.io.sim.simStopSimulation()
+        if hasattr(self.mcom, 'sim'):
+            self.mcom.sim.simStopSimulation()
 
     # MARK Motor discovery and creation
 
-    def discover_motors(self, motor_ids, load_eeprom = True, verbose = False):
+    def discover_motors(self, motor_ids=range(0, 253), verbose = False):
         self._pinglock.acquire()
         self._ctrllock.acquire()
 
         found_ids = []
         try:
-            found_ids = self.io.broadcast_ping()
+            found_ids = self.mcom.broadcast_ping()
         except (AssertionError, AttributeError, IOError):
             pass
 
@@ -167,7 +158,7 @@ class DynamixelController(threading.Thread):
                     print('  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
                             motor_ids[0], motor_ids[-1], m_id)),
                     sys.stdout.flush()
-                if self.io.ping(m_id):
+                if self.mcom.ping(m_id):
                     found_ids.append(m_id)
 
         def in_mids(a):
@@ -180,8 +171,9 @@ class DynamixelController(threading.Thread):
         return found_ids
 
     def load_motors(self, motor_ids):
-        #TODO: check for double motors
-        mmems = self.io.create(motor_ids)
+        """Instanciate a set of motors"""
+        motor_ids = sorted(set(motor_ids)) # eliminating doublons.
+        mmems = self.mcom.create(motor_ids)
 
         for mmem in mmems:
             m = DynamixelController.motormodel[mmem.model](mmem)
@@ -212,27 +204,26 @@ class DynamixelController(threading.Thread):
 
     def _reading_motors(self):
         """ Read the motors for position, speed and load """
+        self.mcom.get(pt.PRESENT_POS_SPEED_LOAD, [m.id for m in self.motors])
 
-        if self.type == 'USB2DXL':
-            for m in self.motors:
-                try:
-                    try:
-                        self.io.get(m.id, 'PRESENT_POS_SPEED_LOAD')
-                    except (ValueError, io.DynamixelTimeoutError, io.DynamixelCommunicationError) as ve:
-                        print('[{}] warning: reading status of motor {} failed with : {}'.format(self.framecount, m.id, ve))
-                        self.io._serial.purge()
-                        self.io._serial.resetDevice()
-                        self.io._serial.setTimeouts(self.io._timeout, self.io._timeout)
-                        self.io._serial.setLatencyTimer(2)
-                except io.DynamixelCommunicationError as e:
-                    print(e)
-                    print('warning: communication error on motor {}'.format(m.id))
+        # TODO: error policy class
+        # if self.mcom == 'USB2DXL':
+        #     for m in self.motors:
+        #         try:
+        #             try:
+        #                 self.mcom.get(m.id, 'PRESENT_POS_SPEED_LOAD')
+        #             except (ValueError, io.DynamixelTimeoutError, io.DynamixelCommunicationError) as ve:
+        #                 print('[{}] warning: reading status of motor {} failed with : {}'.format(self.framecount, m.id, ve))
+        #                 self.mcom._serial.purge()
+        #                 self.mcom._serial.resetDevice()
+        #                 self.mcom._serial.setTimeouts(self.mcom._timeout, self.mcom._timeout)
+        #                 self.mcom._serial.setLatencyTimer(2)
+        #         except io.DynamixelCommunicationError as e:
+        #             print(e)
+        #             print('warning: communication error on motor {}'.format(m.id))
 
-        elif self.type == 'USB2AX' or self.type == 'VREP':
-            positions = self.io.get_sync_positions([m.id for m in self.motors])
-
-
-
+        # elif self.type == 'USB2AX' or self.type == 'VREP':
+        #     positions = self.mcom.get_sync_positions([m.id for m in self.motors])
 
     pst_set     = set(('GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT'))
     special_set = set(('ID', 'MODE'))
@@ -290,62 +281,60 @@ class DynamixelController(threading.Thread):
         # Handling pst requests (if need be)
         sync_pst = []
         sync_st  = []
-        for m, pst_requests in zip(self.motors, all_pst_requests):
+        pst_motor_ids = []
+        pst_valuess   = []
+        st_motor_ids = []
+        st_valuess   = []
+        for m, pst_reqs in zip(self.motors, all_pst_requests):
 
-            if len(pst_requests) > 0:
-                if self.debug:
-                    print('controller: pst_request:', pst_requests)
-
+            if len(pst_reqs) > 0:
                 if not m.compliant:
-                    sync_pst.append((m.id,
-                                     pst_requests.get('GOAL_POSITION', m.goal_position_raw),
-                                     pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
-                                     pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
+                    pst_motor_ids.append(m.id)
+                    pst_valuess.append((pst_reqs.get(pt.GOAL_POSITION, m.goal_position_raw),
+                                       pst_reqs.get(pt.MOVING_SPEED,  m.moving_speed_raw),
+                                       pst_reqs.get(pt.TORQUE_LIMIT,  m.torque_limit_raw)))
 
-                if m.compliant and m.mode == 'joint':
-                    if 'MOVING_SPEED' in pst_requests or 'TORQUE_LIMIT' in pst_requests:
-                        sync_st.append((m.id, pst_requests.get('MOVING_SPEED', m.moving_speed_raw),
-                                              pst_requests.get('TORQUE_LIMIT', m.torque_limit_raw)))
+                elif m.mode == 'joint':
+                    st_motor_ids.append(m.id)
+                    if pt.MOVING_SPEED in pst_reqs or pt.TORQUE_LIMIT in pst_reqs:
+                        st_valuess.append((pst_reqs.get(pt.MOVING_SPEED, m.moving_speed_raw),
+                                          pst_reqs.get(pt.TORQUE_LIMIT, m.torque_limit_raw)))
 
 
-        if len(sync_pst) > 0:
-            self.io.set_sync_positions_speeds_torque_limits(sync_pst)
+        if len(pst_valuess) > 0:
+            self.mcom.set(pt.GOAL_POS_SPEED_TORQUE, motor_ids, pst_valuess)
 
-        if len(sync_st) > 0:
-            self.io.set_sync_speeds_torque_limits(sync_st)
+        if len(st_valuess) > 0:
+            self.mcom.set(pt.GOAL_POS_SPEED_TORQUE, motor_ids, st_valuess)
 
 
     def _handle_special_requests(self, all_special_requests):
         # handling the resquests
         for motor, requests in zip(self.motors, all_special_requests):
-            for request_name, value in requests.items():
-                if request_name == 'ID':
-                    self.io.change_id(motor.id, value)
-                elif request_name == 'MODE':
-                    self.io.change_mode(motor.id, value)
-                else:
-                    print('REQUEST_NAME', value)
-                    raise NotImplementedError
+            for control, value in requests.items():
+                if control == pt.ID:
+                    self.mcom.change_id(motor.id, value)
 
 
     def _handle_all_other_requests(self, all_other_requests):
         # handling the resquests
         for m, requests in zip(self.motors, all_other_requests):
-            for request_name, value in requests.items():
-                self.io.set(m.id, request_name, value)
+            for control, values in requests.items():
+                if not hasattr(values, '__iter__'):
+                    values = (values,)
+                self.mcom.set(control, (m.id,), (values,))
 
     def _handle_all_read_requests(self, all_read_requests):
         # handling the resquests
         for m, requests in zip(self.motors, all_read_requests):
             for request_name, value in requests.items():
-                self.io.get(m.id, request_name)
+                self.mcom.get((m.id,), request_name)
 
 
     def run(self):
         while not self.stopped():
 
             self.framecount += 1
-
 
             self._pinglock.acquire()
             self._ctrllock.acquire()
@@ -365,7 +354,7 @@ class DynamixelController(threading.Thread):
                 self._handle_all_pst_requests(all_pst_requests)
                 self._handle_special_requests(all_special_requests)
                 self._handle_all_read_requests(all_special_requests)
-            except io.DynamixelCommunicationError:
+            except self.mcom.CommunicationError:
                 print("error ignored")
 
             self._ctrllock.release()
@@ -402,17 +391,17 @@ class DynamixelControllerFullRam(DynamixelController):
         for m in self.motors:
             try:
                 try:
-                    self.io.read_ram(m.id)
+                    self.mcom.read_ram(m.id)
                 except ValueError as ve:
                     print('warning: reading status of motor {} failed with : {}'.format(m.id, ve.args[0]))
 
-            except io.DynamixelCommunicationError as e:
+            except self.mcom.DynamixelCommunicationError as e:
                 print(e)
                 print('warning: communication error on motor {}'.format(m.id))
 
     def _handle_all_read_requests(self, all_read_requests):
         """ Requests for reading ram are ignored in this class, since ram is continously updated. """
         for m, requests in zip(self.motors, all_read_requests):
-            for request_name, value in requests.items():
-                if not protocol.REG_RAM(request_name):
-                    self.io.get(m.id, request_name)
+            for control in requests.keys():
+                if not control.ram:
+                    self.mcom.get(control, m.id)
