@@ -5,10 +5,8 @@ from .. import dynamixel
 
 class MotorSet(object):
 
-    def __init__(self, motor_range=(0, 253), verbose=False, serial_id=None):
-        self.dyn  = dynamixel.create_controller(motor_range = motor_range,
-                                                verbose = verbose,
-                                                serial_id=serial_id)
+    def __init__(self, **kwargs):
+        self.dyn  = dynamixel.create_controller(**kwargs)
         self.motors = self.dyn.motors
         self._angle_ranges = None
         self.zero_pose = [0.0]*len(self.motors)
