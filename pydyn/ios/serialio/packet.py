@@ -23,6 +23,8 @@ class PacketError(Exception):
         self.data = data
         self.msg = msg
 
+    def __str__(self):
+        return "PacketError('{}', {})".format(self.msg, list(self.data))
 
 class RawPacket(object):
     'Base packet class : no header, no checksum, for debug and crazy stuff.'
