@@ -1,3 +1,5 @@
+from __future__ import print_function, division
+
 import threading
 import time
 import sys
@@ -57,14 +59,14 @@ class DynamixelController(threading.Thread):
         self._pinglock = threading.Lock() # when discovering motors
         self._ctrllock = threading.Lock() # when running the control loop
 
-        self._stop = threading.Event()
+        self._stop_event = threading.Event()
 
     def stop(self):
         """Stop the thread after the end of the current loop"""
-        self._stop.set()
+        self._stop_event.set()
 
     def stopped(self):
-        return self._stop.isSet()
+        return self._stop_event.is_set()
 
     def wait(self, loops):
         """ Wait a number of loops. Useful to wait before a change is applied to the motors."""
@@ -156,8 +158,8 @@ class DynamixelController(threading.Thread):
         if True and found_ids == []:
             for m_id in motor_ids:
                 if verbose:
-                    print('  [%sSCAN%s] Scanning motor ids between %s and %s : %s\r' % (color.iblue, color.end,
-                            motor_ids[0], motor_ids[-1], m_id)),
+                    print('  [{}SCAN{}] Scanning motor ids between {} and {} : {}'.format(color.iblue, color.end,
+                            motor_ids[0], motor_ids[-1], m_id), end='\r'),
                     sys.stdout.flush()
                 if self.com.ping(m_id):
                     found_ids.append(m_id)
