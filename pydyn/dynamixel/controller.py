@@ -43,6 +43,7 @@ class DynamixelController(threading.Thread):
 
         self.com = motorcom
         self.motors = []
+        self._mtimeouts = {} # motor timeouts after EEPROM writes
 
         def stop_and_close():
             self.stop()
@@ -204,7 +205,10 @@ class DynamixelController(threading.Thread):
 
     def _reading_motors(self):
         """ Read the motors for position, speed and load """
-        self.com.get(pt.PRESENT_POS_SPEED_LOAD, [m.id for m in self.motors])
+        now = time.time()
+        mids = [m.id for m in self.motors if self._mtimeouts.get(m.id, now) <= now]
+        if len(mids) > 0:
+            self.com.get(pt.PRESENT_POS_SPEED_LOAD, [m.id for m in self.motors if self._mtimeouts.get(m.id, now) <= now])
 
         # TODO: error policy class
         # if self.com == 'USB2DXL':
@@ -248,30 +252,33 @@ class DynamixelController(threading.Thread):
 
         for motor in self.motors:
 
-            motor.request_lock.acquire()
-            read_requests  = copy.copy(motor.read_requests)
-            write_requests = copy.copy(motor.write_requests)
-            motor.read_requests.clear()
-            motor.write_requests.clear()
-            motor.request_lock.release()
+            now = time.time()
+            if self._mtimeouts.get(motor.id, now) <= now:
 
-            pst_requests     = OrderedDict()
-            special_requests = OrderedDict()
-            other_requests   = OrderedDict()
-            read_requests    = OrderedDict()
+                motor.request_lock.acquire()
+                read_requests  = copy.copy(motor.read_requests)
+                write_requests = copy.copy(motor.write_requests)
+                motor.read_requests.clear()
+                motor.write_requests.clear()
+                motor.request_lock.release()
 
-            for request_name, value in write_requests.items():
-                if request_name in DynamixelController.pst_set:
-                    pst_requests[request_name] = value
-                elif request_name in DynamixelController.special_set:
-                    special_requests[request_name] = value
-                else:
-                    other_requests[request_name] = value
+                pst_requests     = OrderedDict()
+                special_requests = OrderedDict()
+                other_requests   = OrderedDict()
+                read_requests    = OrderedDict()
 
-            all_other_requests.append(other_requests)
-            all_pst_requests.append(pst_requests)
-            all_special_requests.append(special_requests)
-            all_read_requests.append(read_requests)
+                for request_name, value in write_requests.items():
+                    if request_name in DynamixelController.pst_set:
+                        pst_requests[request_name] = value
+                    elif request_name in DynamixelController.special_set:
+                        special_requests[request_name] = value
+                    else:
+                        other_requests[request_name] = value
+
+                all_other_requests.append(other_requests)
+                all_pst_requests.append(pst_requests)
+                all_special_requests.append(special_requests)
+                all_read_requests.append(read_requests)
 
         # copying the resquests (for thread safety)
 
@@ -286,8 +293,8 @@ class DynamixelController(threading.Thread):
         st_mids = []
         st_valuess   = []
         for m, pst_reqs in zip(self.motors, all_pst_requests):
-
             if len(pst_reqs) > 0:
+
                 if not m.compliant:
                     pst_mids.append(m.id)
                     pst_valuess.append((pst_reqs.get(pt.GOAL_POSITION, m.goal_position_raw),
@@ -323,6 +330,9 @@ class DynamixelController(threading.Thread):
                 if not hasattr(values, '__iter__'):
                     values = (values,)
                 self.com.set(control, (m.id,), (values,))
+                if not control.ram:
+                    now = time.time()
+                    self._mtimeouts[m.id] = max(self._mtimeouts.get(m.id, now), now)+0.020*len(control.sizes)
 
     def _handle_all_read_requests(self, all_read_requests):
         # handling the resquests
