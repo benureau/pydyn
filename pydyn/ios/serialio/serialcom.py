@@ -319,7 +319,7 @@ class SerialCom(object):
         with self._lock:
             n = self.sio.write(str(inst_packet.data))
             if n != len(inst_packet):
-                raise CommunicationError('Packet not correctly sent', packet, None)
+                raise CommunicationError('Packet not correctly sent', inst_packet, None)
 
             if receive:
                 data = self.sio.read(packet.HEADER_SIZE)

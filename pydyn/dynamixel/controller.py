@@ -164,7 +164,7 @@ class DynamixelController(threading.Thread):
 
         def in_mids(a):
             return a in motor_ids
-        found_ids = filter(in_mids, found_ids)
+        found_ids = [mid for mid in found_ids if mid in motor_ids]
 
         self._pinglock.release()
         self._ctrllock.release()
