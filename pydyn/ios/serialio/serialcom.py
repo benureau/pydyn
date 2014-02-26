@@ -317,7 +317,7 @@ class SerialCom(object):
     def _send_packet(self, inst_packet, receive=True):
         """Send a packet and handle the (eventual) reception"""
         with self._lock:
-            n = self.sio.write(str(inst_packet.data))
+            n = self.sio.write(bytes(inst_packet.data))
             if n != len(inst_packet):
                 raise CommunicationError('Packet not correctly sent', inst_packet, None)
 
@@ -336,7 +336,7 @@ class SerialCom(object):
                                              inst_packet, list(bytearray(data)))
 
                 try:
-                    data += self.sio.read(ord(data[3]))
+                    data += self.sio.read(data[3])
                     status_packet = packet.StatusPacket(data)
 
                 except packet.PacketError as e:
@@ -411,9 +411,9 @@ class SerialCom(object):
         assert sum(control.sizes) == len(params), "{} should have length {} but has {}".format(list(values), sum(control.sizes), len(values))
         itp, values = params.__iter__(), []
         for s in control.sizes:
-            values.append(itp.next())
+            values.append(next(itp))
             if s == 2:
-                values[-1] += itp.next() << 8
+                values[-1] += next(itp) << 8
         return values
 
     @staticmethod
