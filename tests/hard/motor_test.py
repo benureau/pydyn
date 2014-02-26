@@ -7,6 +7,8 @@ ms = pydyn.MotorSet(verbose=True)
 time.sleep(0.01)
 
 sleep = 0.1
+for motor in ms.motors:
+    motor.angle_limits_raw = (0, 1023)
 ms.compliant = False
 for motor in ms.motors:
     motor.position = 150

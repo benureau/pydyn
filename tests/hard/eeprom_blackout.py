@@ -14,19 +14,20 @@ mid = [mid for mid in range(0, 253) if mcom.ping(mid)][0]
 mcom.create([mid])
 n = 200
 
-def blackout_duration(control, values):
+def blackout_duration(writes):
     global mid
     start = time.time()
     for i in range(n):
         mcom.get(pt.PRESENT_POS_SPEED_LOAD, [mid])
 
-    if control == pt.ID:
-        mcom.change_id(mid, values[0])
-        mid = values[0]
-    else:
-        mcom.set(control, [mid], (values,))
-        #mcom.set(control, [mid], (values,))
-        #mcom.set(control, [mid], (values,))
+    for control, values, _ in writes:
+        if control == pt.ID:
+            mcom.change_id(mid, values[0])
+            mid = values[0]
+        else:
+            mcom.set(control, [mid], (values,))
+            #mcom.set(control, [mid], (values,))
+            #mcom.set(control, [mid], (values,))
 
     start = time.time()
     no_error = 0
@@ -51,20 +52,21 @@ def blackout_duration(control, values):
         mcom.get(pt.PRESENT_POS_SPEED_LOAD, [mid])
 
     print(('blackout for {} lasted {}{:.1f}ms{} ({} timeouts, {} communication'
-           ' errors)').format(control.name, color.red, 1000*(end-start), color.end, timeouts, comerrors))
+           ' errors)').format(' and '.join(control.name for control, _, _ in writes), color.red, 1000*(end-start), color.end, timeouts, comerrors))
     return 1000*(end-start)
 
-def test_blackout(control, values, dur):
+def test_blackout(writes, dur):
     """Verifies that a timeout of `dur` is sufficient to avoid errors"""
     global mid
     for i in range(n):
         mcom.get(pt.PRESENT_POS_SPEED_LOAD, [mid])
 
-    if control == pt.ID:
-        mcom.change_id(mid, values[0])
-        mid = values[0]
-    else:
-        mcom.set(control, [mid], (values,))
+    for control, _, values in writes:
+        if control == pt.ID:
+            mcom.change_id(mid, values[0])
+            mid = values[0]
+        else:
+            mcom.set(control, [mid], (values,))
     time.sleep(dur/1000.0)
 
     # should pass without error
@@ -77,30 +79,26 @@ max_temp_def = mcom.motormems[mid][pt.HIGHEST_LIMIT_TEMPERATURE]
 min_volt_def = mcom.motormems[mid][pt.LOWEST_LIMIT_VOLTAGE]
 max_volt_def = mcom.motormems[mid][pt.HIGHEST_LIMIT_VOLTAGE]
 
-testcases = [(pt.ID, [2], [4]),
-             (pt.CCW_ANGLE_LIMIT, [15], [2]),
-             (pt.CCW_ANGLE_LIMIT, [1003], [1020]),
-             (pt.ANGLE_LIMITS, [10, 1000], [0, 1023]),
-             (pt.RETURN_DELAY_TIME, [10], [0]),
-             (pt.HIGHEST_LIMIT_TEMPERATURE, [max_temp_def-1], [max_temp_def]),
-             (pt.LOWEST_LIMIT_VOLTAGE, [min_volt_def+1], [min_volt_def]),
-             (pt.HIGHEST_LIMIT_VOLTAGE, [max_volt_def-1], [max_volt_def]),
-             (pt.VOLTAGE_LIMITS, [min_volt_def+1, max_volt_def-1], [min_volt_def, max_volt_def]),
-             (pt.MAX_TORQUE, [512], [1]),
-             (pt.STATUS_RETURN_LEVEL, [2], [1]),
-             (pt.ALARM_LED, [127], [37]),
-             (pt.ALARM_SHUTDOWN, [127], [37]),
+testcases = [[(pt.ID, [2], [4])],
+             [(pt.CCW_ANGLE_LIMIT, [15], [2])],
+             [(pt.CCW_ANGLE_LIMIT, [1003], [1020])],
+             [(pt.CCW_ANGLE_LIMIT, [15], [2]), (pt.CCW_ANGLE_LIMIT, [1003], [1020])],
+             [(pt.ANGLE_LIMITS, [10, 1000], [0, 1023])],
+             [(pt.RETURN_DELAY_TIME, [10], [0])],
+             [(pt.HIGHEST_LIMIT_TEMPERATURE, [max_temp_def-1], [max_temp_def])],
+             [(pt.LOWEST_LIMIT_VOLTAGE, [min_volt_def+1], [min_volt_def])],
+             [(pt.HIGHEST_LIMIT_VOLTAGE, [max_volt_def-1], [max_volt_def])],
+             [(pt.VOLTAGE_LIMITS, [min_volt_def+1, max_volt_def-1], [min_volt_def, max_volt_def])],
+             [(pt.MAX_TORQUE, [512], [1])],
+             [(pt.STATUS_RETURN_LEVEL, [2], [1])],
+             [(pt.ALARM_LED, [127], [37])],
+             [(pt.ALARM_SHUTDOWN, [127], [37])],
+             [(pt.ANGLE_LIMITS, [10, 1000], [0, 1023]), (pt.ALARM_SHUTDOWN, [127], [37])],
             ]
 
-#testcases = [(pt.MAX_TORQUE, [512], [1023])]
-for control, values0, values1 in testcases:
-    dur = blackout_duration(control, values0)
-    test_blackout(control, values1, dur)
-
-#blackout_duration(pt.CCW_ANGLE_LIMIT, [1])
-#blackout_duration(pt.CW_ANGLE_LIMIT, [1023])
-
-
+for writes in testcases:
+    dur = blackout_duration(writes)
+    test_blackout(writes, dur)
 
 mcom.sio.close()
 mcom.close()
