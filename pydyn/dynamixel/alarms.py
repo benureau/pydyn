@@ -1,6 +1,5 @@
 # MARK: - Alarm conversions
 
-import numpy
 from ..refs import limits
 
 DXL_ALARMS = [
@@ -17,7 +16,7 @@ def raw2_alarm_codes(value):
     """This unpack a single integer into a list of error code"""
     limits.checkbounds('alarm code raw', 0, 127, value)
 
-    return numpy.unpackbits(numpy.asarray(value, dtype=numpy.uint8))[:0:-1]
+    return tuple(int(c) for c in reversed(bin(value+128)[3:]))
 
 def raw2_alarm_names(value):
     """This unpack a single integer into a list of error names"""

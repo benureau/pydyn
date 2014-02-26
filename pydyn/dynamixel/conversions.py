@@ -394,13 +394,11 @@ def compliance_slope_2raw(value, mmem=None):
 
 # MARK Alarm conversions
 
-from alarms import raw2_alarm_codes, raw2_alarm_names, alarm_codes_2raw, alarm_names_2raw
+raw2_alarm_led = alarms.raw2_alarm_names
+alarm_led_2raw = alarms.alarm_names_2raw
 
-raw2_alarm_led = raw2_alarm_names
-alarm_led_2raw = alarm_names_2raw
-
-raw2_alarm_shutdown = raw2_alarm_names
-alarm_shutdown_2raw = alarm_names_2raw
+raw2_alarm_shutdown = alarms.raw2_alarm_names
+alarm_shutdown_2raw = alarms.alarm_names_2raw
 
 
 # MARK Temperature

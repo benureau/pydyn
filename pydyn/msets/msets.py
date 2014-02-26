@@ -1,5 +1,4 @@
 import time
-import numpy as np
 
 from .. import dynamixel
 
@@ -25,7 +24,7 @@ class MotorSet(object):
 
     def _clip(self, pose):
         if self._angle_ranges is not None:
-            return np.array([max(min(p, zp+hr), zp-lr) for p, zp, (lr, hr) in zip(pose, self.zero_pose, self.angle_ranges)])
+            return tuple([max(min(p, zp+hr), zp-lr) for p, zp, (lr, hr) in zip(pose, self.zero_pose, self.angle_ranges)])
         else:
             return pose
 
@@ -38,22 +37,22 @@ class MotorSet(object):
         start = time.time()
         while max(abs(sp - p) for sp, p in zip(self.pose, pose)) > margin and time.time()-start < timeout:
             time.sleep(0.01)
-        return np.array([p - sp for sp, p in zip(self.pose, pose)])
+        return tuple([p - sp for sp, p in zip(self.pose, pose)])
 
     @property
     def pose(self):
-        return np.array([m.position - zp for m, zp in zip(self.motors, self.zero_pose)])
+        return tuple([m.position - zp for m, zp in zip(self.motors, self.zero_pose)])
 
     @pose.setter
     def pose(self, _pose):
-        #print("bla" ,np.array(_pose) + self.zero_pose)
-        #print("blu" ,self._clip(np.array(_pose) + self.zero_pose))
-        for m, p in zip(self.motors, self._clip(np.array(_pose) + self.zero_pose)):
+        #print("bla" ,tuple(_pose) + self.zero_pose)
+        #print("blu" ,self._clip(tuple(_pose) + self.zero_pose))
+        for m, p in zip(self.motors, self._clip(tuple(_pose) + self.zero_pose)):
             m.position = p
 
     @property
     def max_speed(self):
-        return np.array([m.speed for m in self.motors])
+        return tuple([m.speed for m in self.motors])
 
     @max_speed.setter
     def max_speed(self, _speed):
@@ -105,5 +104,5 @@ class MotorSet(object):
     @zero_pose.setter
     def zero_pose(self, val):
         assert all(p>=0 for p in val)
-        self._zero_pose = np.array(val)
+        self._zero_pose = tuple(val)
 

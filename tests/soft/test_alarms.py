@@ -1,5 +1,6 @@
 import unittest
 
+import env
 from pydyn.dynamixel.alarms import (raw2_alarm_names, alarm_names_2raw)
 
 

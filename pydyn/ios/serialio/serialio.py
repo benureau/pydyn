@@ -10,13 +10,7 @@ import re
 
 # pyserial imports
 import serial
-try:
-    import serial.tools.list_ports_vid_pid_osx_posix as list_ports
-except ImportError:
-    print("error: the pyserial installed version is not compatible.\n"
-          "       Install the makerbot version of pyserial available at "
-          "https://github.com/makerbot/pyserial.\n")
-    exit()
+from . import list_ports
 
 # ftdi imports
 try:

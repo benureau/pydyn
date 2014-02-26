@@ -4,8 +4,8 @@ from setuptools import setup, find_packages
 
 setup(name='pydyn',
       version='0.9.1',
-      author=('Fabien Benureau', 'Pierre Rouanet', 'Matthieu Lapeyre',
-              'Olivier Mangin', 'Haylee Fogg'
+      author=', '.join(['Fabien Benureau', 'Pierre Rouanet', 'Matthieu Lapeyre',
+              'Olivier Mangin', 'Haylee Fogg']
              ),
       author_email='fabien.benureau+inria@gmail.com',
       url='https://bitbucket.org/humm/pydyn-fork',

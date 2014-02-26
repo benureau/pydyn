@@ -1,1 +1,1 @@
-from .auto import *
+from .auto import create_controller
