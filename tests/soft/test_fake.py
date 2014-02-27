@@ -44,6 +44,9 @@ class TestFake(unittest.TestCase):
             m.goal_position_raw = 1024
         with self.assertRaises(ValueError):
             m.goal_position_raw = -1
+        with self.assertRaises(ValueError):
+            m.max_torque_raw = 1.3
+
 
     # def test_setattr(self):
     #     ctrl = controller.DynamixelController(self.mcom)

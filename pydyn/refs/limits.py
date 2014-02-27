@@ -62,17 +62,17 @@ def def_bounds_unit(lower, upper, desc, unit):
 def def_bounds_int(lower, upper, desc):
     def _bounds(val):
         if not lower <= val <= upper:
-            raise ValueError('{} value is {}, but should be between {} and {}'.format(name, val, lower, upper))
+            raise ValueError('{} value is {}, but should be between {} and {}'.format(desc, val, lower, upper))
         if not isinstance(val, numbers.Integral):
-            raise ValueError('{} raw value ({}) should be an integer'.format(val))
+            raise ValueError('{} value ({}) should be an integer.'.format(desc, val))
     return _bounds
 
 def def_oneof_int(choices, desc):
     def _bounds(val):
         if not val in choices:
-            raise ValueError('{} value is {}, but should be one of {}'.format(name, val, choices))
+            raise ValueError('{} value is {}, but should be one of {}'.format(desc, val, choices))
         if not isinstance(val, numbers.Integral):
-            raise ValueError('{} raw value ({}) should be an integer'.format(val))
+            raise ValueError('{} value ({}) should be an integer.'.format(desc, val))
     return _bounds
 
 
