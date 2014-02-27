@@ -50,20 +50,20 @@ from . import conversions as conv
 class DynamixelMotor(object):
     def __init__(self, memory):
 
-        self.mmem = memory
+        object.__setattr__(self, 'mmem', memory) # self.mmem = memory
 
         # these dictionaries collect write or read request on part of non standart
         # memory (not pos, speed, load (read) or torque lim, moving speed goal pos (write))
-        self.read_requests  = collections.OrderedDict()
-        self.write_requests = collections.OrderedDict()
+        object.__setattr__(self, 'read_requests', collections.OrderedDict()) # self.read_requests  = collections.OrderedDict()
+        object.__setattr__(self, 'write_requests', collections.OrderedDict()) # self.write_requests  = collections.OrderedDict()
         # the dictionary is protected by a semaphore since both Motor and
         # Controller access and modify it. But the semaphore should only be acquired for
         # the duration of atomic actions on the dictionary, and not, for instance, the
         # serial communication related to a request.
-        self.request_lock = threading.Lock()
+        object.__setattr__(self, 'request_lock', threading.Lock()) # self.request_lock = threading.Lock()
 
         # backing up angle limits to switch between joint and wheel mode
-        self._joint_angle_limits_raw = self.angle_limits_raw
+        object.__setattr__(self, '_joint_angle_limits_raw', self.angle_limits_raw) # self._joint_angle_limits_raw = self.angle_limits_raw
 
     def __repr__(self):
         return 'M{}'.format(self.id)
@@ -75,6 +75,13 @@ class DynamixelMotor(object):
             return  0
         else:
             return  1
+
+    def __setattr__(self, attr, value):
+        if hasattr(self, attr):
+            object.__setattr__(self, attr, value)
+        else:
+            raise AttributeError(("'{}' assignement error. Motors can't set new "
+                                  "attributes.").format(attr))
 
 
     # MARK Read/Write request
@@ -161,6 +168,8 @@ class DynamixelMotor(object):
         value = self.write_requests.get(pt.CTRL[name.upper()], False)
         self.request_lock.release()
         return value
+
+
 
 
     # MARK Mode

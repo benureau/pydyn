@@ -47,15 +47,14 @@ class TestFake(unittest.TestCase):
         with self.assertRaises(ValueError):
             m.max_torque_raw = 1.3
 
+    def test_setattr(self):
+        ctrl = controller.DynamixelController(self.mcom)
+        mids = ctrl.discover_motors(verbose=False)
+        ctrl.load_motors(mids)
+        m = ctrl.motors[0]
 
-    # def test_setattr(self):
-    #     ctrl = controller.DynamixelController(self.mcom)
-    #     mids = ctrl.discover_motors(verbose=False)
-    #     ctrl.load_motors(mids)
-    #     m = ctrl.motors[0]
-
-    #     with self.assertRaises(AttributeError):
-    #         m.does_not_exists = 312
+        with self.assertRaises(AttributeError):
+            m.does_not_exists = 312
 
     def test_sync_motor(self):
         ctrl = controller.DynamixelController(self.mcom)
