@@ -12,7 +12,7 @@ class FakeCom(serialcom.SerialCom):
 
     def _add_motor(self, mid, model):
         assert 0 <= mid <= 253
-        fakemem = fakememory.MODELS[model]
+        fakemem = list(fakememory.MODELS[model])
         fakemem[3] = mid
         self._fakemems[mid] = memory.DynamixelMemory(mid, save=False, memory=fakemem)
 
@@ -47,11 +47,10 @@ class FakeCom(serialcom.SerialCom):
             self._send_read_packet(control, mid)
 
     def _send_write_packet(self, control, mid, values):
-        vals, offset = [], 0
-        for size in sizes:
-            vals, append(self._fakemems[mid][control.addr+offset])
+        offset = 0
+        for size, val in zip(control.sizes, values):
+            self._fakemems[mid][control.addr+offset] = val
             offset += size
-        return values
         self._update_memory(control, mid, values)
 
     def _send_sync_write_packet(self, control, mids, valuess):

@@ -260,7 +260,7 @@ class SerialCom(object):
         if len(mids) == 1:
             self._send_read_packet(control, mids[0])
         else:
-            if (self.sio.support_sync_read
+            if (self.support_sync_read
                 and sum(control.sizes) <= 6 and len(mids) <= 30): # TODO split in several sync_read instead of reverting to read packets
                 self._send_sync_read_packet(control, mids)
             else:
