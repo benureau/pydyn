@@ -59,29 +59,6 @@ class DynamixelMemory(object):
         if memory is not None:
             self.update()
 
-    # def __init__(self, raw_eeprom, raw_ram, save=False):
-    #     """
-    #         :param raw_eeprom  raw eeprom data, ie a list of 19 or 24 integers
-    #                            each between 0 and 255.
-    #         :param raw_ram     raw ram data, ie a list of 24 or 26 integers
-    #                            each between 0 and 255.
-
-    #         .. note:: AX series documents EEPROM up to the address 23, while
-    #                   RX and MX are only documented up to address 18.
-
-    #     """
-    #     self._memory_data = [None]*74
-    #     self.save = save
-    #     self.history = memsave.MemSave(74)
-
-    #     self._process_raw_eeprom(raw_eeprom)
-    #     self._process_raw_ram(raw_ram)
-
-    #     # the following 6 attributes are computed by self.update()
-    #     self.id, self.model, self.modelclass = None, None, None
-    #     self.mode, self.lock, self.status_return_level = None, None, None
-    #     self.update()
-
     def update(self):
         """Update precalculated values"""
         self.id = self._memory_data[pt.ID.addr]
@@ -108,99 +85,6 @@ class DynamixelMemory(object):
         self.mode = 'wheel' if mode_test else 'joint'
 
         self.lock = bool(self._memory_data[pt.LOCK.addr])
-
-    def extra_addr(self):
-        """address and size of extra RAM. None if no extra RAM."""
-        if self.modelclass == 'MX':
-            return 68, 6
-        if self.modelclass == 'EX':
-            return 56, 2
-
-    def last_addr(self):
-        """Last address of the RAM"""
-        extra = self.extra_addr()
-        if extra is None:
-            return 24+26 - 1
-        else:
-            return extra[0]+extra[1] - 1
-
-    # def _process_extra(self, rex):
-    #     """Process the extra ram""" # TODO remove
-    #     if self.modelclass == 'MX':
-    #         self[68+0] = rex[0] + (rex[1] << 8)
-    #         self[68+2] = rex[2]
-    #         self[68+3] = rex[3] + (rex[4] << 8)
-    #         self[68+5] = rex[5]
-    #     if self.modelclass == 'EX':
-    #         self[56+0] = rex[0] + (rex[1] << 8)
-
-    # def _process_raw_eeprom(self, rep): # TODO remove
-    #     """Return the eeprom data, with two bytes data properly computed"""
-    #     assert len(rep) >= 19
-    #     self[0]  = rep[0] + (rep[1] << 8)
-    #     self[2]  = rep[2]
-    #     self[3]  = rep[3]
-    #     self[4]  = rep[4]
-    #     self[5]  = rep[5]
-    #     self[6]  = rep[6] + (rep[7] << 8)
-    #     self[8]  = rep[8] + (rep[9] << 8)
-    #     self[10] = rep[10]  # undocumented
-    #     self[11] = rep[11]
-    #     self[12] = rep[12]
-    #     self[13] = rep[13]
-    #     self[14] = rep[14] + (rep[15] << 8)
-    #     self[16] = rep[16]
-    #     self[17] = rep[17]
-    #     self[18] = rep[18]
-
-    #     if len(rep) >= 24:
-    #         self[19] = rep[19]  # undocumented
-    #         self[20] = rep[20] + (rep[21] << 8)
-    #         self[22] = rep[22] + (rep[23] << 8)
-
-    # def cache_ram(self, raw_ram):
-    #     """
-    #     RAM values are volatiles, they are reset each time the power is cut.
-    #     Some RAM value can't change unless the user write to them. As such,
-    #     any read request can use the cached values without triggering a
-    #     serial communication.
-
-    #     :param raw_ram  raw eeprom data, ie a list of 26 or 28 integers
-    #                     each between 0 and 255.
-
-    #     .. note:: While AX and RX series documents RAM up to the address 49,
-    #               MX series also documents adress 68 and 69 (as two-byte
-    #               consuming current value). If the ram list of value is 28,
-    #               the last two values are expected to be the one at adress
-    #               68 and 69.
-    #     """
-    #     self._process_raw_ram(raw_ram)
-
-    # def _process_raw_ram(self, rram): # TODO remove
-    #     """Process the ram data, with two bytes data properly computed"""
-    #     assert len(rram) >= 26
-    #     self[24+ 0] = rram[0]
-    #     self[24+ 1] = rram[1]
-    #     self[24+ 2] = rram[2]
-    #     self[24+ 3] = rram[3]
-    #     self[24+ 4] = rram[4]
-    #     self[24+ 5] = rram[5]
-    #     self[24+ 6] = rram[6]  + (rram[7]  << 8)
-    #     self[24+ 8] = rram[8]  + (rram[9]  << 8)
-    #     self[24+10] = rram[10] + (rram[11] << 8)
-    #     self[24+12] = rram[12] + (rram[13] << 8)
-    #     self[24+14] = rram[14] + (rram[15] << 8)
-    #     self[24+16] = rram[16] + (rram[17] << 8)
-    #     self[24+18] = rram[18]
-    #     self[24+19] = rram[19]
-    #     self[24+20] = rram[20]
-    #     self[24+21] = rram[21] # undocumented
-    #     self[24+22] = rram[22]
-    #     self[24+23] = rram[23]
-    #     self[24+24] = rram[24] + (rram[25] << 8)
-
-    #     if len(rram) >= 28:
-    #         self[24+26] = rram[26] + (rram[27] << 8)
 
     def _next_addr(self, addr):
         if hasattr(addr, 'addr'): # for translating Control instances.
@@ -235,7 +119,7 @@ class DynamixelMemory(object):
         if hasattr(val, 'addr'):
             val = val.addr
         if not isinstance(val, numbers.Integral):
-            raise ValueError("Motors bytes values should be integers (got {} of type {})".format(val, type(val))
+            raise ValueError("Motors bytes values should be integers (got {} of type {})".format(val, type(val)))
         self._memory_data[addr] = val
         if self.save:
             self.history[addr] = val
