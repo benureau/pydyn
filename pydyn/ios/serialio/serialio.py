@@ -199,7 +199,8 @@ class Serial(object):
     @timeout.setter
     def timeout(self, val):
         """Set the read timeout (not the write one)"""
-        assert type(val) == int, 'timeout are exprimed integer values of ms (you provided {}).'.format(val)
+        if round(val) - val != 0.0:
+            raise ValueError('timeout are exprimed integer values of ms (you provided {}).'.format(val))
         if self._ftdi_ctrl:
             self._serial.timeouts = (val, self._serial.timeouts[1])
         else:

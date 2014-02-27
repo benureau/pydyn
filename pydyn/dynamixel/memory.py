@@ -2,6 +2,7 @@
 Motor memory. Keeps a cached image of the motor memory.
 It is only as uptodate as the last read of each address.
 """
+import numbers
 
 from ..refs import protocol as pt
 from . import memsave
@@ -233,8 +234,8 @@ class DynamixelMemory(object):
         """Set a single memory cell's value. Called by __setitem__"""
         if hasattr(val, 'addr'):
             val = val.addr
-        if type(val) != int:
-            raise ValueError("Motors raw values should be integers (got {})".format(type(val)))
+        if not isinstance(val, numbers.Integral):
+            raise ValueError("Motors bytes values should be integers (got {} of type {})".format(val, type(val))
         self._memory_data[addr] = val
         if self.save:
             self.history[addr] = val

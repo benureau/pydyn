@@ -101,7 +101,7 @@ class DynamixelMotor(object):
         If already a control, return unchanged.
         :param aliases:  aliases dict for translations
         """
-        if type(name) != pt.Control:
+        if not isinstance(name, pt.Control):
             name = name.lower()
             if name in self.aliases:
                 name = self.aliases[name]
