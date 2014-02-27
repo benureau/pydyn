@@ -384,7 +384,7 @@ class DynamixelMotor(object):
 
     @highest_limit_voltage_raw.setter
     def highest_limit_voltage_raw(self, val):
-        limits.checkbounds('highest_limit_voltage', 10, 99, val)
+        limits.CHECK[pt.HIGHEST_LIMIT_VOLTAGE](val)
         self._register_write(pt.HIGHEST_LIMIT_VOLTAGE, val)
 
 
@@ -404,7 +404,7 @@ class DynamixelMotor(object):
 
     @lowest_limit_voltage_raw.setter
     def lowest_limit_voltage_raw(self, val):
-        limits.checkbounds('lowest_limit_voltage', 10, 99, val)
+        limits.CHECK[pt.LOWEST_LIMIT_VOLTAGE](val)
         self._register_write(pt.LOWEST_LIMIT_VOLTAGE, val)
 
 
@@ -459,7 +459,7 @@ class DynamixelMotor(object):
 
     @max_torque_raw.setter
     def max_torque_raw(self, val):
-        limits.checkbounds('max_torque', 0, 1023, val)
+        limits.CHECK[pt.MAX_TORQUE](val)
         self._register_write(pt.MAX_TORQUE, val)
 
 
@@ -471,7 +471,7 @@ class DynamixelMotor(object):
 
     @status_return_level.setter
     def status_return_level(self, val):
-        limits.checkoneof('compliant', [0, 1, 2], val)
+        limits.CHECK[pt.STATUS_RETURN_LEVEL](val)
         self._register_write(pt.STATUS_RETURN_LEVEL, val)
 
 
