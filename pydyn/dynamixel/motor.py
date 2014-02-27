@@ -47,6 +47,36 @@ from ..refs import protocol as pt
 from ..refs import limits
 from . import conversions as conv
 
+def _set_raw(control):
+    def _f(self, val):
+        limits.CHECK[pt.RETURN_DELAY_TIME](val)
+        self._register_write(pt.RETURN_DELAY_TIME, val)
+
+
+class ByteMotorControl(object):
+    def __init__(self, control):
+        self.control = control
+        self.check = True
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.mmem[pt.RETURN_DELAY_TIME]
+
+    def __set__(self, instance, value):
+        limits.CHECK[self.control](value)
+        instance._register_write(control, value)
+
+
+# class MotorControl(object):
+#     def __init__(self, byte_control):
+#         self.check = True
+#     def __get__(self, instance, owner):
+#         return ins
+#     def __set__(self, instance, value):
+#         self.value = float(value)
+
+
 class DynamixelMotor(object):
     def __init__(self, memory):
 
@@ -252,22 +282,23 @@ class DynamixelMotor(object):
 
     # MARK Return Delay Time
 
+    return_delay_time_raw = ByteMotorControl(pt.RETURN_DELAY_TIME)
     @property
     def return_delay_time(self):
         return conv.raw2_return_delay_time(self.mmem[pt.RETURN_DELAY_TIME])
 
-    @property
-    def return_delay_time_raw(self):
-        return self.mmem[pt.RETURN_DELAY_TIME]
+    # @property
+    # def return_delay_time_raw(self):
+    #     return self.mmem[pt.RETURN_DELAY_TIME]
 
     @return_delay_time.setter
     def return_delay_time(self, val):
         self.return_delay_time_raw = conv.return_delay_time_2raw(val)
 
-    @return_delay_time_raw.setter
-    def return_delay_time_raw(self, val):
-        limits.CHECK[pt.RETURN_DELAY_TIME](val)
-        self._register_write(pt.RETURN_DELAY_TIME, val)
+    # @return_delay_time_raw.setter
+    # def return_delay_time_raw(self, val):
+    #     limits.CHECK[pt.RETURN_DELAY_TIME](val)
+    #     self._register_write(pt.RETURN_DELAY_TIME, val)
 
 
     # MARK Angle Limits
