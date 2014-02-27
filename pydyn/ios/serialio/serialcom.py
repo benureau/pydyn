@@ -100,7 +100,7 @@ class SerialCom(object):
 
     # __open_ports = [] # TODO: unified interface
 
-    def __init__(self, sio, **kwargs):
+    def __init__(self, sio, verbose=True, **kwargs):
         """
         :param sio:  a functional, opened serial io instance.
 
@@ -110,6 +110,7 @@ class SerialCom(object):
         #     raise IOError('Port already used (%s)!' % (port))
 
         self.sio = sio
+        self.verbose = verbose
         # self.__open_ports.append(port)
 
         self._lock = threading.RLock()
@@ -152,7 +153,10 @@ class SerialCom(object):
         except TimeoutError:
             return False
         except CommunicationError as e:
-            print(e)
+            if (list(e.status_packet) == [0]):
+                if self.verbose:
+                    e.msg = 'status packet received after ping was [0]; it can indicate lack of power to the motors.'
+                    print('warning: {}'.format(e.msg))
             return False
 
     def ping_broadcast(self):
@@ -188,15 +192,6 @@ class SerialCom(object):
             self.sio.timeout = timeout_bak
 
         return motors
-
-    def scan(self, ids=range(254)):
-        """
-        Finds the ids of all the motors connected to the bus.
-
-        :param list ids: the range of ids to search
-        :return: list of ids found
-        """
-        return [mid for mid in ids if self.ping(mid)]
 
     def read(self, mid, addr, size):
         """

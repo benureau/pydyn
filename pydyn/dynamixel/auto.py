@@ -60,7 +60,6 @@ def create_controller(device_type = 'USB2Serial',
                                 serial_id=serial_id,
                                  baudrate=baudrate,
                                   timeout=timeout,
-                                  verbose=verbose,
                             enable_pyftdi=enable_pyftdi)
     except serialio.PortNotFoundError as e:
         if verbose:

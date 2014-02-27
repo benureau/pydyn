@@ -196,7 +196,7 @@ class DynamixelMotor(object):
 
     @id.setter
     def id(self, val):
-        limits.checkbounds('id', 0, 254, val)
+        limits.CHECK[pt.ID](val)
         self._register_write(pt.ID, val)
 
 
@@ -237,7 +237,7 @@ class DynamixelMotor(object):
     @baudrate_raw.setter
     def baudrate_raw(self, val):
         """Usually, only value 1, 3, 4, 7, 9, 16, 34, 103, 207, (and 250, 251, 252 for MX) are used"""
-        limits.checkbounds('baudrate', 0, 254, val)
+        limits.CHECK[pt.BAUD_RATE](val)
         self._register_write(pt.BAUD_RATE, val)
 
 
@@ -257,7 +257,7 @@ class DynamixelMotor(object):
 
     @return_delay_time_raw.setter
     def return_delay_time_raw(self, val):
-        limits.checkbounds('return_delay_time', 0, 254, val)
+        limits.CHECK[pt.RETURN_DELAY_TIME](val)
         self._register_write(pt.RETURN_DELAY_TIME, val)
 
 
@@ -277,7 +277,7 @@ class DynamixelMotor(object):
 
     @cw_angle_limit_raw.setter
     def cw_angle_limit_raw(self, val):
-        limits.checkbounds('cw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], val)
+        limits.checkbounds('cw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass][0], val)
         if int(val[0]) > int(self.ccw_angle_limit_raw):
             raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], self.ccw_angle_limit_raw))
         if val != 0 or val != self.ccw_angle_limit_raw:
@@ -298,7 +298,9 @@ class DynamixelMotor(object):
 
     @ccw_angle_limit_raw.setter
     def ccw_angle_limit_raw(self, val):
-        limits.checkbounds('ccw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], val)
+        limits.checkbounds('ccw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass][0], val)
+        #if int(val[0]) > int(self.ccw_angle_limit_raw):
+        #    raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], self.ccw_angle_limit_raw))
         if val != 0 or val != self.cw_angle_limit_raw:
             self._joint_angle_limits_raw = (val, self.cw_angle_limit_raw)
         self._register_write(pt.CCW_ANGLE_LIMIT, val)
@@ -318,11 +320,11 @@ class DynamixelMotor(object):
 
     @angle_limits_raw.setter
     def angle_limits_raw(self, val):
-        limits.checkbounds('cw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], int(val[0]))
-        limits.checkbounds('ccw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass], int(val[1]))
+        limits.checkbounds('cw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass][0], int(val[0]))
+        limits.checkbounds('ccw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass][0], int(val[1]))
         assert len(val) == 2
-        if val[0] > val[1]:
-            raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], val[1]))
+        #if val[0] > val[1]:
+        #    raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], val[1]))
         if val[0] != 0 or val[1] != 0:
             self._joint_angle_limits_raw = val
         self._register_write(pt.ANGLE_LIMITS, val)
@@ -809,8 +811,8 @@ class DynamixelMotor(object):
              '{} Max Limit Voltage     : {}'.format(*self._mem_desc(13, '{:4.1f} V'.format(self.highest_limit_voltage))),
              '{} Max Torque            : {}'.format(*self._mem_desc(14, '{:.1f} % of max'.format(self.max_torque))),
              '{} Status Return Level   : {}'.format(*self._mem_desc(16, '')),
-             #'{} Alarm LED             : {}' % column(17, aled),
-             #'{} Alarm Shutdown        : {}' % column(18, ashutdown),
+             '{} Alarm LED             : {}'.format(*self._mem_desc(17, '')),
+             '{} Alarm Shutdown        : {}'.format(*self._mem_desc(18, '')),
              '\n'+color.end]
         s = '\n'.join(s)
         return s

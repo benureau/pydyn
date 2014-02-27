@@ -11,8 +11,8 @@ HEADER_SIZE = 4
 def check_header(mid, data):
     """Check that an header is consistent"""
     data = bytearray(data)
-    assert len(data) == 4, "header size ({}) is wrong (!=4)".format(len(data))
-    assert data[0] == data[1] == 255, "header prefix ({}) is wrong (!= [255, 255])".format(list(data[:2]))
+    assert len(data) == 4, "header size is {} instead of {}".format(len(data), HEADER_SIZE)
+    assert data[0] == data[1] == 255, "header prefix is {} instead of [255, 255])".format(list(data[:2]))
     assert mid == data[2], "mid ({}) is wrong (!={})".format(data[2], mid)
 
 class PacketError(Exception):
