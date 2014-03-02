@@ -1,350 +1,397 @@
+"""
+Conversion modules
+
+Host all the conversion fonctions we need to make motor values more human.
+Conversion fonctions follow the naming convention:
+
+    def control_name_2bytes(value, modelclass=None, mode=None)
+    def bytes2_control_name(value, modelclass=None, mode=None)
+
+which convert human values to bytes and bytes to human values respectively.
+Note that two-bytes values are returned as one integer:
+
+
+
+Some functions require the motor modelclass ('AX', 'RX', 'MX', ...) and mode
+('joint' or 'wheel') to function properly. For consistency, all conversions
+function accept thoses arguments.
+
+All function are accessible through the conversions.CONV dictionnary:
+
+    CONV[pt.MAX_TORQUE] = (max_torque_2bytes, bytes2_max_torque)
+
+Functions do check that arguments are in their legal ranges.
+"""
+
+#pylint: disable=C0103,W0613,C0326
+
+from __future__ import division
+
 from ..refs import protocol as pt
 from ..refs import limits
 from . import alarms
 
+
+
 # for details, see http://support.robotis.com/en/product/dynamixel/
 
-# MARK Dynamic
+CONV = {}
 
-def raw2_value(name, value, mmem=None):
-    return globals()['raw2_' + name.lower()](int(value), mmem)
+# MARK For simple cases
 
-def value_2raw(name, value, mmem=None):
-    return globals()[name.lower()+'_2raw'](value, mmem)
+def _def_bytes2_onebyte(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK_BYTES[control](value)
+        return int(value)
+    return _b2b
+
+def _def_onebyte_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK[control](value)
+        return int(value)
+    return _b2b
 
 
 # MARK Model Number
 
-def raw2_model_number(value, mmem=None):
-    limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107, 10028, 10064], value)
-    return int(value)
+MODEL_NAMES = {
+    113: 'DX-113',
+    116: 'DX-116',
+    117: 'DX-117',
 
-def model_number_2raw(value, mmem=None):
-    limits.checkoneof('model number', [12, 18, 44, 10, 24, 28, 64, 29, 54, 320, 107, 10028, 10064], value)
-    return int(value)
+    12:  'AX-12',
+    18:  'AX-18',
+    44:  'AX-12W',
+
+    10:  'RX-10',
+    24:  'RX-24F',
+    28:  'RX-28',
+    64:  'RX-64',
+
+    360: 'MX-12',
+    29:  'MX-28',
+    54:  'MX-64',
+    320: 'MX-106',
+
+    107: 'EX-106+',
+
+    10028: 'VX-28', # VREP
+    10064: 'VX-64', # VREP
+}
+MODEL_NUMBERS = {name: number for number, name in MODEL_NAMES.items()}
+
+
+def bytes2_model_number(value, modelclass=None, mode=None):
+    limits.CHECK_BYTES[pt.MODEL_NUMBER](value)
+    return MODEL_NAMES[value]
+
+def model_number_2bytes(value, modelclass=None, mode=None):
+    limits.CHECK[pt.MODEL_NUMBER](value)
+    return MODEL_NUMBERS[value.upper()]
+
+CONV[pt.MODEL_NUMBER] = (model_number_2bytes, bytes2_model_number)
 
 
 # MARK Firmware
 
-def raw2_version(value, mmem=None):
-    limits.checkbounds('version', 0, 253, value)
-    return int(value)
-
-def version_2raw(value, mmem=None):
-    limits.checkbounds('version', 0, 253, value)
-    return int(value)
+bytes2_firmware = _def_bytes2_onebyte(pt.FIRMWARE)
+firmware_2bytes = _def_onebyte_2bytes(pt.FIRMWARE)
+CONV[pt.FIRMWARE] = (firmware_2bytes, bytes2_firmware)
 
 
 # MARK ID
 
-def raw2_id(value, mmem=None):
-    limits.checkbounds('id', 0, 253, value)
-    return int(value)
-
-def id_2raw(value, mmem=None):
-    limits.checkbounds('id', 0, 253, value)
-    return int(value)
+bytes2_id = _def_bytes2_onebyte(pt.FIRMWARE)
+id_2bytes = _def_onebyte_2bytes(pt.FIRMWARE)
+CONV[pt.ID] = (id_2bytes, bytes2_id)
 
 
 # MARK Status Return Level
 
-def raw2_status_return_level(value, mmem=None):
-    limits.checkoneof('status return level', [0, 1, 2], value)
-    return int(value)
-
-def status_return_level_2raw(value, mmem=None):
-    limits.checkoneof('status return level', [0, 1, 2], value)
-    return int(value)
+bytes2_status_return_level = _def_bytes2_onebyte(pt.STATUS_RETURN_LEVEL)
+status_return_level_2bytes = _def_onebyte_2bytes(pt.STATUS_RETURN_LEVEL)
+CONV[pt.STATUS_RETURN_LEVEL] = (status_return_level_2bytes, bytes2_status_return_level)
 
 
 # MARK Baudrate
 
-_baudrate_axrx_raw = set((1, 3, 4, 7, 9, 16, 34, 103, 207))
-
-def raw2_baudrate_axrx(value):
-    limits.checkoneof('baudrate raw', _baudrate_axrx_raw, value)
-    return 2000000.0/(value + 1)
-
-_baudrate_axrx = set((9600, 19200, 57200, 115200, 200000, 250000, 400000, 500000, 1000000))
-
-def baudrate_axrx_2raw(value):
-    limits.checkoneof('baudrate', _baudrate_axrx, value)
-    return int(2000000.0/value - 1)
-
-
-baudrate_mx = {
+BAUDRATE_MX = {
     250 : 2250000,
     251 : 2500000,
     252 : 3000000,
 }
 
-mx_baudrate = {
-    2250000 : 250,
-    2500000 : 251,
-    3000000 : 252,
-}
+MX_BAUDRATE = {value:key for key, value in BAUDRATE_MX.items()}
 
-def raw2_baudrate_mx(value):
-    limits.checkbounds('baudrate raw', 0, 254, value)
-    try:
-        return baudrate_mx[value]
-    except KeyError:
-        return 2000000.0/(value + 1)
 
-def baudrate_mx_2raw(value):
-    try:
-        return mx_baudrate[int(value)]
-    except KeyError:
-        return int(2000000.0/value - 1)
+def bytes2_baudrate(value, modelclass=None, mode=None):
+    limits.CHECK_BYTES[pt.BAUDRATE](value)
+    if modelclass == 'MX':
+        try:
+            return BAUDRATE_MX[value]
+        except KeyError:
+            pass
+    return 2000000.0/(value + 1)
 
-baudrate_fun = {
-    'AX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
-    'RX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
-    'EX' : (raw2_baudrate_axrx, baudrate_axrx_2raw),
-    'MX' : (raw2_baudrate_mx,   baudrate_mx_2raw),
-    'VX' : (raw2_baudrate_mx,   baudrate_mx_2raw),
-}
 
-def baud_rate_2raw(value, mmem):
-    return baudrate_fun[mmem.modelclass][1](value)
+def baudrate_2bytes(value, modelclass=None, mode=None):
+    limits.CHECK[pt.BAUDRATE](value, modelclass)
+    if modelclass == 'MX':
+        try:
+            return MX_BAUDRATE[value]
+        except KeyError:
+            pass
+    return int(2000000.0/value - 1)
 
-def raw2_baud_rate(value, mmem):
-    return baudrate_fun[mmem.modelclass][0](value)
+CONV[pt.BAUDRATE] = (baudrate_2bytes, bytes2_baudrate)
 
 
 # MARK Return delay time
 
-def return_delay_time_2raw(value, mmem=None):
+def return_delay_time_2bytes(value, modelclass=None, mode=None):
     """in microseconds"""
-    limits.checkbounds('return delay time', 0, 508, value)
+    limits.CHECK[pt.RETURN_DELAY_TIME](value)
     return int(value/2)
 
-def raw2_return_delay_time(value, mmem=None):
+def bytes2_return_delay_time(value, modelclass=None, mode=None):
     """in microseconds"""
-    limits.checkbounds('return delay time raw', 0, 254, value)
+    limits.CHECK_BYTES[pt.RETURN_DELAY_TIME](value)
     return 2*value
+
+CONV[pt.RETURN_DELAY_TIME] = (return_delay_time_2bytes, bytes2_return_delay_time)
+
+
+# MARK Temperature
+
+bytes2_highest_limit_temperature = _def_bytes2_onebyte(pt.HIGHEST_LIMIT_TEMPERATURE)
+highest_limit_temperature_2bytes = _def_onebyte_2bytes(pt.HIGHEST_LIMIT_TEMPERATURE)
+CONV[pt.HIGHEST_LIMIT_TEMPERATURE] = (highest_limit_temperature_2bytes, bytes2_highest_limit_temperature)
+
+bytes2_present_temperature = _def_bytes2_onebyte(pt.PRESENT_TEMPERATURE)
+present_temperature_2bytes = _def_onebyte_2bytes(pt.PRESENT_TEMPERATURE)
+CONV[pt.PRESENT_TEMPERATURE] = (present_temperature_2bytes, bytes2_present_temperature)
 
 
 # MARK Voltage
 
-def voltage_2raw(value, mmem=None):
-    """Return the voltage in volt"""
-    limits.checkbounds('voltage', 0, 25.5, value)
-    return int(10.0*value)
+def _def_bytes2_voltage(control):
+    def _b2b(value, modelclass=None, mode=None):
+        """Return the voltage in volt"""
+        limits.CHECK_BYTES[control](value)
+        return value/10.0
+    return _b2b
 
-def raw2_voltage(value, mmem=None):
-    """Return the voltage in volt"""
-    limits.checkbounds('voltage raw', 0, 255, value)
-    return value/10.0
+def _def_voltage_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        """Return the voltage in volt"""
+        limits.CHECK[control](value)
+        return int(10.0*value)
+    return _b2b
 
-highest_limit_voltage_2raw = voltage_2raw
-raw2_highest_limit_voltage = raw2_voltage
+bytes2_highest_limit_voltage = _def_bytes2_voltage(pt.HIGHEST_LIMIT_VOLTAGE)
+highest_limit_voltage_2bytes = _def_voltage_2bytes(pt.HIGHEST_LIMIT_VOLTAGE)
+CONV[pt.HIGHEST_LIMIT_VOLTAGE] = (highest_limit_voltage_2bytes, bytes2_highest_limit_voltage)
 
-lowest_limit_voltage_2raw = voltage_2raw
-raw2_lowest_limit_voltage = raw2_voltage
+bytes2_lowest_limit_voltage = _def_bytes2_voltage(pt.LOWEST_LIMIT_VOLTAGE)
+lowest_limit_voltage_2bytes = _def_voltage_2bytes(pt.LOWEST_LIMIT_VOLTAGE)
+CONV[pt.LOWEST_LIMIT_VOLTAGE] = (lowest_limit_voltage_2bytes, bytes2_lowest_limit_voltage)
 
-present_voltage_2raw = voltage_2raw
-raw2_present_voltage = raw2_voltage
+bytes2_present_voltage = _def_bytes2_voltage(pt.PRESENT_VOLTAGE)
+present_voltage_2bytes = _def_voltage_2bytes(pt.PRESENT_VOLTAGE)
+CONV[pt.PRESENT_VOLTAGE] = (present_voltage_2bytes, bytes2_present_voltage)
 
 
 # MARK Torque
 
-def raw2_torque(value, mmem=None):
-    """Return the torque in percent"""
-    limits.checkbounds('torque', 0, 1023, value)
-    return 100.0*value/1023.0
+def _def_bytes2_percent(control):
+    def _b2b(value, modelclass=None, mode=None):
+        """Map [0, 1023] to [0%, 100%]"""
+        limits.CHECK_BYTES[control](value)
+        return 100.0*value/1023.0
+    return _b2b
 
-def torque_2raw(value, mmem=None):
-    limits.checkbounds('torque raw', 0, 100, value)
-    return int(value/100.0*1023)
+def _def_percent_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK[control](value)
+        return int(value/100.0*1023)
+    return _b2b
 
-max_torque_2raw = torque_2raw
-raw2_max_torque = raw2_torque
+max_torque_2bytes = _def_percent_2bytes(pt.MAX_TORQUE)
+bytes2_max_torque = _def_bytes2_percent(pt.MAX_TORQUE)
+CONV[pt.MAX_TORQUE] = (max_torque_2bytes, bytes2_max_torque)
 
-torque_limit_2raw = torque_2raw
-raw2_torque_limit = raw2_torque
+torque_limit_2bytes = _def_percent_2bytes(pt.TORQUE_LIMIT)
+bytes2_torque_limit = _def_bytes2_percent(pt.TORQUE_LIMIT)
+CONV[pt.TORQUE_LIMIT] = (torque_limit_2bytes, bytes2_torque_limit)
 
-punch_2raw = torque_2raw
-raw2_punch = raw2_torque
+punch_2bytes = _def_percent_2bytes(pt.PUNCH)
+bytes2_punch = _def_bytes2_percent(pt.PUNCH)
+CONV[pt.PUNCH] = (punch_2bytes, bytes2_punch)
 
 
 # MARK Position
 
-def raw2_deg(value, mmem):
-    max_pos, max_deg = limits.POSITION_RANGES[mmem.modelclass]
-    limits.checkbounds('position raw', 0, max_pos, value)
-    return (value / max_pos) * max_deg
+def _def_bytes2_degree(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK_BYTES[control](value, modelclass=modelclass, mode=mode)
+        max_pos, max_deg = limits.POSITION_RANGES[modelclass]
+        return (value / max_pos - 0.5) * max_deg
+    return _b2b
 
-def deg_2raw(value, mmem):
-    max_pos, max_deg = limits.POSITION_RANGES[mmem.modelclass]
-    limits.checkbounds('position', -0.001, max_deg + 0.001, value)
-    return int(round((value / max_deg) * max_pos))
+def _def_degree_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK[control](value, modelclass=modelclass, mode=mode)
+        max_pos, max_deg = limits.POSITION_RANGES[modelclass]
+        return int(round((value / max_deg + 0.5) * max_pos))
+    return _b2b
 
-def safedeg_2raw(value, mmem):
-    min_angle = raw2_deg(mmem[pt.CW_ANGLE_LIMIT], mmem)
-    max_angle = raw2_deg(mmem[pt.CCW_ANGLE_LIMIT], mmem)
-    limits.checkbounds('safe position', min_angle - 0.001, max_angle + 0.001, value)
-    return deg_2raw(value, mmem)
+# def safedeg_2bytes(value, modelclass=None, mode=None):
+#     min_angle = bytes2_deg(mmem[pt.CW_ANGLE_LIMIT], modelclass=modelclass, mode=mode)
+#     max_angle = bytes2_deg(mmem[pt.CCW_ANGLE_LIMIT], modelclass=modelclass, mode=mode)
+#     limits.checkbounds('safe position', min_angle - 0.001, max_angle + 0.001, value)
+#     return deg_2bytes(value, modelclass=None, mode=None)
 
 
-raw2_position = raw2_deg
-position_2raw = safedeg_2raw
+bytes2_position = _def_bytes2_degree(pt.PRESENT_POSITION)
+position_2bytes = _def_degree_2bytes(pt.GOAL_POSITION)
 
-raw2_goal_position = raw2_deg
-goal_position_2raw = safedeg_2raw
+bytes2_goal_position = _def_bytes2_degree(pt.GOAL_POSITION)
+goal_position_2bytes = _def_degree_2bytes(pt.GOAL_POSITION)
+CONV[pt.GOAL_POSITION] = (goal_position_2bytes, bytes2_goal_position)
 
-raw2_present_position = raw2_deg
-present_position_2raw = deg_2raw # useless
+bytes2_present_position = _def_bytes2_degree(pt.PRESENT_POSITION)
+present_position_2bytes = _def_degree_2bytes(pt.PRESENT_POSITION) # useless
+CONV[pt.PRESENT_POSITION] = (present_position_2bytes, bytes2_present_position)
 
-raw2_cw_angle_limit   = raw2_deg
-cw_angle_limit_2raw   = deg_2raw
+bytes2_cw_angle_limit   = _def_bytes2_degree(pt.CW_ANGLE_LIMIT)
+cw_angle_limit_2bytes   = _def_degree_2bytes(pt.CW_ANGLE_LIMIT)
+CONV[pt.CW_ANGLE_LIMIT] = (cw_angle_limit_2bytes, bytes2_cw_angle_limit)
 
-raw2_ccw_angle_limit  = raw2_deg
-ccw_angle_limit_2raw  = deg_2raw
+bytes2_ccw_angle_limit  = _def_bytes2_degree(pt.CCW_ANGLE_LIMIT)
+ccw_angle_limit_2bytes  = _def_degree_2bytes(pt.CCW_ANGLE_LIMIT)
+CONV[pt.CCW_ANGLE_LIMIT] = (ccw_angle_limit_2bytes, bytes2_ccw_angle_limit)
 
 
 # MARK Speed
 
-speedratio = {
+SPEED_RATIOS = {
     'AX': 6*0.111,
+    'DX': 6*0.111,
     'RX': 6*0.111,
     'EX': 6*0.111,
     'MX': 6*0.11445,
-    'VX': 6*0.11445,
+    'VX': 6*0.111,
 }
 
-speedrawmax = {
-    'AX': 1023,
-    'RX': 1023,
-    'EX': 1023,
-    'MX': 1023,
-    'VX': 32767,
-}
-
-def raw2_movingdps(value, mmem):
+def bytes2_present_speed(value, modelclass=None, mode=None):
     """
-        Raw to degree per second for speed
-        raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
-        (AX and RX)
-        """
-    limits.checkbounds('positive speed raw', 0, speedrawmax[mmem.modelclass], value)
-    return value*speedratio[mmem.modelclass]
-
-def movingdps_2raw(value, mmem):
+    present speed conversion, in degree per second and percent.
+    For model other than MX, in wheel mode, present speed return
+    the amount of torque exerced on the motor.
     """
-        Degree per second for speed to raw value
-        raw values are in [0, 1023], and 1023 ~ 117.07 rpm (MX) or 114 rpm
-        (AX and RX)
-        """
-    max_speed = speedrawmax[mmem.modelclass]*speedratio[mmem.modelclass]
-    limits.checkbounds('positive speed', 0, max_speed, value)
-    return round(value/speedratio[mmem.modelclass])
-
-def raw2_moving_speed(value, mmem):
-    if mmem.mode == 'wheel' and mmem.modelclass in ('RX', 'AX'):
-        return raw2_present_load(value)
+    limits.CHECK_BYTES[pt.PRESENT_SPEED](value, modelclass=modelclass, mode=mode)
+    if modelclass != 'MX' and mode == 'wheel':
+        return bytes2_present_load(value)
     else:
-        return raw2_movingdps(value, mmem)
+        direction = ((value >> 10) * 2) - 1
+        return direction * (value % 1024) * SPEED_RATIOS[modelclass]
 
-def moving_speed_2raw(value, mmem):
-    if mmem.mode == 'wheel' and mmem.modelclass in ('RX', 'AX'):
-        return present_load_2raw(value)
-    else:
-        return movingdps_2raw(value, mmem)
-
-
-# TODO : correct present speed for AX/RX
-def raw2_cwccwdps(value, mmem):
+def present_speed_2bytes(value, modelclass=None, mode=None):
     """
-        Raw to degree per second for CW/CCW speed
-
-        Robotis manual :
-            If a value is in the rage of 0~1023 then the motor rotates to the CCW direction.
-            If a value is in the rage of 1024~2047 then the motor rotates to the CW direction.
-            The 10th bit becomes the direction bit to control the direction; 0 and 1024 are equal.
-
-        a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
-
-        """
-    limits.checkbounds('cw/ccw speed raw', 0, 2*speedrawmax[mmem.modelclass]+1, value)
-    direction = ((value >> 10) * 2) - 1
-    speed = raw2_moving_speed(value % (speedrawmax[mmem.modelclass]+1), mmem)
-
-    return direction * speed
-
-def cwccwdps_2raw(value, mmem):
+    present speed conversion, in degree per second and percent.
+    For model other than MX, in wheel mode, present speed return
+    the amount of torque exerced on the motor.
     """
-        degree per second for CW/CCW speed to raw value
-
-        Robotis manual :
-            If a value is in the rage of 0~1023 then the motor rotates to the CCW direction.
-            If a value is in the rage of 1024~2047 then the motor rotates to the CW direction.
-            The 10th bit becomes the direction bit to control the direction; 0 and 1024 are equal.
-
-        a unit equals (about) 0.11445 rpm = 0.6867 dps (MX) and 0.111 rpm = 0.666 dps (AX and RX)
-
-        """
-    max_speed = speedrawmax[mmem.modelclass]*speedratio[mmem.modelclass]
-    limits.checkbounds('cw/ccw speed', -max_speed, max_speed, value)
-
-    if value > 0:
-        return int(speedrawmax[mmem.modelclass]+1 + abs(value)/speedratio[mmem.modelclass])
+    limits.CHECK[pt.PRESENT_SPEED](value, modelclass=modelclass, mode=mode)
+    if modelclass != 'MX' and mode == 'wheel':
+        return present_load_2bytes(value)
     else:
-        return int(abs(value)/speedratio[mmem.modelclass])
+        b = int(round(abs(value)/SPEED_RATIOS[modelclass]))
+        if value >= 0:
+            return b + 1024
+        return b
 
-present_speed_2raw = cwccwdps_2raw
-raw2_present_speed = raw2_cwccwdps
+CONV[pt.PRESENT_SPEED] = (present_speed_2bytes, bytes2_present_speed)
+
+
+
+def bytes2_moving_speed(value, modelclass=None, mode=None):
+    """
+    present speed conversion, in degree per second and percent.
+    For model other than MX, in wheel mode, present speed return
+    the amount of torque exerced on the motor.
+    """
+    limits.CHECK_BYTES[pt.MOVING_SPEED](value, modelclass=modelclass, mode=mode)
+    if mode == 'joint':
+        return value*SPEED_RATIOS[modelclass]
+    else: # wheel mode
+        return bytes2_present_speed(value, modelclass=modelclass, mode=mode)
+
+def moving_speed_2bytes(value, modelclass=None, mode=None):
+    """
+    present speed conversion, in degree per second and percent.
+    For model other than MX, in wheel mode, present speed return
+    the amount of torque exerced on the motor.
+    """
+    limits.CHECK[pt.MOVING_SPEED](value, modelclass=modelclass, mode=mode)
+    if mode == 'joint':
+        return int(round(value/SPEED_RATIOS[modelclass]))
+    else:
+        return present_speed_2bytes(value, modelclass=modelclass, mode=mode)
+
+CONV[pt.MOVING_SPEED] = (moving_speed_2bytes, bytes2_moving_speed)
 
 
 # MARK Load
 
-def raw2_present_load(value, mmem=None):
+def bytes2_present_load(value, modelclass=None, mode=None):
     """return the load into signed torque percent"""
-    limits.checkbounds('load raw', 0, 2047, value)
+    limits.CHECK_BYTES[pt.PRESENT_LOAD](value)
     direction = ((value >> 10) * 2) - 1
 
-    return direction * raw2_torque(value % 1024)
+    return direction * (value % 1024) * 0.1
 
-def present_load_2raw(value, mmem=None):
-    limits.checkbounds('load', -100, 100, value)
-
+def present_load_2bytes(value, modelclass=None, mode=None):
+    limits.CHECK[pt.PRESENT_LOAD](value)
     if value > 0:
-        return int(1024 + 1023*abs(value)/100.0)
+        return int(round( value*1023/100.0))+1024
     else:
-        return int(1023*abs(value)/100.0)
+        return int(round(-value*1023/100.0))
+
+CONV[pt.PRESENT_LOAD] = (present_load_2bytes, bytes2_present_load)
 
 
 # MARK: - Gain conversions
 
-MAX_P_GAIN = 254.0 / 8.0
-MAX_I_GAIN = 254.0 * 1000.0 / 2048.0
-MAX_D_GAIN = 254.0 * 4.0 / 1000.0
+def bytes2_d_gain(value, modelclass=None, mode=None):
+    limits.CHECK_BYTES[pt.D_GAIN](value)
+    return 0.004 * value
 
-def raw2_d_gain(raw, mmem=None):
-    limits.checkbounds('p_gain raw', 0, 254, raw)
-    return 0.004 * raw
+def bytes2_i_gain(value, modelclass=None, mode=None):
+    limits.CHECK_BYTES[pt.I_GAIN](value)
+    return value / 2.048
 
-def raw2_i_gain(raw, mmem=None):
-    limits.checkbounds('i_gain raw', 0, 254, raw)
-    return raw / 2.048
+def bytes2_p_gain(value, modelclass=None, mode=None):
+    limits.CHECK_BYTES[pt.P_GAIN](value)
+    return 0.125 * value
 
-def raw2_p_gain(raw, mmem=None):
-    limits.checkbounds('d_gain raw', 0, 254, raw)
-    return 0.125 * raw
-
-def d_gain_2raw(value, mmem=None):
-    limits.checkbounds('p_gain', 0, MAX_P_GAIN, value)
+def d_gain_2bytes(value, modelclass=None, mode=None):
+    limits.CHECK[pt.D_GAIN](value)
     return int(250.0 * value)
 
-def i_gain_2raw(value, mmem=None):
-    limits.checkbounds('i_gain', 0, MAX_I_GAIN, value)
+def i_gain_2bytes(value, modelclass=None, mode=None):
+    limits.CHECK[pt.I_GAIN](value)
     return int(2.048 * value)
 
-def p_gain_2raw(value, mmem=None):
-    limits.checkbounds('d_gain', 0, MAX_D_GAIN, value)
+def p_gain_2bytes(value, modelclass=None, mode=None):
+    limits.CHECK[pt.P_GAIN](value)
     return int(8.0 * value)
 
-def raw2_gains(gains, mmem=None):
+CONV[pt.D_GAIN] = (d_gain_2bytes, bytes2_d_gain)
+CONV[pt.I_GAIN] = (i_gain_2bytes, bytes2_i_gain)
+CONV[pt.P_GAIN] = (p_gain_2bytes, bytes2_p_gain)
+
+def bytes2_gains(gains, modelclass=None, mode=None):
     """
         Return real values of PID gains according to
         http://support.robotis.com/en/images/product/dynamixel/mx_series/
@@ -357,144 +404,163 @@ def raw2_gains(gains, mmem=None):
     if not len(gains) == 3 :
         raise ValueError('Gains should have 3 values')
 
-    return raw2_d_gain(gains[0]), raw2_i_gain(gains[1]), raw2_p_gain(gains[2])
+    return bytes2_d_gain(gains[0]), bytes2_i_gain(gains[1]), bytes2_p_gain(gains[2])
 
-def gains_2raw(gains, mmem=None):
-
+def gains_2bytes(gains, modelclass=None, mode=None):
     if not len(gains) == 3 :
         raise ValueError('Gains should have 3 values')
 
-    return d_gain_2raw(gains[0]), i_gain_2raw(gains[1]), p_gain_2raw(gains[2])
+    return d_gain_2bytes(gains[0]), i_gain_2bytes(gains[1]), p_gain_2bytes(gains[2])
 
+CONV[pt.GAINS] = (gains_2bytes, bytes2_gains)
 
 # MARK Compliance Margins
 
-def compliance_margin_2raw(value, mmem=None):
-    limits.checkbounds('compliance margin', 0, raw2_deg(255, mmem), value)
-    return deg_2raw(value, mmem)
+def _def_bytes2_compliance_margin(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK_BYTES[control](value)
+        max_pos, max_deg = limits.POSITION_RANGES[modelclass]
+        return (value / max_pos) * max_deg
+    return _b2b
 
-def raw2_compliance_margin(value, mmem=None):
-    limits.checkbounds('compliance margin raw', 0, 255, value)
-    return raw2_deg(value, mmem)
+def _def_compliance_margin_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK[control](value)
+        max_pos, max_deg = limits.POSITION_RANGES[modelclass]
+        return int(round((value / max_deg) * max_pos))
+    return _b2b
+
+cw_compliance_margin_2bytes = _def_compliance_margin_2bytes(pt.CW_COMPLIANCE_MARGIN)
+bytes2_cw_compliance_margin = _def_bytes2_compliance_margin(pt.CW_COMPLIANCE_MARGIN)
+CONV[pt.CW_COMPLIANCE_MARGIN] = (cw_compliance_margin_2bytes, bytes2_cw_compliance_margin)
+
+ccw_compliance_margin_2bytes = _def_compliance_margin_2bytes(pt.CCW_COMPLIANCE_MARGIN)
+bytes2_ccw_compliance_margin = _def_bytes2_compliance_margin(pt.CCW_COMPLIANCE_MARGIN)
+CONV[pt.CCW_COMPLIANCE_MARGIN] = (ccw_compliance_margin_2bytes, bytes2_ccw_compliance_margin)
 
 
 # MARK Compliance Slopes
 
-def raw2_compliance_slope(value, mmem=None):
-    limits.checkbounds('compliance slope raw', 0, 254, value)
-    for i in xrange(7, -1, -1):
-        if (value >> i) == 1:
-            return i
-    return 0
+def _def_bytes2_compliance_slope(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK_BYTES[control](value)
+        for i in xrange(7, -1, -1):
+            if (value >> i) == 1:
+                return i
+        return 0
+    return _b2b
 
-def compliance_slope_2raw(value, mmem=None):
-    limits.checkbounds('compliance slope', 0, 7, value)
-    return 2**int(value)
+def _def_compliance_slope_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK[control](value)
+        return 2**int(value)
+    return _b2b
 
+cw_compliance_scope_2bytes  = _def_compliance_slope_2bytes(pt.CW_COMPLIANCE_SLOPE)
+bytes2_cw_compliance_scope  = _def_bytes2_compliance_slope(pt.CW_COMPLIANCE_SLOPE)
+
+ccw_compliance_scope_2bytes = _def_compliance_slope_2bytes(pt.CCW_COMPLIANCE_SLOPE)
+bytes2_ccw_compliance_scope = _def_bytes2_compliance_slope(pt.CCW_COMPLIANCE_SLOPE)
+
+CONV[pt.CW_COMPLIANCE_SLOPE]  = ( cw_compliance_scope_2bytes, bytes2_cw_compliance_scope)
+CONV[pt.CCW_COMPLIANCE_SLOPE] = (ccw_compliance_scope_2bytes, bytes2_ccw_compliance_scope)
 
 # MARK Alarm conversions
 
-raw2_alarm_led = alarms.raw2_alarm_names
-alarm_led_2raw = alarms.alarm_names_2raw
+bytes2_alarm_led = alarms.bytes2_alarm_names
+alarm_led_2bytes = alarms.alarm_names_2bytes
+CONV[pt.ALARM_LED] = (alarm_led_2bytes, bytes2_alarm_led)
 
-raw2_alarm_shutdown = alarms.raw2_alarm_names
-alarm_shutdown_2raw = alarms.alarm_names_2raw
-
-
-# MARK Temperature
-
-def present_temperature_2raw(value, mmem=None):
-    return int(value)
-
-def raw2_present_temperature(value, mmem=None):
-    return value
-
-def highest_limit_temperature_2raw(value, mmem=None):
-    limits.checkbounds('present_temperature', 10, 99, value)
-    return int(value)
-
-def raw2_highest_limit_temperature(value, mmem=None):
-    limits.checkbounds('present_temperature', 10, 99, value)
-    return value
-
-
-# MARK Goal Torque
-
-def goal_torque_2raw(value, mmem=None):
-    """in A"""
-    limits.checkbounds('goal torque', -4.6035, 4.6035, value)
-    return int(value/0.0045 + 1024)
-
-def raw2_goal_torque(value, mmem=None):
-    """in A"""
-    # it says that goal torque can't be bigger than torque limit
-    # but since each have different units, it's difficult
-    # to test.
-    limits.checkbounds('goal torque raw', 0, 2047, value)
-    return 0.0045 * (value - 1024)
+bytes2_alarm_shutdown = alarms.bytes2_alarm_names
+alarm_shutdown_2bytes = alarms.alarm_names_2bytes
+CONV[pt.ALARM_SHUTDOWN] = (alarm_shutdown_2bytes, bytes2_alarm_shutdown)
 
 
 # MARK Goal Acceleration
 
-def goal_acceleration_2raw(value, mmem=None):
+def goal_acceleration_2bytes(value, modelclass=None, mode=None):
     """in degree/s**2"""
     limits.checkbounds('goal acceleration', 0, 2180.082, value)
-    return int(value*8.583)
+    return int(value/8.583)
 
-def raw2_goal_acceleration(value, mmem=None):
+def bytes2_goal_acceleration(value, modelclass=None, mode=None):
     """in degree/s**2"""
-    limits.checkbounds('goal acceleration raw', 0, 254, value)
-    return value/8.583
+    limits.CHECK[pt.GOAL_ACCELERATION](value)
+    return value*8.583
+
+CONV[pt.GOAL_ACCELERATION] = (goal_acceleration_2bytes, bytes2_goal_acceleration)
 
 
-# MARK Current
+# MARK Goal Torque, Current
 
-def current_2raw(value, mmem=None):
-    """in A"""
-    limits.checkbounds('current', -9.216, 9.2115, value)
-    return int(value/0.0045 + 2048)
+def _def_current_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        """in A"""
+        limits.CHECK[control](value)
+        return int(value/0.0045 + 2048)
+    return _b2b
 
-def raw2_current(value, mmem=None):
-    """in A"""
-    limits.checkbounds('current raw', 0, 4095, value)
-    return 0.0045 * (value - 2048)
+def _def_bytes2_current(control):
+    def _b2b(value, modelclass=None, mode=None):
+        """in A"""
+        limits.CHECK_BYTES[control](value)
+        return 0.0045 * (value - 2048)
+    return _b2b
 
-def sensed_current_2raw(value, mmem=None):
+goal_torque_2bytes = _def_current_2bytes(pt.GOAL_TORQUE)
+bytes2_goal_torque = _def_bytes2_current(pt.GOAL_TORQUE)
+CONV[pt.GOAL_TORQUE] = (goal_torque_2bytes, bytes2_goal_torque)
+
+current_2bytes = _def_current_2bytes(pt.CURRENT)
+bytes2_current = _def_bytes2_current(pt.CURRENT)
+CONV[pt.CURRENT] = (current_2bytes, bytes2_current)
+
+
+def sensed_current_2bytes(value, modelclass=None, mode=None):
     """in A - should not be useful (since you can't write sensed current)"""
-    limits.checkbounds('sensed current', -5.12, 5.11, value)
+    limits.CHECK[pt.SENSED_CURRENT](value)
     return int(value/0.01 + 512)
 
-def raw2_sensed_current(value, mmem=None):
+def bytes2_sensed_current(value, modelclass=None, mode=None):
     """in A"""
-    limits.checkbounds('sensed current raw', 0, 1023, value)
+    limits.CHECK_BYTES[pt.SENSED_CURRENT](value)
     return 0.01 * (value - 512)
 
 
 # Mark Boolean
 
-def bool_2raw(value, mmem=None):
-    limits.checkoneof('boolean value raw', [0, 1], value)
-    return int(value)
+def _def_bool_2bytes(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK_BYTES[control](value)
+        return int(value)
+    return _b2b
 
-def raw2_bool(value, mmem=None):
-    limits.checkoneof('boolean value', [False, True], value)
-    return bool(value)
+def _def_bytes2_bool(control):
+    def _b2b(value, modelclass=None, mode=None):
+        limits.CHECK[control](value)
+        return bool(value)
+    return _b2b
 
-raw2_registered = raw2_bool
-registered_2raw = bool_2raw
+bytes2_registered = _def_bytes2_bool(pt.REGISTERED)
+registered_2bytes = _def_bool_2bytes(pt.REGISTERED)
+CONV[pt.REGISTERED] = (registered_2bytes, bytes2_registered)
 
-raw2_lock = raw2_bool
-lock_2raw = bool_2raw
+bytes2_lock = _def_bytes2_bool(pt.LOCK)
+lock_2bytes = _def_bool_2bytes(pt.LOCK)
+CONV[pt.LOCK] = (lock_2bytes, bytes2_lock)
 
-raw2_led = raw2_bool
-led_2raw = bool_2raw
+bytes2_led = _def_bytes2_bool(pt.LED)
+led_2bytes = _def_bool_2bytes(pt.LED)
+CONV[pt.LED] = (led_2bytes, bytes2_led)
 
-raw2_moving = raw2_bool
-moving_2raw = bool_2raw
+bytes2_moving = _def_bytes2_bool(pt.MOVING)
+moving_2bytes = _def_bool_2bytes(pt.MOVING)
+CONV[pt.MOVING] = (moving_2bytes, bytes2_moving)
 
-raw2_torque_control_mode_enable = raw2_bool
-torque_control_mode_enable_2raw = bool_2raw
+bytes2_torque_control_mode_enable = _def_bytes2_bool(pt.TORQUE_CONTROL_MODE_ENABLE)
+torque_control_mode_enable_2bytes = _def_bool_2bytes(pt.TORQUE_CONTROL_MODE_ENABLE)
+CONV[pt.TORQUE_CONTROL_MODE_ENABLE] = (torque_control_mode_enable_2bytes, bytes2_torque_control_mode_enable)
 
-raw2_torque_enable = raw2_bool
-torque_enable_2raw = bool_2raw
-
+bytes2_torque_enable = _def_bytes2_bool(pt.TORQUE_ENABLE)
+torque_enable_2bytes = _def_bool_2bytes(pt.TORQUE_ENABLE)
+CONV[pt.TORQUE_ENABLE] = (torque_enable_2bytes, bytes2_torque_enable)

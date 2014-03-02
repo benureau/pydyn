@@ -5,6 +5,7 @@ It is only as uptodate as the last read of each address.
 import numbers
 
 from ..refs import protocol as pt
+from ..refs.conversions import MODEL_NAMES
 from . import memsave
 
 class DynamixelMemory(object):
@@ -64,7 +65,7 @@ class DynamixelMemory(object):
         self.id = self._memory_data[pt.ID.addr]
 
         try:
-            self.model = pt.MODELS[self._memory_data[pt.MODEL_NUMBER.addr]]
+            self.model = MODEL_NAMES[self._memory_data[pt.MODEL_NUMBER.addr]]
             self.modelclass = self.model[:2]
         except KeyError:
             print(("pydyn detected an unsupported motor model with model number"

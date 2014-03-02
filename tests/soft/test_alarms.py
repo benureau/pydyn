@@ -1,7 +1,7 @@
 import unittest
 
 import env
-from pydyn.dynamixel.alarms import (raw2_alarm_names, alarm_names_2raw)
+from pydyn.refs.alarms import (bytes2_alarm_names, alarm_names_2bytes)
 
 
 ALARMS = [
@@ -25,13 +25,13 @@ EXAMPLES = [
 
 class TestAlarmCodes(unittest.TestCase):
 
-    def test_involution_raw(self):
+    def test_involution_bytes(self):
         for r in range(127):
-            self.assertEqual(alarm_names_2raw(raw2_alarm_names(r)), r)
+            self.assertEqual(alarm_names_2bytes(bytes2_alarm_names(r)), r)
 
     def test_on_examples(self):
         for code, name_list in EXAMPLES:
-            self.assertEqual(set(name_list), set(raw2_alarm_names(code)))
+            self.assertEqual(set(name_list), set(bytes2_alarm_names(code)))
 
 if __name__ == '__main__':
     unittest.main()

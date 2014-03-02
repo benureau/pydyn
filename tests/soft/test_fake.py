@@ -34,18 +34,18 @@ class TestFake(unittest.TestCase):
         m = ctrl.motors[0]
 
         # position checks
-        m.goal_position_raw = 0
-        m.goal_position_raw
-        m.present_position_raw
+        m.goal_position_bytes = 0
+        m.goal_position_bytes
+        m.present_position_bytes
         with self.assertRaises(AttributeError):
-            m.present_position_raw = 0
+            m.present_position_bytes = 0
 
         with self.assertRaises(ValueError):
-            m.goal_position_raw = 1024
+            m.goal_position_bytes = 1024
         with self.assertRaises(ValueError):
-            m.goal_position_raw = -1
+            m.goal_position_bytes = -1
         with self.assertRaises(ValueError):
-            m.max_torque_raw = 1.3
+            m.max_torque_bytes = 1.3
 
     def test_setattr(self):
         ctrl = controller.DynamixelController(self.mcom)
@@ -63,9 +63,9 @@ class TestFake(unittest.TestCase):
         ctrl.start()
 
         m = ctrl.motors[0]
-        m.goal_position_raw = 312
+        m.goal_position_bytes = 312
         time.sleep(0.1)
-        self.assertEqual(m.goal_position_raw, 312)
+        self.assertEqual(m.goal_position_bytes, 312)
         self.assertEqual(m.present_position, m.position)
 
         ctrl.stop()

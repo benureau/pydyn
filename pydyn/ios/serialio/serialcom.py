@@ -16,8 +16,8 @@ import itertools
 #import atexit
 
 from ...refs import protocol as pt
+from ...refs import alarms as conv # the only conversion needed in I/O
 from ...dynamixel import memory
-from ...dynamixel import alarms as conv # the only conversion needed in I/O
 from . import packet
 
 
