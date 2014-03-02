@@ -31,8 +31,6 @@ from ..refs import protocol as pt
 from ..refs import limits
 from . import alarms
 
-
-
 # for details, see http://support.robotis.com/en/product/dynamixel/
 
 CONV = {}

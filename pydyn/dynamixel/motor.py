@@ -47,34 +47,42 @@ from ..refs import protocol as pt
 from ..refs import limits
 from ..refs import conversions as conv
 
-def _set_bytes(control):
-    def _f(self, val):
-        limits.CHECK[pt.RETURN_DELAY_TIME](val)
-        self._register_write(pt.RETURN_DELAY_TIME, val)
-
-
-class ByteMotorControl(object):
+class ROByteMotorControl(object):
     def __init__(self, control):
         self.control = control
-        self.check = True
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        return instance.mmem[pt.RETURN_DELAY_TIME]
+        return instance.mmem[self.control]
 
     def __set__(self, instance, value):
-        limits.CHECK[self.control](value)
-        instance._register_write(control, value)
+        raise AttributeError("can't set {}".format(self.control.name))
 
+class RWByteMotorControl(ROByteMotorControl):
 
-# class MotorControl(object):
-#     def __init__(self, byte_control):
-#         self.check = True
-#     def __get__(self, instance, owner):
-#         return ins
-#     def __set__(self, instance, value):
-#         self.value = float(value)
+    def __set__(self, instance, value):
+        limits.CHECK_BYTES[self.control](value, modelclass=instance.modelclass,
+                                                      mode=instance.mode)
+        instance._register_write(self.control, value)
+
+class ROMotorControl(ROByteMotorControl):
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        byte_value = instance.mmem[self.control]
+        return conv.CONV[self.control][1](byte_value, modelclass=instance.modelclass,
+                                                      mode=instance.mode)
+
+class RWMotorControl(ROMotorControl):
+
+    def __set__(self, instance, value):
+        limits.CHECK[self.control](value, modelclass=instance.modelclass,
+                                                mode=instance.mode)
+        byte_value = conv.CONV[self.control][0](value, modelclass=instance.modelclass,
+                                                       mode=instance.mode)
+        instance._register_write(self.control, value)
 
 
 class DynamixelMotor(object):
@@ -122,14 +130,11 @@ class DynamixelMotor(object):
         'position'        : 'present_position',
         'speed'           : 'present_speed',
         'load'            : 'present_load',
-        'max_temperature' : 'highest_limit_temperature',
     }
 
     aliases_write = {
-        'voltage'         : 'present_voltage',
         'position'        : 'goal_position',
         'speed'           : 'moving_speed',
-        'max_temperature' : 'highest_limit_temperature',
     }
 
     def _str2ctrl(self, control, aliases=()):
@@ -199,9 +204,6 @@ class DynamixelMotor(object):
         self.request_lock.release()
         return value
 
-
-
-
     # MARK Mode
 
     @property
@@ -239,15 +241,11 @@ class DynamixelMotor(object):
         self._register_write(pt.ID, val)
 
 
-    @property
-    def model(self):
-        """ The model of motor ('RX-28', 'MX-64', etc.) """
-        return self.mmem.model
+    model_bytes = ROByteMotorControl(pt.MODEL_NUMBER)
+    model       =     ROMotorControl(pt.MODEL_NUMBER)
 
-    @property
-    def model_bytes(self):
-        return self.mmem[pt.MODEL_NUMBER]
-
+    firmware_bytes = ROByteMotorControl(pt.FIRMWARE)
+    firmware       =     ROMotorControl(pt.FIRMWARE)
     @property
     def modelclass(self):
         """ The class of motor (for a RX-28, return 'RX') """
@@ -281,25 +279,8 @@ class DynamixelMotor(object):
 
 
     # MARK Return Delay Time
-
-    return_delay_time_bytes = ByteMotorControl(pt.RETURN_DELAY_TIME)
-    @property
-    def return_delay_time(self):
-        return conv.bytes2_return_delay_time(self.mmem[pt.RETURN_DELAY_TIME])
-
-    # @property
-    # def return_delay_time_bytes(self):
-    #     return self.mmem[pt.RETURN_DELAY_TIME]
-
-    @return_delay_time.setter
-    def return_delay_time(self, val):
-        self.return_delay_time_bytes = conv.return_delay_time_2bytes(val)
-
-    # @return_delay_time_bytes.setter
-    # def return_delay_time_bytes(self, val):
-    #     limits.CHECK[pt.RETURN_DELAY_TIME](val)
-    #     self._register_write(pt.RETURN_DELAY_TIME, val)
-
+    return_delay_time_bytes = RWByteMotorControl(pt.RETURN_DELAY_TIME)
+    return_delay_time       =     RWMotorControl(pt.RETURN_DELAY_TIME)
 
     # MARK Angle Limits
 
@@ -371,171 +352,31 @@ class DynamixelMotor(object):
 
 
     # MARK Highest Limit Temperature
+    highest_limit_temperature_bytes = RWByteMotorControl(pt.HIGHEST_LIMIT_TEMPERATURE)
+    highest_limit_temperature       =     RWMotorControl(pt.HIGHEST_LIMIT_TEMPERATURE)
 
-    @property
-    def highest_limit_temperature(self):
-        return conv.bytes2_highest_limit_temperature(self.highest_limit_temperature_bytes)
+    # MARK Limit Voltage
+    highest_limit_voltage_bytes = RWByteMotorControl(pt.HIGHEST_LIMIT_VOLTAGE)
+    highest_limit_voltage       =     RWMotorControl(pt.HIGHEST_LIMIT_VOLTAGE)
 
-    @property
-    def highest_limit_temperature_bytes(self):
-        return self.mmem[pt.HIGHEST_LIMIT_TEMPERATURE]
-
-    @highest_limit_temperature.setter
-    def highest_limit_temperature(self, val):
-        self.highest_limit_temperature_bytes = conv.highest_limit_temperature_2bytes(val)
-
-    @highest_limit_temperature_bytes.setter
-    def highest_limit_temperature_bytes(self, val):
-        limits.checkbounds('highest_limit_temperature', 10, 99, val)
-        self._register_write(pt.HIGHEST_LIMIT_TEMPERATURE, val)
-
-    # max_temp is provided as a conveniance alias
-
-    @property
-    def max_temp(self):
-        return self.highest_limit_temperature
-
-    @property
-    def max_temp_bytes(self):
-        return self.highest_limit_temperature_bytes
-
-    @max_temp.setter
-    def max_temp(self, val):
-        self.highest_limit_temperature_bytes = val
-
-    @max_temp_bytes.setter
-    def max_temp_bytes(self, val):
-        self.highest_limit_temperature_bytes = val
-
-
-    # MARK Highest Limit Voltage
-
-    @property
-    def highest_limit_voltage(self):
-        return conv.bytes2_highest_limit_voltage(self.highest_limit_voltage_bytes)
-
-    @property
-    def highest_limit_voltage_bytes(self):
-        return self.mmem[pt.HIGHEST_LIMIT_VOLTAGE]
-
-    @highest_limit_voltage.setter
-    def highest_limit_voltage(self, val):
-        self.highest_limit_voltage_bytes = conv.highest_limit_voltage_2bytes(val)
-
-    @highest_limit_voltage_bytes.setter
-    def highest_limit_voltage_bytes(self, val):
-        limits.CHECK[pt.HIGHEST_LIMIT_VOLTAGE](val)
-        self._register_write(pt.HIGHEST_LIMIT_VOLTAGE, val)
-
-
-    # MARK Lowest Limit Voltage
-
-    @property
-    def lowest_limit_voltage(self):
-        return conv.bytes2_lowest_limit_voltage(self.lowest_limit_voltage_bytes)
-
-    @property
-    def lowest_limit_voltage_bytes(self):
-        return self.mmem[pt.LOWEST_LIMIT_VOLTAGE]
-
-    @lowest_limit_voltage.setter
-    def lowest_limit_voltage(self, val):
-        self.lowest_limit_voltage_bytes = conv.lowest_limit_voltage_2bytes(val)
-
-    @lowest_limit_voltage_bytes.setter
-    def lowest_limit_voltage_bytes(self, val):
-        limits.CHECK[pt.LOWEST_LIMIT_VOLTAGE](val)
-        self._register_write(pt.LOWEST_LIMIT_VOLTAGE, val)
-
-
-    # max_voltage is provided as a conveniance alias
-
-    @property
-    def min_voltage(self):
-        return self.lowest_limit_voltage
-
-    @property
-    def min_voltage_bytes(self):
-        return self.lowest_limit_voltage_bytes
-
-    @min_voltage.setter
-    def min_voltage(self, val):
-        self.lowest_limit_voltage = val
-
-    @min_voltage_bytes.setter
-    def min_voltage_bytes(self, val):
-        self.lowest_limit_voltage_bytes = val
-
-    @property
-    def max_voltage(self):
-        return self.highest_limit_voltage
-
-    @property
-    def max_voltage_bytes(self):
-        return self.highest_limit_voltage_bytes
-
-    @max_voltage.setter
-    def max_voltage(self, val):
-        self.highest_limit_voltage = val
-
-    @max_voltage_bytes.setter
-    def max_voltage_bytes(self, val):
-        self.highest_limit_voltage_bytes = val
-
+    lowest_limit_voltage_bytes = RWByteMotorControl(pt.LOWEST_LIMIT_VOLTAGE)
+    lowest_limit_voltage       =     RWMotorControl(pt.LOWEST_LIMIT_VOLTAGE)
 
     # MARK Max Torque
-
-    @property
-    def max_torque(self):
-        return conv.bytes2_max_torque(self.mmem[pt.MAX_TORQUE])
-
-    @property
-    def max_torque_bytes(self):
-        return self.mmem[pt.MAX_TORQUE]
-
-    @max_torque.setter
-    def max_torque(self, val):
-        self.max_torque_bytes = conv.max_torque_2bytes(val)
-
-    @max_torque_bytes.setter
-    def max_torque_bytes(self, val):
-        limits.CHECK_BYTES[pt.MAX_TORQUE](val)
-        self._register_write(pt.MAX_TORQUE, val)
-
+    max_torque_bytes = RWByteMotorControl(pt.MAX_TORQUE)
+    max_torque       =     RWMotorControl(pt.MAX_TORQUE)
 
     # MARK Return Status Level
-
-    @property
-    def status_return_level(self):
-        return self.mmem.status_return_level
-
-    @status_return_level.setter
-    def status_return_level(self, val):
-        limits.CHECK[pt.STATUS_RETURN_LEVEL](val)
-        self._register_write(pt.STATUS_RETURN_LEVEL, val)
+    status_return_level_bytes = RWByteMotorControl(pt.STATUS_RETURN_LEVEL)
+    status_return_level       =     RWMotorControl(pt.STATUS_RETURN_LEVEL)
 
 
     # MARK RAM properties
 
     # MARK Torque Enable
 
-    @property
-    def torque_enable(self):
-        return bool(self.mmem[pt.TORQUE_ENABLE])
-
-    @property
-    def torque_enable_bytes(self):
-        return self.mmem[pt.TORQUE_ENABLE]
-
-    @torque_enable.setter
-    def torque_enable(self, val):
-        self.torque_enable_bytes = val
-
-    @torque_enable_bytes.setter
-    def torque_enable_bytes(self, val):
-        limits.checkoneof('torque_enable', [0, 1], int(val))
-        self._register_write(pt.TORQUE_ENABLE, int(val))
-
+    torque_enable_bytes = RWByteMotorControl(pt.TORQUE_ENABLE)
+    torque_enable       =     RWMotorControl(pt.TORQUE_ENABLE)
 
     @property
     def compliant(self):
@@ -558,117 +399,31 @@ class DynamixelMotor(object):
 
 
     # MARK LED
-
-    @property
-    def led(self):
-        return conv.bytes2_led(self.led_bytes)
-
-    @property
-    def led_bytes(self):
-        return self.mmem[pt.LED]
-
-    @led.setter
-    def led(self, val):
-        self.led_bytes = conv.led_2bytes(val)
-
-    @led_bytes.setter
-    def led_bytes(self, val):
-        """Changing the goal position will turn on torque_enable if off."""
-        limits.checkoneof('led', [0, 1], val)
-        self._register_write(pt.LED, val)
-
+    led_bytes = RWByteMotorControl(pt.LED)
+    led       =     RWMotorControl(pt.LED)
 
     # MARK Goal position
-
-    @property
-    def goal_position(self):
-        return conv.bytes2_goal_position(self.goal_position_bytes, self.mmem)
-
-    @property
-    def goal_position_bytes(self):
-        return self.mmem[pt.GOAL_POSITION]
-
-    @goal_position.setter
-    def goal_position(self, val):
-        self.goal_position_bytes = conv.goal_position_2bytes(val, self.mmem)
-
-    @goal_position_bytes.setter
-    def goal_position_bytes(self, val):
-        """Changing the goal position will turn on torque_enable if off."""
-        limits.checkbounds('goal_position',
-                         self.cw_angle_limit_bytes, self.ccw_angle_limit_bytes, val)
-        self._register_write(pt.GOAL_POSITION, val)
-
+    goal_position_bytes = RWByteMotorControl(pt.GOAL_POSITION)
+    goal_position       =     RWMotorControl(pt.GOAL_POSITION)
 
     # MARK moving_speed
-
-    @property
-    def moving_speed(self):
-        return conv.bytes2_moving_speed(self.moving_speed_bytes, self.mmem)
-
-    @property
-    def moving_speed_bytes(self):
-        return self.mmem[pt.MOVING_SPEED]
-
-    @moving_speed.setter
-    def moving_speed(self, val):
-        self.moving_speed_bytes = conv.moving_speed_2bytes(val, self.mmem)
-
-    @moving_speed_bytes.setter
-    def moving_speed_bytes(self, val):
-        if self.mode == 'wheel':
-            limits.checkbounds_mode('moving_speed', 0, 2047, val, self.mode)
-        else:
-            limits.checkbounds_mode('moving_speed', 0, 1023, val, self.mode)
-        self._register_write(pt.MOVING_SPEED, val)
-
+    moving_speed_bytes = RWByteMotorControl(pt.MOVING_SPEED)
+    moving_speed       =     RWMotorControl(pt.MOVING_SPEED)
 
     # MARK torque_limit
-
-    @property
-    def torque_limit(self):
-        return conv.bytes2_torque_limit(self.torque_limit_bytes, self.mmem)
-
-    @property
-    def torque_limit_bytes(self):
-        return self.mmem[pt.TORQUE_LIMIT]
-
-    @torque_limit.setter
-    def torque_limit(self, val):
-        self.torque_limit_bytes = conv.torque_limit_2bytes(val, self.mmem)
-
-    @torque_limit_bytes.setter
-    def torque_limit_bytes(self, val):
-        limits.checkbounds('torque_limit', 0, 1023, val)
-        self._register_write(pt.TORQUE_LIMIT, val)
+    moving_speed_bytes = RWByteMotorControl(pt.TORQUE_LIMIT)
+    moving_speed       =     RWMotorControl(pt.TORQUE_LIMIT)
 
 
     # MARK present_position, present_speed, present_load
+    present_position_bytes = ROByteMotorControl(pt.PRESENT_POSITION)
+    present_position       =     ROMotorControl(pt.PRESENT_POSITION)
 
-    @property
-    def present_position(self):
-        return conv.bytes2_present_position(self.present_position_bytes, self.mmem.modelclass, self.mmem.mode)
+    present_speed_bytes = ROByteMotorControl(pt.PRESENT_SPEED)
+    present_speed       =     ROMotorControl(pt.PRESENT_SPEED)
 
-    @property
-    def present_position_bytes(self):
-        return self.mmem[pt.PRESENT_POSITION]
-
-    @property
-    def present_speed(self):
-        return conv.bytes2_present_speed(self.present_speed_bytes, self.mmem.modelclass, self.mmem.mode)
-
-    @property
-    def present_speed_bytes(self):
-        return self.mmem[pt.PRESENT_SPEED]
-
-    @property
-    def present_load(self):
-        return conv.bytes2_present_load(self.mmem[pt.PRESENT_LOAD])
-
-    @property
-    def present_load_bytes(self):
-        return self.mmem[pt.PRESENT_LOAD]
-
+    present_load_bytes = ROByteMotorControl(pt.PRESENT_LOAD)
+    present_load       =     ROMotorControl(pt.PRESENT_LOAD)
 
     # MARK position, speed
 
@@ -708,62 +463,33 @@ class DynamixelMotor(object):
     def speed_bytes(self, val):
         self.moving_speed_bytes = val
 
-    @property
-    def load(self):
-        return self.present_load
+    # position_bytes = property(present_position_bytes.__get__, goal_position_bytes.__set__)
+    # position       = property(present_position.__get__,       goal_position.__set__)
 
-    @property
-    def load_bytes(self):
-        return self.present_load_bytes
+    # speed_bytes = property(present_speed_bytes.__get__, moving_speed_bytes.__set__)
+    # speed       = property(present_speed.__get__,       moving_speed.__set__)
+
+    load = present_load
+    load_bytes = present_load_bytes
 
 
     # MARK Present voltage
+    present_voltage_bytes = ROByteMotorControl(pt.PRESENT_VOLTAGE)
+    present_voltage       =     ROMotorControl(pt.PRESENT_VOLTAGE)
 
-    @property
-    def present_voltage(self):
-        return conv.bytes2_present_voltage(self.present_voltage_bytes)
-
-    @property
-    def present_voltage_bytes(self):
-        return self.mmem[pt.PRESENT_VOLTAGE]
-
-    @property
-    def voltage(self):
-        return self.present_voltage
-
-    @property
-    def voltage_bytes(self):
-        return self.present_voltage_bytes
-
+    voltage_bytes = present_voltage_bytes
+    voltage       = present_voltage
 
     # MARK Present temperature
+    present_temperature_bytes = ROByteMotorControl(pt.PRESENT_TEMPERATURE)
+    present_temperature       =     ROMotorControl(pt.PRESENT_TEMPERATURE)
 
-    @property
-    def present_temperature(self):
-        return conv.bytes2_present_temperature(self.present_temperature_bytes)
-
-    @property
-    def present_temperature_bytes(self):
-        return self.mmem[pt.PRESENT_TEMPERATURE]
-
-    @property
-    def temp(self):
-        return self.present_temperature
-
-    @property
-    def temp_bytes(self):
-        return self.present_temperature_bytes
-
+    temperature_bytes = present_temperature_bytes
+    temperature       = present_temperature
 
     # MARK Registered
-
-    @property
-    def registered(self):
-        return conv.bytes2_registered(self.registered_bytes)
-
-    @property
-    def registered_bytes(self):
-        return self.mmem[pt.REGISTERED]
+    registered_bytes = ROByteMotorControl(pt.REGISTERED)
+    registered       =     ROMotorControl(pt.REGISTERED)
 
 
     # MARK Lock EEPROM
@@ -799,35 +525,12 @@ class DynamixelMotor(object):
 
 
     # MARK Moving
-
-    @property
-    def moving(self):
-        return conv.bytes2_moving(self.moving_bytes)
-
-    @property
-    def moving_bytes(self):
-        return self.mmem[pt.MOVING]
-
+    moving_bytes = ROByteMotorControl(pt.MOVING)
+    moving       =     ROMotorControl(pt.MOVING)
 
     # MARK Punch
-
-    @property
-    def punch(self):
-        return conv.bytes2_punch(self.punch_bytes)
-
-    @property
-    def punch_bytes(self):
-        return self.mmem[pt.MOVING]
-
-    @punch.setter
-    def punch(self, val):
-        self.punch_bytes = conv.punch_2bytes(val, self.mmem)
-
-    @punch_bytes.setter
-    def punch_bytes(self, val):
-        # TODO 32 for RX, 0 for MX
-        limits.checkbounds('punch', 32, 1023, val)
-        self._register_write(pt.PUNCH, val)
+    punch_bytes = ROByteMotorControl(pt.PUNCH)
+    punch       =     ROMotorControl(pt.PUNCH)
 
 
     # MARK Printing EEPROM, RAM
@@ -888,326 +591,79 @@ class DynamixelMotor(object):
 class ComplianceMarginSlopeExtra(object):
 
     # MARK Compliance margin
+    cw_compliance_margin_bytes  = RWByteMotorControl(pt.CW_COMPLIANCE_MARGIN)
+    cw_compliance_margin        =     RWMotorControl(pt.CW_COMPLIANCE_MARGIN)
 
-    # Compliance margins are aggressively cached since they are not changed
-    # other than through user intervention
+    ccw_compliance_margin_bytes = RWByteMotorControl(pt.CCW_COMPLIANCE_MARGIN)
+    ccw_compliance_margin       =     RWMotorControl(pt.CCW_COMPLIANCE_MARGIN)
 
-    @property
-    def cw_compliance_margin(self):
-        return conv.bytes2_compliance_margin(self.mmem[pt.CW_COMPLIANCE_MARGIN], self.mmem)
-
-    @property
-    def cw_compliance_margin_bytes(self):
-        return self.mmem[pt.CW_COMPLIANCE_MARGIN]
-
-
-    @cw_compliance_margin.setter
-    def cw_compliance_margin(self, val):
-        self.cw_compliance_margin_bytes = conv.compliance_margin_2bytes(val, self.mmem)
-
-    @cw_compliance_margin_bytes.setter
-    def cw_compliance_margin_bytes(self, val):
-        limits.checkbounds('cw compliance margin bytes', 0, 255, val)
-        self._register_write(pt.CW_COMPLIANCE_MARGIN, val)
-
-    @property
-    def ccw_compliance_margin(self):
-        return conv.bytes2_compliance_margin(self.mmem[pt.CCW_COMPLIANCE_MARGIN], self.mmem)
-
-    @property
-    def ccw_compliance_margin_bytes(self):
-        return self.mmem[pt.CCW_COMPLIANCE_MARGIN]
-
-    @ccw_compliance_margin.setter
-    def ccw_compliance_margin(self, val):
-        self.ccw_compliance_margin_bytes = conv.compliance_margin_2bytes(val, self.mmem)
-
-    @ccw_compliance_margin_bytes.setter
-    def ccw_compliance_margin_bytes(self, val):
-        limits.checkbounds('ccw compliance margin bytes', 0, 255, val)
-        self._register_write(pt.CCW_COMPLIANCE_MARGIN, val)
-
-
-    @property
-    def compliance_margins(self):
-        return self.cw_compliance_margin, self.ccw_compliance_margin
-
-    @property
-    def compliance_margins_bytes(self):
-        return self.cw_compliance_margin_bytes, self.ccw_compliance_margin_bytes
-
-    # here we can do only one write
-    @compliance_margins.setter
-    def compliance_margins(self, val):
-        self.compliance_margins_bytes = val
-
-    @compliance_margins_bytes.setter
-    def compliance_margins_bytes(self, val):
-        limits.checkbounds('cw compliance margin',  0, 255, val[0])
-        limits.checkbounds('ccw compliance margin', 0, 255, val[1])
-        self._register_write(pt.COMPLIANCE_MARGINS, val)
-
+    compliance_margins_bytes    = RWByteMotorControl(pt.COMPLIANCE_MARGINS)
+    compliance_margins          =     RWMotorControl(pt.COMPLIANCE_MARGINS)
 
     # MARK compliance slopes
+    cw_compliance_slope_bytes   = RWByteMotorControl(pt.CW_COMPLIANCE_SLOPE)
+    cw_compliance_slope         =     RWMotorControl(pt.CW_COMPLIANCE_SLOPE)
 
-    @property
-    def cw_compliance_slope(self):
-        return conv.bytes2_compliance_slope(self.mmem[pt.CW_COMPLIANCE_SLOPE], self.mmem)
+    ccw_compliance_slope_bytes  = RWByteMotorControl(pt.CCW_COMPLIANCE_SLOPE)
+    ccw_compliance_slope        =     RWMotorControl(pt.CCW_COMPLIANCE_SLOPE)
 
-    @property
-    def cw_compliance_slope_bytes(self):
-        return self.mmem[pt.CW_COMPLIANCE_SLOPE]
-
-    @cw_compliance_slope.setter
-    def cw_compliance_slope(self, val):
-        self.cw_compliance_slope_bytes = conv.compliance_slope_2bytes(val, self.mmem)
-
-    @cw_compliance_slope_bytes.setter
-    def cw_compliance_slope_bytes(self, val):
-        limits.checkbounds('cw compliance slope bytes', 0, 254, val)
-        self._register_write(pt.CW_COMPLIANCE_SLOPE, val)
-
-
-    @property
-    def ccw_compliance_slope(self):
-        return conv.bytes2_compliance_slope(self.mmem[pt.CCW_COMPLIANCE_SLOPE], self.mmem)
-
-    @property
-    def ccw_compliance_slope_bytes(self):
-        return self.mmem[pt.CCW_COMPLIANCE_SLOPE]
-
-    @ccw_compliance_slope.setter
-    def ccw_compliance_slope(self, val):
-        self.ccw_compliance_slope_bytes = conv.compliance_slope_2bytes(val, self.mmem)
-
-    @ccw_compliance_slope_bytes.setter
-    def ccw_compliance_slope_bytes(self, val):
-        limits.checkbounds('ccw compliance slope bytes', 0, 254, val)
-        self._register_write(pt.CCW_COMPLIANCE_SLOPE, val)
-
-
-    @property
-    def compliance_slopes(self):
-        return self.cw_compliance_slope, self.ccw_compliance_slope
-
-    @property
-    def compliance_slopes_bytes(self):
-        return self.cw_compliance_slope_bytes, self.ccw_compliance_slope_bytes
-
-    # here we can do only one write
-    @compliance_slopes.setter
-    def compliance_slopes(self, val):
-        self.compliance_slopes_bytes = val
-
-    @compliance_slopes_bytes.setter
-    def compliance_slopes_bytes(self, val):
-        limits.checkbounds('cw compliance slope',  0, 255, val[0])
-        limits.checkbounds('ccw compliance slope', 0, 255, val[1])
-        self._register_write(pt.COMPLIANCE_SLOPES, val)
+    compliance_slopes_bytes     = RWByteMotorControl(pt.COMPLIANCE_SLOPES)
+    compliance_slopes           =     RWMotorControl(pt.COMPLIANCE_SLOPES)
 
 
 class PIDExtra(object):
 
     # MARK PID Gains
+    d_gain_bytes     = RWByteMotorControl(pt.D_GAIN)
+    d_gain           =     RWMotorControl(pt.D_GAIN)
 
-    # PID gains are aggressively cached since they are not changed
-    # other than through user intervention
+    p_gain_bytes     = RWByteMotorControl(pt.P_GAIN)
+    p_gain           =     RWMotorControl(pt.P_GAIN)
 
-    @property
-    def p_gain(self):
-        return conv.bytes2_p_gain(self.p_gain_bytes)
+    i_gain_bytes     = RWByteMotorControl(pt.I_GAIN)
+    i_gain           =     RWMotorControl(pt.I_GAIN)
 
-    @property
-    def p_gain_bytes(self):
-        return self.mmem[pt.P_GAIN]
-
-    @p_gain.setter
-    def p_gain(self, val):
-        self.p_gain_bytes = conv.p_gain_2bytes(val)
-
-    @p_gain_bytes.setter
-    def p_gain_bytes(self, val):
-        limits.checkbounds('p_gain', 0, 254, val)
-        self._register_write(pt.P_GAINS, val)
-
-
-    @property
-    def i_gain(self):
-        return conv.bytes2_i_gain(self.i_gain_bytes)
-
-    @property
-    def i_gain_bytes(self):
-        return self.mmem[pt.I_GAIN]
-
-    @i_gain.setter
-    def i_gain(self, val):
-        self.i_gain_bytes = conv.i_gain_2bytes(val)
-
-    @i_gain_bytes.setter
-    def i_gain_bytes(self, val):
-        limits.checkbounds('i_gain', 0, 254, val)
-        self._register_write(pt.I_GAIN, val)
-
-
-    @property
-    def d_gain(self):
-        return conv.bytes2_d_gain(self.d_gain_bytes)
-
-    @property
-    def d_gain_bytes(self):
-        return self.mmem[pt.D_GAIN]
-
-    @d_gain.setter
-    def d_gain(self, val):
-        self.d_gain_bytes = conv.d_gain_2bytes(val)
-
-    @d_gain_bytes.setter
-    def d_gain_bytes(self, val):
-        limits.checkbounds('d_gain', 0, 254, val)
-        self._register_write(pt.D_GAIN, val)
-
-
-    @property
-    def gains(self):
-        return conv.bytes2_gains(self.gains_bytes)
-
-    @property
-    def gains_bytes(self):
-        return (self.mmem[pt.D_GAIN],
-                self.mmem[pt.I_GAIN],
-                self.mmem[pt.P_GAIN])
-
-    @gains.setter
-    def gains(self, val):
-        self.gains_bytes = conv.gains_2bytes(val)
-
-    @gains_bytes.setter
-    def gains_bytes(self, val):
-        limits.checkbounds('d_gain', 0, 254, val[0])
-        limits.checkbounds('i_gain', 0, 254, val[1])
-        limits.checkbounds('p_gain', 0, 254, val[2])
-        self._register_write(pt.GAINS, val)
-
+    gains_bytes      = RWByteMotorControl(pt.GAINS)
+    gains            =     RWMotorControl(pt.GAINS)
 
 
 class SensedCurrentExtra(object):
 
-    @property
-    def sensed_current(self):
-        return self.bytes2_sensed_current(self.sensed_current_bytes)
-
-    @property
-    def sensed_current_bytes(self):
-        return self.mmem[pt.SENSED_CURRENT]
+    # MARK Sensed Current
+    sensed_current_bytes = ROByteMotorControl(pt.SENSED_CURRENT)
+    sensed_current       =     ROMotorControl(pt.SENSED_CURRENT)
 
 
 class CurrentExtra(object):
 
     # MARK Current
+    current_bytes = RWByteMotorControl(pt.CURRENT)
+    current       =     RWMotorControl(pt.CURRENT)
+    # Only the MX64 and 106 seems to support current, although you have to go
+    # through the korean doc for the MX64 to know that. We assume it is a
+    # mistake and all MX support it.
 
-    @property
-    def current(self):
-        return conv.bytes2_current(self.current_bytes)
-
-    @property
-    def current_bytes(self):
-        return self.mmem[pt.CURRENT]
-
-    @current.setter
-    def current(self, val):
-        self.current_bytes = conv.current_2bytes(val)
-
-    @current_bytes.setter
-    def current_bytes(self, val):
-        limits.checkbounds('current bytes', 0, 4095, val)
-        self._register_write(pt.CURRENT, val)
-
-
-# Only the MX64 and 106 seems to support current.
-# (although you have to go through the korean doc for the MX64 to know that)
 
 class TorqueModeExtra(object):
 
     # MARK Torque Control Mode
-
-    @property
-    def torque_control_mode_enable(self):
-        return conv.bytes2_torque_control_mode_enable(self.torque_control_mode_enable_bytes)
-
-    @property
-    def torque_control_mode_enable_bytes(self):
-        return self.mmem[pt.TORQUE_CONTROL_MODE_ENABLE]
-
-    @torque_control_mode_enable.setter
-    def torque_control_mode_enable(self, val):
-        self.torque_control_mode_enable_bytes = conv.torque_control_mode_enable_2bytes(val)
-
-    @torque_control_mode_enable_bytes.setter
-    def torque_control_mode_enable_bytes(self, val):
-        limits.checkoneof('torque_control_mode_enable bytes', [0, 1], val)
-        self._register_write(pt.TORQUE_CONTROL_MODE_ENABLE, val)
+    torque_control_mode_enable_bytes = RWByteMotorControl(pt.TORQUE_CONTROL_MODE_ENABLE)
+    torque_control_mode_enable       =     RWMotorControl(pt.TORQUE_CONTROL_MODE_ENABLE)
 
     # torque_mode alias for torque_control_mode_enable
-
-    @property
-    def torque_mode(self):
-        return self.torque_control_enable
-
-    @property
-    def torque_mode_bytes(self):
-        return self.torque_control_enable_bytes
-
-    @torque_mode.setter
-    def torque_mode(self, val):
-        self.torque_control_mode_enable = val
-
-    @torque_mode_bytes.setter
-    def torque_mode_bytes(self, val):
-        self.torque_control_mode_enable_bytes = val
-
+    torque_mode_bytes = torque_control_mode_enable_bytes
+    torque_mode       = torque_control_mode_enable
 
     # MARK Goal Torque
-
-    @property
-    def goal_torque(self):
-        return conv.bytes2_goal_torque(self.goal_torque_bytes)
-
-    @property
-    def goal_torque_bytes(self):
-        return self.mmem[pt.GOAL_TORQUE]
-
-    @goal_torque.setter
-    def goal_torque(self, val):
-        self.goal_torque_bytes = conv.goal_torque_2bytes(val)
-
-    @goal_torque_bytes.setter
-    def goal_torque_bytes(self):
-        limits.checkbounds('goal torque bytes', 0, 2047, val)
-        self._register_write(pt.GOAL_TORQUE, val)
-
+    goal_torque_bytes = RWByteMotorControl(pt.GOAL_TORQUE)
+    goal_torque       =     RWMotorControl(pt.GOAL_TORQUE)
 
 
 class GoalAccelerationExtra(object):
 
     # MARK Goal Acceleration
-
-    @property
-    def goal_acceleration(self):
-        return conv.bytes2_goal_acceleration(self.goal_acceleration_bytes)
-
-    @property
-    def goal_acceleration_bytes(self):
-        return self.mmem[pt.GOAL_ACCELERATION]
-
-    @goal_acceleration.setter
-    def goal_acceleration(self, val):
-        self.goal_acceleration_bytes = conv.goal_acceleration_2bytes(val)
-
-    @goal_acceleration_bytes.setter
-    def goal_acceleration_bytes(self):
-        limits.checkbounds('goal acceleration bytes', 0, 254, val)
-        self._register_write(pt.GOAL_ACCELERATION, val)
-
+    goal_acceleration_bytes = RWByteMotorControl(pt.GOAL_ACCELERATION)
+    goal_acceleration       =     RWMotorControl(pt.GOAL_ACCELERATION)
 
 
 class AXMotor(DynamixelMotor, ComplianceMarginSlopeExtra):
