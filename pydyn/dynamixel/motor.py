@@ -41,6 +41,7 @@ bytes integer value present in the hardware memory register.
 
 import threading
 import collections
+import textwrap
 
 from .. import color
 from ..refs import protocol as pt
@@ -48,8 +49,9 @@ from ..refs import limits
 from ..refs import conversions as conv
 
 class ROByteMotorControl(object):
-    def __init__(self, control):
+    def __init__(self, control, doc=''):
         self.control = control
+        self.__doc__ = textwrap.dedent(doc)
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -82,7 +84,7 @@ class RWMotorControl(ROMotorControl):
                                                 mode=instance.mode)
         byte_value = conv.CONV[self.control][0](value, modelclass=instance.modelclass,
                                                        mode=instance.mode)
-        instance._register_write(self.control, value)
+        instance._register_write(self.control, byte_value)
 
 
 class DynamixelMotor(object):
@@ -118,8 +120,9 @@ class DynamixelMotor(object):
         if hasattr(self, attr):
             object.__setattr__(self, attr, value)
         else:
-            raise AttributeError(("'{}' assignement error. Motors can't set new "
-                                  "attributes.").format(attr))
+            raise AttributeError(("'{}' assignement error. This attribute does not exist "
+                                  "and new attributes cannot be defined on Motor "
+                                  "instances.").format(attr, attr))
 
 
     # MARK Read/Write request
@@ -138,23 +141,25 @@ class DynamixelMotor(object):
     }
 
     def _str2ctrl(self, control, aliases=()):
-        """
+        """\
         Return the Control instance corresponding to the string.
         If already a control, return unchanged.
         :param aliases:  aliases dict for translations
         """
-        if not isinstance(name, pt.Control):
-            name = name.lower()
-            if name in self.aliases:
-                name = self.aliases[name]
-            control = pt.CTRL[name.upper()]
+        if not isinstance(control, pt.Control):
+            control = control.lower()
+            if control in self.aliases:
+                control = self.aliases[control]
+            control = pt.CTRL[control.upper()]
+        return control
 
     def request_read(self, control):
-        """Request a specific value of the motor to be refreshed
+        """\
+        Request a specific value of the motor to be refreshed
 
-        :arg control:  the name of the value. See the :py:mod:`protocol <pydyn.io.protocol>` module for the list of values.
+        :arg control:  the name of the value. See the :py:mod:`protocol <pydyn.refs.protocol>` module for the list of values.
         """
-        control = self_str2ctrl(control, aliases=aliases_read)
+        control = self._str2ctrl(control, aliases=aliases_read)
 
         self.request_lock.acquire()
         if control in self.read_requests:
@@ -163,14 +168,15 @@ class DynamixelMotor(object):
         self.request_lock.release()
 
     def request_write(self, control, value):
-        """ Request a specific write on the motor
+        """\
+        Request a specific write on the motor
 
-        :arg name:  the name of the value. See the :py:mod:`protocol <pydyn.io.protocol>` module for the list of values.
+        :arg name:  the name of the value. See the :py:mod:`protocol <pydyn.refs.protocol>` module for the list of values.
         """
-        control = self_str2ctrl(control, aliases=aliases_write)
-        setattr(self, name, value) # for bound checking, mode handling
+        control = self._str2ctrl(control, aliases=aliases_write)
+        setattr(self, control, value) # for bound checking, mode handling
 
-    def _register_write(self, control, val):
+    def _register_write(self, control, val): # TODO this is a bad name for ACTION/REGISTERED
         """Register the write request for the controller benefit"""
         self.request_lock.acquire()
         if control in self.write_requests:
@@ -179,28 +185,26 @@ class DynamixelMotor(object):
         self.request_lock.release()
 
     def requested_read(self, control):
-        """ Return True if a value is requested for reading but was not read yet.
-            After the value was read, return False.
+        """\
+        Return True if a value is requested for reading but was not read yet.
+        After the value was read, return False.
         """
-        name = name.lower()
-        if name in aliases_read:
-            name = aliases_read[name]
+        control = self._str2ctrl(control, aliases=aliases_read)
 
         self.request_lock.acquire()
-        value = self.read_requests.get(pt.CTRL[name.upper()], False)
+        value = self.read_requests.get(control, False)
         self.request_lock.release()
         return value
 
-    def requested_write(self, name):
-        """ Return the value of the requested write, if it wasn't written yet.
-            After the value was read, return None.
+    def requested_write(self, control):
+        """\
+        Return the value of the requested write, if it wasn't written yet.
+        After the value was read, return None.
         """
-        name = name.lower()
-        if name in aliases_write:
-            name = aliases_write[name]
+        control = self._str2ctrl(control, aliases=aliases_write)
 
         self.request_lock.acquire()
-        value = self.write_requests.get(pt.CTRL[name.upper()], False)
+        value = self.write_requests.get(control, False)
         self.request_lock.release()
         return value
 
@@ -212,12 +216,15 @@ class DynamixelMotor(object):
         return self.mmem.mode
 
     @mode.setter
-    def mode(self, val):
-        """This will change the mode of the motor.
+    def mode(self, value):
+        """\
+        This will change the mode of the motor.
         Previous joint angle limits will be restored when coming from wheel mode.
+
+        :param value:  either 'joint' or 'wheel'
         """
-        limits.checkoneof('mode', ['wheel', 'joint'], val)
-        if val == 'wheel':
+        limits.checkoneof('mode', ['wheel', 'joint'], value)
+        if value == 'wheel':
             self._joint_angle_limits_bytes = self.angle_limits_bytes
             self._register_write(pt.ANGLE_LIMITS, (0, 0))
         else:
@@ -226,57 +233,50 @@ class DynamixelMotor(object):
 
     # MARK EEPROM properties
 
-    @property
-    def id(self):
-        """ The id of the motor. You can also change the id of a motor this way.
+    _doc_id = """\
+    The id of the motor, valid value are between 0 and 253.
 
-            .. warning:: beware of id collisions, they are not checked yet.
-        """
+    :raise ValueError:  if you set an id that is already used.
+    """
+    id_bytes = RWByteMotorControl(pt.ID, doc=_doc_id)
+    id       =     RWMotorControl(pt.ID, doc=_doc_id)
 
-        return self.mmem.id
+    _doc_model_bytes = """The model of the motor."""
+    model_bytes = ROByteMotorControl(pt.MODEL_NUMBER, doc=_doc_model_bytes)
+    _doc_model       = """The model of the motor as a string (eg. 'AX-12')."""
+    model       =     ROMotorControl(pt.MODEL_NUMBER, doc=_doc_model)
 
-    @id.setter
-    def id(self, val):
-        limits.CHECK[pt.ID](val)
-        self._register_write(pt.ID, val)
-
-
-    model_bytes = ROByteMotorControl(pt.MODEL_NUMBER)
-    model       =     ROMotorControl(pt.MODEL_NUMBER)
-
+    _doc_firmware_bytes = """The version of the firmware."""
     firmware_bytes = ROByteMotorControl(pt.FIRMWARE)
     firmware       =     ROMotorControl(pt.FIRMWARE)
+
     @property
     def modelclass(self):
         """ The class of motor (for a RX-28, return 'RX') """
         return self.mmem.modelclass
 
-    @property
-    def version(self):
-        return self.mmem.firmware
-
     # MARK Baudrate
+    _doc_baudrate_bytes = """\
+    Baudrate for the motor
 
-    @property
-    def baudrate(self):
-        """ Possible values are : 1000000, 50000, 40000, 25000, 20000, 115200, 57600, 19200, 9600 (and 2250000, 2500000, 3000000 for MX). """
-        return conv.bytes2_baud_rate(self.mmem[pt.BAUD_RATE], self.mmem)
+    Usual values are 1, 3, 4, 7, 9, 16, 34, 103, 207 (and 0, 250, 251, 252 for
+    MX), but anything between 1 and 253 is accepted.
 
-    @property
-    def baudrate_bytes(self):
-        """ Possible values are : 1, 3, 4, 7, 9, 16, 34, 103, 207 (and 250, 251, 252 for MX). """
-        return self.mmem[pt.BAUD_RATE]
+    .. warning:: if you change the baudrate, the motor will be unreachable
+                 until you change the connection baudrate too.
+    """
+    _doc_baudrate = """\
+    Baudrate for the motor
 
-    @baudrate.setter
-    def baudrate(self, val):
-        self.baudrate_bytes = conv.baud_rate_2bytes(val, self.mmem)
+    Usual values are 1000000, 50000, 40000, 25000, 20000, 115200, 57600,
+    19200, 9600 (and 2000000, 2250000, 2500000, 3000000 for MX), but anything
+    between 1000000 and 7874 is accepted.
 
-    @baudrate_bytes.setter
-    def baudrate_bytes(self, val):
-        """Usually, only value 1, 3, 4, 7, 9, 16, 34, 103, 207, (and 250, 251, 252 for MX) are used"""
-        limits.CHECK[pt.BAUD_RATE](val)
-        self._register_write(pt.BAUD_RATE, val)
-
+    .. warning:: if you change the baudrate, the motor will be unreachable
+                 until you change the connection baudrate too.
+    """
+    baudrate_bytes = RWByteMotorControl(pt.BAUDRATE, doc=_doc_baudrate_bytes)
+    baudrate       = RWByteMotorControl(pt.BAUDRATE, doc=_doc_baudrate)
 
     # MARK Return Delay Time
     return_delay_time_bytes = RWByteMotorControl(pt.RETURN_DELAY_TIME)
@@ -286,7 +286,7 @@ class DynamixelMotor(object):
 
     @property
     def cw_angle_limit(self):
-        return conv.bytes2_cw_angle_limit(self.cw_angle_limit_bytes, self.mmem)
+        return conv.CONV[pt.CW_ANGLE_LIMIT][1](self.cw_angle_limit_bytes, modelclass=self.modelclass, mode=self.mode)
 
     @property
     def cw_angle_limit_bytes(self):
@@ -294,12 +294,12 @@ class DynamixelMotor(object):
 
     @cw_angle_limit.setter
     def cw_angle_limit(self, val):
-        self.cw_angle_limit_bytes = conv.cw_angle_limit_2bytes(val, self.mmem)
+        self.cw_angle_limit_bytes = conv.CONV[pt.CCW_ANGLE_LIMIT][0](val, modelclass=self.modelclass, mode=self.mode)
 
     @cw_angle_limit_bytes.setter
     def cw_angle_limit_bytes(self, val):
-        limits.checkbounds('cw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass][0], val)
-        if int(val[0]) > int(self.ccw_angle_limit_bytes):
+        limits.CHECK_BYTES[pt.CW_ANGLE_LIMIT](val, modelclass=self.modelclass, mode=self.mode)
+        if int(val) > int(self.ccw_angle_limit_bytes):
             raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], self.ccw_angle_limit_bytes))
         if val != 0 or val != self.ccw_angle_limit_bytes:
             self._joint_angle_limits_bytes = (val, self.ccw_angle_limit_bytes)
@@ -307,7 +307,7 @@ class DynamixelMotor(object):
 
     @property
     def ccw_angle_limit(self):
-        return conv.bytes2_ccw_angle_limit(self.ccw_angle_limit_bytes, self.mmem)
+        return conv.CONV[pt.CCW_ANGLE_LIMIT][1](self.ccw_angle_limit_bytes, modelclass=self.modelclass, mode=self.mode)
 
     @property
     def ccw_angle_limit_bytes(self):
@@ -319,7 +319,7 @@ class DynamixelMotor(object):
 
     @ccw_angle_limit_bytes.setter
     def ccw_angle_limit_bytes(self, val):
-        limits.checkbounds('ccw_angle_limit', 0, limits.POSITION_RANGES[self.modelclass][0], val)
+        limits.CHECK_BYTES[pt.CCW_ANGLE_LIMIT](val, modelclass=self.modelclass, mode=self.mode)
         #if int(val[0]) > int(self.ccw_angle_limit_bytes):
         #    raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], self.ccw_angle_limit_bytes))
         if val != 0 or val != self.cw_angle_limit_bytes:
@@ -411,8 +411,8 @@ class DynamixelMotor(object):
     moving_speed       =     RWMotorControl(pt.MOVING_SPEED)
 
     # MARK torque_limit
-    moving_speed_bytes = RWByteMotorControl(pt.TORQUE_LIMIT)
-    moving_speed       =     RWMotorControl(pt.TORQUE_LIMIT)
+    torque_limit_bytes = RWByteMotorControl(pt.TORQUE_LIMIT)
+    torque_limit       =     RWMotorControl(pt.TORQUE_LIMIT)
 
 
     # MARK present_position, present_speed, present_load

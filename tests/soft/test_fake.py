@@ -56,6 +56,9 @@ class TestFake(unittest.TestCase):
         with self.assertRaises(AttributeError):
             m.does_not_exists = 312
 
+        m.cw_angle_limit = 40
+        m.compliant = False
+
     def test_sync_motor(self):
         ctrl = controller.DynamixelController(self.mcom)
         mids = ctrl.discover_motors(verbose=False)

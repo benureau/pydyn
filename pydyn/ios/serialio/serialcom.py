@@ -79,20 +79,22 @@ class SerialCom(object):
         * the EEPROM area
         * the RAM area
 
-    When values are written to the EEPROM, they are conserved after cycling the power.
+    When values are written to the EEPROM, they are conserved after cycling
+    the power.
     The values written to the RAM are lost when cycling the power.
 
-    In this modules, all values are raw, integer values. Conversion to human values
-    are made at higher level, through the motor interface.
+    In this modules, all values are bytes. Conversion to human values are made
+    at higher level, through the motor interface.
 
     Also, this module does minimal checking about if values make sense or are legal.
     The Motor instance is responsible for that. It makes everything simpler here, and
     problems are catched earlier by the Motor instances. Plus, if you really want to
     go crazy experimenting on non-legal value, you can by accessing this level.
 
-    .. warning:: When accessing EEPROM registers the motor enters a "busy" mode and
-                 should not be accessed before about 100ms. [#TODO: is that really true ?]
-
+    .. warning:: When writing on EEPROM registers the motor enters a "busy" mode
+                 will no respond correctly to requests for roughly 20ms times the
+                 number of register written (not all register are equal, check the
+                 eeprom_blackout.py sample for more details).
     """
     CommunicationError = CommunicationError
     TimeoutError = TimeoutError
@@ -340,7 +342,7 @@ class SerialCom(object):
                                              list(bytearray(data)))
 
                 if status_packet.error != 0:
-                    alarms = conv.raw2_alarm_names(status_packet.error)
+                    alarms = conv.bytes2_alarm_names(status_packet.error)
                     if len(alarms):
                         raise MotorError(status_packet.mid, alarms)
 

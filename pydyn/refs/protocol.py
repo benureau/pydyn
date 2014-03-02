@@ -61,7 +61,7 @@ SUPPORTED_MODELS = [
 
 _all_models    = frozenset(SUPPORTED_MODELS)
 _mx_models     = frozenset((360, 29, 54, 320))
-_but_mx_models  = frozenset((12, 18, 44, 10, 24, 28, 64, 107, 113, 116, 117))
+_but_mx_models = frozenset((12, 18, 44, 10, 24, 28, 64, 107, 113, 116, 117))
 _ex_models     = frozenset((107,))
 
 # this list is in sorted by starting addr

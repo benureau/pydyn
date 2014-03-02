@@ -204,13 +204,13 @@ CONV[pt.PRESENT_VOLTAGE] = (present_voltage_2bytes, bytes2_present_voltage)
 def _def_bytes2_percent(control):
     def _b2b(value, modelclass=None, mode=None):
         """Map [0, 1023] to [0%, 100%]"""
-        limits.CHECK_BYTES[control](value)
+        limits.CHECK_BYTES[control](value, modelclass=modelclass, mode=mode)
         return 100.0*value/1023.0
     return _b2b
 
 def _def_percent_2bytes(control):
     def _b2b(value, modelclass=None, mode=None):
-        limits.CHECK[control](value)
+        limits.CHECK[control](value, modelclass=modelclass, mode=mode)
         return int(value/100.0*1023)
     return _b2b
 

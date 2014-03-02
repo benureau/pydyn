@@ -8,7 +8,7 @@ from pydyn import color
 
 
 sio = serialio.Serial(device_type='USB2Serial', latency=1, timeout=0)
-print('I/O open on {}'.format(sio))
+print('I/O open on {}{}{}'.format(color.cyan, sio, color.end))
 mcom = serialcom.SerialCom(sio)
 mid = [mid for mid in range(0, 253) if mcom.ping(mid)][0]
 mcom.create([mid])
@@ -94,6 +94,7 @@ testcases = [[(pt.ID, [2], [4])],
              [(pt.ALARM_LED, [127], [37])],
              [(pt.ALARM_SHUTDOWN, [127], [37])],
              [(pt.ANGLE_LIMITS, [10, 1000], [0, 1023]), (pt.ALARM_SHUTDOWN, [127], [37])],
+             [(pt.ANGLE_LIMITS, [10, 1000], [0, 1023]), (pt.MAX_TORQUE, [500], [512]), (pt.STATUS_RETURN_LEVEL, [1], [1])],
             ]
 
 for writes in testcases:

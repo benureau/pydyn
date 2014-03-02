@@ -252,15 +252,16 @@ class DynamixelController(threading.Thread):
         all_other_requests   = []
         all_read_requests    = []
 
-        for motor in self.motors:
 
+        for motor in self.motors:
             now = time.time()
             if self._mtimeouts.get(motor.id, now) <= now:
 
+                # copying the resquests (for thread safety)
                 motor.request_lock.acquire()
                 read_requests  = copy.copy(motor.read_requests)
-                write_requests = copy.copy(motor.write_requests)
                 motor.read_requests.clear()
+                write_requests = copy.copy(motor.write_requests)
                 motor.write_requests.clear()
                 motor.request_lock.release()
 
@@ -282,7 +283,6 @@ class DynamixelController(threading.Thread):
                 all_special_requests.append(special_requests)
                 all_read_requests.append(read_requests)
 
-        # copying the resquests (for thread safety)
 
         return all_pst_requests, all_special_requests, all_other_requests, all_read_requests
 
@@ -334,7 +334,7 @@ class DynamixelController(threading.Thread):
                 self.com.set(control, (m.id,), (values,))
                 if not control.ram:
                     now = time.time()
-                    self._mtimeouts[m.id] = max(self._mtimeouts.get(m.id, now), now)+0.020*len(control.sizes)
+                    self._mtimeouts[m.id] = max(self._mtimeouts.get(m.id, now), now)+0.030*len(control.sizes)
 
     def _handle_all_read_requests(self, all_read_requests):
         # handling the resquests

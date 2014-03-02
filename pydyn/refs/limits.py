@@ -97,34 +97,34 @@ def _check_bytes(value, desc):
 def _def_bounds(lower, upper, desc):
     def _bounds(value, modelclass=None, mode=None):
         if not lower <= value <= upper:
-            raise ValueError('value of {} is {}, but should be between {} and {}'.format(desc, value, lower, upper))
+            raise ValueError('value of {} is {}, but should be between {} and {}.'.format(desc, value, lower, upper))
     return _bounds
 
 def _def_bounds_unit(lower, upper, desc, unit):
     def _bounds(value, modelclass=None, mode=None):
         if not lower <= value <= upper:
-            raise ValueError('value of {} is {} {}, but should be between {} and {}'.format(desc, value, unit, lower, upper))
+            raise ValueError('value of {} is {} {}, but should be between {} and {}.'.format(desc, value, unit, lower, upper))
     return _bounds
 
 def _def_bounds_bytes(lower, upper, desc):
     def _bounds(value, modelclass=None, mode=None):
         _check_bytes(value, desc)
         if not lower <= value <= upper:
-            raise ValueError('{} value is {}, but should be between {} and {}'.format(desc, value, lower, upper))
+            raise ValueError('{} value is {}, but should be between {} and {}.'.format(desc, value, lower, upper))
     return _bounds
 
 def _def_oneof_bytes(choices, desc):
     def _bounds(value, modelclass=None, mode=None):
         _check_bytes(value, desc)
         if not value in choices:
-            raise ValueError('{} value is {}, but should be one of {}'.format(desc, value, choices))
+            raise ValueError('{} value is {}, but should be one of {}.'.format(desc, value, choices))
     return _bounds
 
 def _def_chain_bytes(control):
     assert len(control.parts) > 1
     def _bounds(values, modelclass=None, mode=None):
         if len(control.parts) != len(values):
-            raise ValueError('{} requires {} values, but {} was provided'.format(control.name, len(control.parts), values))
+            raise ValueError('{} requires {} values, but {} was provided.'.format(control.name, len(control.parts), values))
         for value, c in zip(values, control.parts):
             CHECK_BYTES[c](value, modelclass=modelclass, mode=mode)
     return _bounds
@@ -133,13 +133,13 @@ def _def_chain(control):
     assert len(control.parts) > 1
     def _bounds(values, modelclass=None, mode=None):
         if len(control.parts) != len(values):
-            raise ValueError('{} requires {} values, but {} was provided'.format(control.name, len(control.parts), values))
+            raise ValueError('{} requires {} values, but {} was provided.'.format(control.name, len(control.parts), values))
         for value, c in zip(values, control.parts):
             CHECK[c](value, modelclass=modelclass, mode=mode)
     return _bounds
 
 
-def _no_checks():
+def _no_checks(value, modelclass=None, mode=None):
     pass
 
 def _def_position_bytes(desc):
@@ -147,14 +147,14 @@ def _def_position_bytes(desc):
         _check_bytes(value, desc)
         max_pos = POSITION_RANGES[modelclass][0]
         if not 0 <= value <= max_pos:
-            raise ValueError('{} value is {}, but should be between {} and {}'.format(desc, value, 0.0, max_pos))
+            raise ValueError('{} value is {}, but should be between {} and {}.'.format(desc, value, 0.0, max_pos))
     return _bounds
 
 def _def_position(desc):
     def _bounds(value, modelclass=None, mode=None):
         max_pos = POSITION_RANGES[modelclass][1]/2.0
         if not -max_pos <= value <= max_pos:
-            raise ValueError('{} value is {} degrees, but should be between {} and {}'.format(desc, value, -max_pos, max_pos))
+            raise ValueError('{} value is {} degrees, but should be between {} and {} degrees.'.format(desc, value, -max_pos, max_pos))
     return _bounds
 
 def _def_speed_bytes(desc):
@@ -163,43 +163,43 @@ def _def_speed_bytes(desc):
         max_speed = SPEED_RANGES[modelclass][0]
         if mode == 'joint':
             if not 0 <= value <= 1023:
-                raise ValueError('{} value is {}, but should be between 0 and 1023 (joint mode)'.format(desc, value))
+                raise ValueError('{} value is {}, but should be between 0 and 1023 (joint mode).'.format(desc, value))
         else:
             if not 0 <= value <= 2047:
-                raise ValueError('{} value is {}, but should be between 0 and 2047 (wheel mode)'.format(desc, value))
+                raise ValueError('{} value is {}, but should be between 0 and 2047 (wheel mode).'.format(desc, value))
     return _bounds
 
 def _moving_speed(value, modelclass=None, mode=None):
     max_speed = SPEED_RANGES[modelclass][1]
     if mode == 'joint':
         if not 0.0 <= value <= max_speed:
-            raise ValueError('moving speed value is {} %, but should be between 0.0 and {} (joint mode)'.format(value, max_speed))
+            raise ValueError('moving speed value is {} %, but should be between 0.0 and {} % (joint mode).'.format(value, max_speed))
     else:
         if modelclass != 'MX' and mode == 'wheel':
             if not -100.0 <= value <= 100.0:
-                raise ValueError('speed value is {} %, but should be between -100.0 and 100.0 (wheel mode)'.format(value))
+                raise ValueError('speed value is {} %, but should be between -100.0 and 100.0 % (wheel mode).'.format(value))
         else:
             max_speed = SPEED_RANGES[modelclass][1]
             if not -max_speed <= value <= max_speed:
-                raise ValueError('speed value is {} degree per second, but should be between {} and {}'.format(value, -max_speed, max_speed))
+                raise ValueError('speed value is {} degree per second, but should be between {} and {} degree per second.'.format(value, -max_speed, max_speed))
 
 def _present_speed(value, modelclass=None, mode=None):
     if modelclass != 'MX' and mode == 'wheel':
         if not -100.0 <= value <= 100.0:
-            raise ValueError('speed value is {} %, but should be between -100.0 and 100.0 (wheel mode)'.format(value))
+            raise ValueError('speed value is {} %, but should be between -100.0 and 100.0 % (wheel mode).'.format(value))
     else:
         max_speed = SPEED_RANGES[modelclass][1]
         if not -max_speed <= value <= max_speed:
-            raise ValueError('speed value is {} degree per second, but should be between {} and {}'.format(value, -max_speed, max_speed))
+            raise ValueError('speed value is {} degree per second, but should be between {} and {} degrees.'.format(value, -max_speed, max_speed))
 
 def _punch(value, modelclass=None, mode=None):
-    if PUNCH_RANGES[1] <= value <= 100.0:
-        raise ValueError('punch value is {} %, but should be between {} and {}'.format(value, PUNCH_RANGES[1], 100.0))
+    if not PUNCH_RANGES[modelclass][1] <= value <= 100.0:
+        raise ValueError('punch value is {} %, but should be between {} and {} %.'.format(value, PUNCH_RANGES[modelclass][1], 100.0))
 
 def _punch_bytes(value, modelclass=None, mode=None):
     _check_bytes(value, 'punch (bytes)')
-    if PUNCH_RANGES[0] <= value <= 1023:
-        raise ValueError('punch (bytes) value is {}, but should be between {} and {}'.format(value, PUNCH_RANGES[0], 1023))
+    if not PUNCH_RANGES[modelclass][0] <= value <= 1023:
+        raise ValueError('punch (bytes) value is {}, but should be between {} and {}.'.format(value, PUNCH_RANGES[modelclass][0], 1023))
 
 def _def_compliance_margin(desc):
     def _bounds(value, modelclass=None, mode=None):
@@ -207,6 +207,7 @@ def _def_compliance_margin(desc):
         max_margin = max_deg*255/max_pos
         if 0.0 <= value <= max_margin:
             raise ValueError('{} value is {} degree, but should be between {} and {}'.format(desc, value, 0.0, max_margin))
+    return _bounds
 
 CHECK_BYTES = {
     pt.MODEL_NUMBER              : _def_bounds_bytes(  0, 4095, 'firware version (bytes)'),
@@ -264,7 +265,7 @@ CHECK = {
     pt.MODEL_NUMBER              : _def_bounds_bytes(  0, 4095, 'model number'),
     pt.FIRMWARE                  : _def_bounds_bytes(  0,  253, 'firware version'),
     pt.ID                        : _def_bounds_bytes(  0,  253, 'id '),
-    pt.BAUDRATE                  : _no_checks, #TODO
+    pt.BAUDRATE                  : _def_bounds_unit(7874, 1000000, 'baudrate', 'bps'), # FIXME for MX
     pt.RETURN_DELAY_TIME         : _def_bounds_unit(   0,  508, 'return delay time', 'us'),
     pt.CW_ANGLE_LIMIT            : _def_position(               'cw angle limit'),
     pt.CCW_ANGLE_LIMIT           : _def_position(               'ccw angle limit'),
