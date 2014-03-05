@@ -10,6 +10,8 @@ setup(name='pydyn',
       author_email='fabien.benureau+inria@gmail.com',
       url='https://bitbucket.org/humm/pydyn-fork',
       description='Python Library for Robot Control',
-      requires=['serial', 'pyftdi'],
+      requires=['serial', 'pyftdi',
+                'sphinx_rtd_theme' # for the doc
+               ],
       packages = find_packages(),
      )

@@ -5,27 +5,6 @@
 
 The motor classes all inherit from the :class:`DynamixelMotor` class. The end-user class use multiple inheritance to adapt to the model specificities.
 
-.. autoclass:: AXMotor
-   :show-inheritance:
-   :members:
-   :member-order: by source
-
-.. autoclass:: RXMotor
-   :show-inheritance:
-   :members:
-   :member-order: by source
-
-.. autoclass:: MXMotor
-   :show-inheritance:
-   :members:
-   :member-order: by source
-
-.. autoclass:: VXMotor
-   :show-inheritance:
-   :members:
-   :member-order: by source
-
-
 .. autoclass:: DynamixelMotor
    :members:
    :undoc-members:
@@ -59,4 +38,27 @@ This extra properties only apply to specific class of models.
    :members:
    :undoc-members:
    :member-order: by source
+
+Here, the different class of model support different extra values.
+
+.. autoclass:: AXMotor
+   :show-inheritance:
+   :members:
+   :member-order: by source
+
+.. autoclass:: RXMotor
+   :show-inheritance:
+   :members:
+   :member-order: by source
+
+.. autoclass:: MXMotor
+   :show-inheritance:
+   :members:
+   :member-order: by source
+
+.. autoclass:: VXMotor
+   :show-inheritance:
+   :members:
+   :member-order: by source
+
 
