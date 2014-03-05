@@ -210,7 +210,14 @@ class DynamixelController(threading.Thread):
         now = time.time()
         mids = [m.id for m in self.motors if self._mtimeouts.get(m.id, now) <= now]
         if len(mids) > 0:
-            self.com.get(pt.PRESENT_POS_SPEED_LOAD, [m.id for m in self.motors if self._mtimeouts.get(m.id, now) <= now])
+            try:
+                self.com.get(pt.PRESENT_POS_SPEED_LOAD, [m.id for m in self.motors if self._mtimeouts.get(m.id, now) <= now])
+            except self.com.TimeoutError as e:
+                if True or self.debug:
+                    print(e)
+                self.com.purge()
+
+
 
         # TODO: error policy class
         # if self.com == 'USB2DXL':
@@ -231,9 +238,50 @@ class DynamixelController(threading.Thread):
         # elif self.type == 'USB2AX' or self.type == 'VREP':
         #     positions = self.com.get_sync_positions([m.id for m in self.motors])
 
-    pst_set     = set(('GOAL_POSITION', 'MOVING_SPEED', 'TORQUE_LIMIT'))
-    special_set = set(('ID', 'MODE'))
+    pst_set     = set((pt.GOAL_POSITION, pt.MOVING_SPEED, pt.TORQUE_LIMIT))
+    special_set = set((pt.ID))
 
+    def _divide_motor_requests(self, motor):
+        """\
+        Divide a motor request between read, position/speed/torque_limit writes
+        and other writes.
+        If an eeprom write is present, only extract this one, and leave the other
+        requests on the motor.
+        """
+        write_rq     = OrderedDict()
+        write_pst_rq = OrderedDict()
+
+        now = time.time()
+        if self._mtimeouts.get(motor.id, now) > now:
+            return write_rq, write_pst_rq, OrderedDict()
+
+        motor.request_lock.acquire()
+        for control, value in motor.write_requests.items():
+            if not control.ram:
+                # we have a eeprom write to do, so we do it exclusively and set
+                # a timeout on the motor. Other request will be treated when
+                # the timeout clears.
+                write_rq[control] = value
+                motor.write_requests.pop(control)
+                motor.request_lock.release()
+                return write_rq, write_pst_rq, OrderedDict()
+
+        # if we're here, we don't have any eeprom write to do
+        # all request will be treated.
+        write_requests = copy.copy(motor.write_requests)
+        motor.write_requests.clear()
+        read_rq  = copy.copy(motor.read_requests)
+        motor.read_requests.clear()
+        motor.request_lock.release()
+
+
+        for control, value in write_requests.items():
+            if control in DynamixelController.pst_set:
+                write_pst_rq[control] = value
+            else:
+                write_rq[control] = value
+
+        return write_rq, write_pst_rq, read_rq
 
     def _divide_requests(self):
         """This function distributes requests into relevant groups.
@@ -246,45 +294,19 @@ class DynamixelController(threading.Thread):
 
             :return:  list of dictionary request
             """
-        # Dividing requests
-        all_pst_requests     = []
-        all_special_requests = []
-        all_other_requests   = []
-        all_read_requests    = []
+        write_pst_requests = []
+        write_requests     = []
+        read_requests      = []
 
 
         for motor in self.motors:
-            now = time.time()
-            if self._mtimeouts.get(motor.id, now) <= now:
+            m_write, m_pst, m_read = self._divide_motor_requests(motor)
 
-                # copying the resquests (for thread safety)
-                motor.request_lock.acquire()
-                read_requests  = copy.copy(motor.read_requests)
-                motor.read_requests.clear()
-                write_requests = copy.copy(motor.write_requests)
-                motor.write_requests.clear()
-                motor.request_lock.release()
+            write_requests.append(m_write)
+            write_pst_requests.append(m_pst)
+            read_requests.append(m_read)
 
-                pst_requests     = OrderedDict()
-                special_requests = OrderedDict()
-                other_requests   = OrderedDict()
-                read_requests    = OrderedDict()
-
-                for request_name, value in write_requests.items():
-                    if request_name in DynamixelController.pst_set:
-                        pst_requests[request_name] = value
-                    elif request_name in DynamixelController.special_set:
-                        special_requests[request_name] = value
-                    else:
-                        other_requests[request_name] = value
-
-                all_other_requests.append(other_requests)
-                all_pst_requests.append(pst_requests)
-                all_special_requests.append(special_requests)
-                all_read_requests.append(read_requests)
-
-
-        return all_pst_requests, all_special_requests, all_other_requests, all_read_requests
+        return write_requests, write_pst_requests, read_requests
 
     def _handle_all_pst_requests(self, all_pst_requests):
         # Handling pst requests (if need be)
@@ -297,24 +319,24 @@ class DynamixelController(threading.Thread):
         for m, pst_reqs in zip(self.motors, all_pst_requests):
             if len(pst_reqs) > 0:
 
-                if not m.compliant:
-                    pst_mids.append(m.id)
-                    pst_valuess.append((pst_reqs.get(pt.GOAL_POSITION, m.goal_position_raw),
-                                       pst_reqs.get(pt.MOVING_SPEED,  m.moving_speed_raw),
-                                       pst_reqs.get(pt.TORQUE_LIMIT,  m.torque_limit_raw)))
+                # if not m.compliant:
+                pst_mids.append(m.id)
+                pst_valuess.append((pst_reqs.get(pt.GOAL_POSITION, m.goal_position_bytes),
+                                    pst_reqs.get(pt.MOVING_SPEED,  m.moving_speed_bytes),
+                                    pst_reqs.get(pt.TORQUE_LIMIT,  m.torque_limit_bytes)))
 
-                elif m.mode == 'joint':
-                    st_mids.append(m.id)
-                    if pt.MOVING_SPEED in pst_reqs or pt.TORQUE_LIMIT in pst_reqs:
-                        st_valuess.append((pst_reqs.get(pt.MOVING_SPEED, m.moving_speed_raw),
-                                          pst_reqs.get(pt.TORQUE_LIMIT, m.torque_limit_raw)))
+                # elif m.mode == 'joint':
+                #     st_mids.append(m.id)
+                #     if pt.MOVING_SPEED in pst_reqs or pt.TORQUE_LIMIT in pst_reqs:
+                #         st_valuess.append((pst_reqs.get(pt.MOVING_SPEED, m.moving_speed_raw),
+                #                           pst_reqs.get(pt.TORQUE_LIMIT, m.torque_limit_raw)))
 
 
         if len(pst_valuess) > 0:
-            self.com.set(pt.GOAL_POS_SPEED_TORQUE, mids, pst_valuess)
+            self.com.set(pt.GOAL_POS_SPEED_TORQUE, pst_mids, pst_valuess)
 
         if len(st_valuess) > 0:
-            self.com.set(pt.GOAL_POS_SPEED_TORQUE, mids, st_valuess)
+            self.com.set(pt.GOAL_POS_SPEED_TORQUE, st_mids, st_valuess)
 
 
     def _handle_special_requests(self, all_special_requests):
@@ -325,20 +347,23 @@ class DynamixelController(threading.Thread):
                     self.com.change_id(motor.id, value)
 
 
-    def _handle_all_other_requests(self, all_other_requests):
+    def _handle_write_requests(self, write_requests):
         # handling the resquests
-        for m, requests in zip(self.motors, all_other_requests):
+        for m, requests in zip(self.motors, write_requests):
             for control, values in requests.items():
-                if not hasattr(values, '__iter__'):
-                    values = (values,)
-                self.com.set(control, (m.id,), (values,))
+                if control == pt.ID:
+                    self.com.change_id(motor.id, value)
+                else:
+                    if not hasattr(values, '__iter__'):
+                        values = (values,)
+                    self.com.set(control, (m.id,), (values,))
                 if not control.ram:
                     now = time.time()
-                    self._mtimeouts[m.id] = max(self._mtimeouts.get(m.id, now), now)+0.030*len(control.sizes)
+                    self._mtimeouts[m.id] = max(self._mtimeouts.get(m.id, now), now)+0.020*len(control.sizes)
 
-    def _handle_all_read_requests(self, all_read_requests):
+    def _handle_all_read_rq(self, all_read_rq):
         # handling the resquests
-        for m, requests in zip(self.motors, all_read_requests):
+        for m, requests in zip(self.motors, all_read_rq):
             for request_name, value in requests.items():
                 self.com.get((m.id,), request_name)
 
@@ -359,13 +384,12 @@ class DynamixelController(threading.Thread):
                 self._reading_motors()
 
                 # Dividing requests
-                all_pst_requests, all_special_requests, all_other_requests, all_read_requests = self._divide_requests()
+                write_requests, write_pst_requests, read_requests = self._divide_requests()
 
                 # Handling requests
-                self._handle_all_other_requests(all_other_requests)
-                self._handle_all_pst_requests(all_pst_requests)
-                self._handle_special_requests(all_special_requests)
-                self._handle_all_read_requests(all_special_requests)
+                self._handle_write_requests(write_requests)
+                self._handle_all_pst_requests(write_pst_requests)
+                self._handle_all_read_rq(read_requests)
             except self.com.CommunicationError:
                 print("error ignored")
 
@@ -411,9 +435,9 @@ class DynamixelControllerFullRam(DynamixelController):
                 print(e)
                 print('warning: communication error on motor {}'.format(m.id))
 
-    def _handle_all_read_requests(self, all_read_requests):
+    def _handle_all_read_rq(self, all_read_rq):
         """ Requests for reading ram are ignored in this class, since ram is continously updated. """
-        for m, requests in zip(self.motors, all_read_requests):
+        for m, requests in zip(self.motors, all_read_rq):
             for control in requests.keys():
                 if not control.ram:
                     self.com.get(control, m.id)

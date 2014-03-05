@@ -109,7 +109,7 @@ class Serial(object):
     """
 
     def __init__(self, port_path=None, device_type='Any', serial_id=None,
-                 baudrate=1000000, timeout=10, latency=1,
+                 baudrate=1000000, timeout=20, latency=1,
                  enable_pyftdi=True, **kwargs):
         """
         Create a serial port.

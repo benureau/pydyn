@@ -130,6 +130,10 @@ class SerialCom(object):
         except Exception:
             pass
 
+    def purge(self):
+        """Purge the IO port. Useful after an error."""
+        self.sio.purge()
+
     def __del__(self):
         """ Automatically closes the serial communication on destruction. """
         self.close()
@@ -239,6 +243,7 @@ class SerialCom(object):
                          the same as mids, each sequence shape should
                          match the control.sizes parameter.
         """
+        #print('set({})'.format(control.name))
         assert len(mids) > 0
         if len(mids) > 1 and sum(control.sizes) <= 6:
             self._send_sync_write_packet(control, mids, valuess)
@@ -253,6 +258,7 @@ class SerialCom(object):
         :param mids:     ids of motors. If more than one, and the io supports
                          it, do a sync write.
         """
+        #print('get({})'.format(control.name))
         assert len(mids) > 0
         if len(mids) == 1:
             self._send_read_packet(control, mids[0])
