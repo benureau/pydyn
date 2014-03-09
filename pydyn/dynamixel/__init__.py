@@ -1,1 +1,1 @@
-from .auto import create_controller
+from .hub import connect, disconnect, motors, controller
