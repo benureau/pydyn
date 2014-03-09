@@ -87,7 +87,7 @@ class RWMotorControl(ROMotorControl):
         instance._register_write(self.control, byte_value)
 
 
-class DynamixelMotor(object):
+class Motor(object):
     def __init__(self, memory):
 
         object.__setattr__(self, 'mmem', memory) # self.mmem = memory
@@ -159,7 +159,7 @@ class DynamixelMotor(object):
 
         :arg control:  the name of the value. See the :py:mod:`protocol <pydyn.refs.protocol>` module for the list of values.
         """
-        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_read)
+        control = self._str2ctrl(control, aliases=Motor.aliases_read)
 
         self.request_lock.acquire()
         if control in self.read_requests:
@@ -173,7 +173,7 @@ class DynamixelMotor(object):
 
         :arg name:  the name of the value. See the :py:mod:`protocol <pydyn.refs.protocol>` module for the list of values.
         """
-        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_write)
+        control = self._str2ctrl(control, aliases=Motor.aliases_write)
         setattr(self, control, value) # for bound checking, mode handling
 
     def _register_write(self, control, val): # TODO this is a bad name for ACTION/REGISTERED
@@ -189,7 +189,7 @@ class DynamixelMotor(object):
         Return True if a value is requested for reading but was not read yet.
         After the value was read, return False.
         """
-        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_read)
+        control = self._str2ctrl(control, aliases=Motor.aliases_read)
 
         self.request_lock.acquire()
         value = self.read_requests.get(control, False)
@@ -201,7 +201,7 @@ class DynamixelMotor(object):
         Return the value of the requested write, if it wasn't written yet.
         After the value was read, return None.
         """
-        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_write)
+        control = self._str2ctrl(control, aliases=Motor.aliases_write)
 
         self.request_lock.acquire()
         value = self.write_requests.get(control, False)
@@ -586,7 +586,7 @@ class DynamixelMotor(object):
 
     # MARK Extra motor properties
 
-# Here we don't inherit from DynamixelMotor - we do multiple inheritance (composition)
+# Here we don't inherit from Motor - we do multiple inheritance (composition)
 # instead that grant us more flexibility
 class ComplianceMarginSlopeExtra(object):
 
@@ -666,18 +666,18 @@ class GoalAccelerationExtra(object):
     goal_acceleration       =     RWMotorControl(pt.GOAL_ACCELERATION)
 
 
-class AXMotor(DynamixelMotor, ComplianceMarginSlopeExtra):
+class AXMotor(Motor, ComplianceMarginSlopeExtra):
     """AX-12 motors"""
     pass
 
-class RXMotor(DynamixelMotor, ComplianceMarginSlopeExtra):
+class RXMotor(Motor, ComplianceMarginSlopeExtra):
     """RX-28 and RX-64 motors"""
     pass
 
-class EXMotor(DynamixelMotor, ComplianceMarginSlopeExtra, SensedCurrentExtra):
+class EXMotor(Motor, ComplianceMarginSlopeExtra, SensedCurrentExtra):
     pass
 
-class MXMotor(DynamixelMotor, PIDExtra, CurrentExtra, GoalAccelerationExtra):
+class MXMotor(Motor, PIDExtra, CurrentExtra, GoalAccelerationExtra):
     """MX-28, MX-64 and MX-128 motors"""
     pass
 
@@ -690,6 +690,26 @@ class MX64Motor(MXMotor):
 class MX106Motor(MXMotor):
     pass
 
-class VXMotor(DynamixelMotor, PIDExtra):
+class VXMotor(Motor, PIDExtra):
     """VX-28, and VX-64 motors, used by the V-Rep simulation"""
     pass
+
+MOTOR_MODELS = {
+    'AX-12'   : AXMotor,
+    'AX-18'   : AXMotor,
+    'AX-12W'  : AXMotor,
+
+    'RX-10'   : RXMotor,
+    'RX-24F'  : RXMotor,
+    'RX-28'   : RXMotor,
+    'RX-64'   : RXMotor,
+
+    'MX-28'   : MXMotor,
+    'MX-64'   : MX64Motor,
+    'MX-106'  : MX106Motor,
+
+    'EX-106+' : EXMotor,
+
+    'VX-28'   : VXMotor,
+    'VX-64'   : VXMotor,
+}

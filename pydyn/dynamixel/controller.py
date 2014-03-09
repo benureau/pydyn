@@ -14,8 +14,6 @@ from . import memory
 from . import motor
 
 
-CONTROLLER_TYPE = ("USB2DXL", "USB2AX", "VREP")
-
 class DynamixelController(threading.Thread):
     """
     The Controller is in charge of handling the read and write request of the motors.
@@ -179,29 +177,9 @@ class DynamixelController(threading.Thread):
         mmems = self.com.create(motor_ids)
 
         for mmem in mmems:
-            m = DynamixelController.motormodel[mmem.model](mmem)
+            m = motor.MOTOR_MODELS[mmem.model](mmem)
             self.motors.append(m)
 
-
-    motormodel = {
-        'AX-12'   : motor.AXMotor,
-        'AX-18'   : motor.AXMotor,
-        'AX-12W'  : motor.AXMotor,
-
-        'RX-10'   : motor.RXMotor,
-        'RX-24F'  : motor.RXMotor,
-        'RX-28'   : motor.RXMotor,
-        'RX-64'   : motor.RXMotor,
-
-        'MX-28'   : motor.MXMotor,
-        'MX-64'   : motor.MX64Motor,
-        'MX-106'  : motor.MX106Motor,
-
-        'EX-106+' : motor.EXMotor,
-
-        'VX-28'   : motor.VXMotor,
-        'VX-64'   : motor.VXMotor,
-    }
 
     # MARK Handling Requests and Updating
 

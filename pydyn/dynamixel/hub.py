@@ -81,6 +81,9 @@ def connect(device_type = 'USB2Serial',
         print('Error; exiting.')
         exit(1)
 
+    if verbose:
+        print(OK + 'Connexion established: {}{}{}'.format(color.cyan, sio, color.end))
+
     mcom = serialcom.SerialCom(sio)
 
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
@@ -90,20 +93,17 @@ def connect(device_type = 'USB2Serial',
     uid = _ctrlcount
     _ctrlcount += 1
 
-    if verbose:
-        print(OK + 'Connexion established: {}{}{}'.format(color.cyan, sio, color.end))
-
     # discovering motors
     motor_ids = ctrl.discover_motors(range(min(motor_range),
                                            max(motor_range) + 1),
                                      verbose = verbose)
     if verbose:
-        print(OK + 'Scanning motor ids between {} and {}...   '.format(
+        print('{}Scanning motor ids between {} and {}...   '.format(OK,
                 min(motor_range), max(motor_range)))
 
     if len(motor_ids) == 0:
-        print (FAIL + 'No motor found. Verify connections, power, USB '
-               'dongle state, scan range.')
+        print ('{}No motor found. Verify connections, power, USB '
+               'dongle state, scan range.'.format(FAIL))
         return ctrl
     else:
         if verbose:
@@ -113,15 +113,15 @@ def connect(device_type = 'USB2Serial',
                               for m_id in motor_ids)))
 
     if verbose:
-        print (LOAD + 'Loading EEPROMs and RAMs...', end='\r'),
+        print ('{}Loading EEPROMs and RAMs...'.format(LOAD), end='\r'),
         sys.stdout.flush()
     ctrl.load_motors(motor_ids)
 
     if verbose:
-        print(OK + 'Loaded EEPROMs and RAMs.' + 3 * ' ')
-        print(OK + 'Models: '
-              + ', '.join(["%s%s%s" % (color.cyan, m.model, color.end)
-                           for m in ctrl.motors]))
+        print('{}Loaded EEPROMs and RAMs.   '.format(OK))
+        print('{}Models: {}'.format(OK,
+                ', '.join(['{}{}{}'.format(color.cyan, m.model, color.end)
+                           for m in ctrl.motors])))
 
     # staring control loop
     if start:
