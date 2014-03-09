@@ -8,7 +8,7 @@ class FakeCom(serialcom.SerialCom):
     def __init__(self, support_sync_read=False):
         self._fakemems = {}
         self._support_sync_read = support_sync_read
-        self.motormems = {}
+        self.mmems = {}
 
     def _add_motor(self, mid, model):
         assert 0 <= mid <= 253

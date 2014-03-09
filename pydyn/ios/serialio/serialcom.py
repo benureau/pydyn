@@ -117,7 +117,7 @@ class SerialCom(object):
 
         self._lock = threading.RLock()
 
-        self.motormems = {}
+        self.mmems = {}
 
     @property
     def support_sync_read(self):
@@ -223,7 +223,7 @@ class SerialCom(object):
 
         for mid in mids:
             mmem = memory.DynamixelMemory(mid)
-            self.motormems[mmem.id] = mmem
+            self.mmems[mmem.id] = mmem
             self.get(pt.EEPROM, [mid])
             self.get(pt.RAM,    [mid])
 
@@ -283,12 +283,12 @@ class SerialCom(object):
         :raises:  ValueError when the id is already taken
         """
         if (mid != new_mid and
-            (new_mid in self.motormems or self.ping(new_mid))):
+            (new_mid in self.mmems or self.ping(new_mid))):
             raise ValueError('id %d already used' % (new_mid))
 
         self._send_write_packet(pt.ID, mid, [new_mid])
 
-        self.motormems[new_mid] = self.motormems.pop(mid)
+        self.mmems[new_mid] = self.mmems.pop(mid)
 
     def get_status_return_level(self, mid):
         """
@@ -307,10 +307,10 @@ class SerialCom(object):
 
         try:
             status_return_level = self._send_read_packet(pt.STATUS_RETURN_LEVEL, mid)
-            self.motormems[mid][pt.STATUS_RETURN_LEVEL] = status_return_level
+            self.mmems[mid][pt.STATUS_RETURN_LEVEL] = status_return_level
         except TimeoutError as e:
             if self.ping(mid):
-                self.motormems[mid][pt.STATUS_RETURN_LEVEL] = 0
+                self.mmems[mid][pt.STATUS_RETURN_LEVEL] = 0
             else:
                 raise e
 
@@ -357,13 +357,13 @@ class SerialCom(object):
         """Update the memory of the motors"""
         offset = 0
         for size, value in zip(control.sizes, values):
-            self.motormems[mid][control.addr+offset] = value
+            self.mmems[mid][control.addr+offset] = value
             offset += size
-        self.motormems[mid].update() # could be more selective, but this would be useless optimization.
+        self.mmems[mid].update() # could be more selective, but this would be useless optimization.
 
     def _send_read_packet(self, control, mid):
         """Send a read packet and update memory if successful."""
-        if self.motormems[mid].status_return_level == 0:
+        if self.mmems[mid].status_return_level == 0:
             print(('warning, status_return_level of motor {} is at 0, '
                    'no reads possible').format(mid))
 
@@ -385,7 +385,7 @@ class SerialCom(object):
 
         write_packet = packet.InstructionPacket(mid, pt.WRITE_DATA, [control.addr] + params)
 
-        self._send_packet(write_packet, receive=self.motormems[mid].status_return_level == 2)
+        self._send_packet(write_packet, receive=self.mmems[mid].status_return_level == 2)
         self._update_memory(control, mid, values)
 
     def _send_sync_write_packet(self, control, mids, valuess):
