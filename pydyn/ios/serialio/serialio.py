@@ -274,7 +274,7 @@ class Serial(object):
             start = time.time()
             data = bytearray()
             while (len(data) < size and time.time()-start < self.timeout/1000.0):
-                data +=  bytearray(self._serial.read_data(size - len(data)))
+                data +=  bytearray(self._serial.read_data_bytes(size - len(data)))
                 time.sleep(0.0001)
             assert(len(data) <= size)
             return data
