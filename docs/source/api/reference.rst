@@ -1,5 +1,5 @@
-:mod:`pydyn` -- Reference API
-==============================
+Reference API
+=============
 
 .. toctree::
 

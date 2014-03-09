@@ -19,14 +19,28 @@ If the previous example worked for you out of the box, you can skip this version
 
 There are many diverse ways to connect dynamixel servos to motors.
 
-Given a motor set, we can access the motors directly by ``mset.motors``. We can rewrite the previous script using that:
+Accessing ``Motor`` instances
+-----------------------------
 
+Given a motor set, we can access the motors directly by ``mset.motors``. We can rewrite the previous script using that:
 
 .. code:: python
 
     import pydyn
     mset = pydyn.MotorSet()
-    mset.position += 10
+    for motor in mset.motors:
+        motor.position += 10
 
+To read the status of a motor and send orders to it, we use a simple attribute-based syntax :
 
+.. code:: python
 
+    import pydyn
+    mset = pydyn.MotorSet()
+
+    for motor in mset.motors:
+        motor.position = 0
+
+    time.sleep(1.0) # we wait for motor to get in position
+    for motor in mset.motors:
+        print(motor.position)
