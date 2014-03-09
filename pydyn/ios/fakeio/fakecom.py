@@ -54,6 +54,6 @@ class FakeCom(serialcom.SerialCom):
         self._update_memory(control, mid, values)
 
     def _send_sync_write_packet(self, control, mids, valuess):
-        for mid, values in zip(mid, valuess):
+        for mid, values in zip(mids, valuess):
             self._send_write_packet(control, mid, values)
 
