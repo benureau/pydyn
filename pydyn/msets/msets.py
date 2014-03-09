@@ -1,12 +1,12 @@
 import time
 
-from .. import dynamixel
+from ..dynamixel import hub
 
 class MotorSet(object):
 
     def __init__(self, **kwargs):
-        self.dyn  = dynamixel.create_controller(**kwargs)
-        self.motors = self.dyn.motors
+        self.dyn_uid  = hub.connect(**kwargs)
+        self.motors = hub.motors(self.dyn_uid)
         self._angle_ranges = None
         self.zero_pose = [0.0]*len(self.motors)
 
