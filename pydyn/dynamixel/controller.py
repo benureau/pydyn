@@ -151,8 +151,8 @@ class DynamixelController(threading.Thread):
 
         found_ids = []
         try:
-            found_ids = self.com.broadcast_ping()
-        except (AssertionError, AttributeError, IOError):
+            found_ids = self.com.ping_broadcast()
+        except (AssertionError, IOError):
             pass
 
         if True and found_ids == []:
@@ -364,8 +364,8 @@ class DynamixelController(threading.Thread):
     def _handle_all_read_rq(self, all_read_rq):
         # handling the resquests
         for m, requests in zip(self.motors, all_read_rq):
-            for request_name, value in requests.items():
-                self.com.get((m.id,), request_name)
+            for control, value in requests.items():
+                self.com.get(control, (m.id,))
 
 
     def run(self):
