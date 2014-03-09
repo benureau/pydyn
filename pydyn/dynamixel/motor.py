@@ -159,7 +159,7 @@ class DynamixelMotor(object):
 
         :arg control:  the name of the value. See the :py:mod:`protocol <pydyn.refs.protocol>` module for the list of values.
         """
-        control = self._str2ctrl(control, aliases=aliases_read)
+        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_read)
 
         self.request_lock.acquire()
         if control in self.read_requests:
@@ -173,7 +173,7 @@ class DynamixelMotor(object):
 
         :arg name:  the name of the value. See the :py:mod:`protocol <pydyn.refs.protocol>` module for the list of values.
         """
-        control = self._str2ctrl(control, aliases=aliases_write)
+        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_write)
         setattr(self, control, value) # for bound checking, mode handling
 
     def _register_write(self, control, val): # TODO this is a bad name for ACTION/REGISTERED
@@ -189,7 +189,7 @@ class DynamixelMotor(object):
         Return True if a value is requested for reading but was not read yet.
         After the value was read, return False.
         """
-        control = self._str2ctrl(control, aliases=aliases_read)
+        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_read)
 
         self.request_lock.acquire()
         value = self.read_requests.get(control, False)
@@ -201,7 +201,7 @@ class DynamixelMotor(object):
         Return the value of the requested write, if it wasn't written yet.
         After the value was read, return None.
         """
-        control = self._str2ctrl(control, aliases=aliases_write)
+        control = self._str2ctrl(control, aliases=DynamixelMotor.aliases_write)
 
         self.request_lock.acquire()
         value = self.write_requests.get(control, False)
@@ -276,7 +276,7 @@ class DynamixelMotor(object):
                  until you change the connection baudrate too.
     """
     baudrate_bytes = RWByteMotorControl(pt.BAUDRATE, doc=_doc_baudrate_bytes)
-    baudrate       = RWByteMotorControl(pt.BAUDRATE, doc=_doc_baudrate)
+    baudrate       = RWMotorControl(pt.BAUDRATE, doc=_doc_baudrate)
 
     # MARK Return Delay Time
     return_delay_time_bytes = RWByteMotorControl(pt.RETURN_DELAY_TIME)
@@ -315,7 +315,7 @@ class DynamixelMotor(object):
 
     @ccw_angle_limit.setter
     def ccw_angle_limit(self, val):
-        self.ccw_angle_limit_bytes = conv.ccw_angle_limit_2bytes(val, self.mmem)
+        self.ccw_angle_limit_bytes = conv.ccw_angle_limit_2bytes(val, modelclass=self.modelclass, mode=self.mode)
 
     @ccw_angle_limit_bytes.setter
     def ccw_angle_limit_bytes(self, val):
@@ -337,7 +337,7 @@ class DynamixelMotor(object):
 
     @angle_limits.setter
     def angle_limits(self, val):
-        self.angle_limits_bytes = conv.cw_angle_limit_2bytes(val[0], self.mmem), conv.ccw_angle_limit_2bytes(val[1], self.mmem)
+        self.angle_limits_bytes = conv.cw_angle_limit_2bytes(val[0], modelclass=self.modelclass, mode=self.mode), conv.ccw_angle_limit_2bytes(val[1], modelclass=self.modelclass, mode=self.mode)
 
     @angle_limits_bytes.setter
     def angle_limits_bytes(self, val):
