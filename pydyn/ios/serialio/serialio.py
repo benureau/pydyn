@@ -27,7 +27,7 @@ class PortNotFoundError(Exception):
         self.serial_id = serial_id
 
 USB_DEVICES    = {'USB2Serial', 'USB2Dynamixel', 'USB2AX', 'CM-513', 'CM-700',
-                  'CM-900', 'OpenCM9.04', 'CM-100', 'CM-100A'}
+                  'CM-900', 'OpenCM9.04', 'CM-100', 'CM-100A', 'USB2Serial+CM-5', 'USB2Serial+CM-510'}
 SERIAL_DEVICES = {'SerialPort', 'CM-5', 'CM-510'}
 
 FTDI_VIDPID = ((0x0403, 0x6001), # ft232am, ft232bm, ft232r
@@ -172,7 +172,8 @@ class Serial(object):
             self.port = port_desc['port']
 
 
-        if device_type in ['CM-5', 'CM-510']:
+        if device_type in ['USB2Serial+CM-5', 'USB2Serial+CM-510','CM-5', 'CM-510']:
+            print('tossmode')
             self._toss_mode()
 
     def __repr__(self):
@@ -199,7 +200,9 @@ class Serial(object):
     @timeout.setter
     def timeout(self, val):
         """Set the read timeout (not the write one)"""
-        if round(val) - val != 0.0:
+        if val == 0:
+            val = float('inf')
+        elif round(val) - val != 0.0:
             raise ValueError('timeout are exprimed integer values of ms (you provided {}).'.format(val))
         if self._ftdi_ctrl:
             self._serial.timeouts = (val, self._serial.timeouts[1])
@@ -265,8 +268,16 @@ class Serial(object):
         If a timeout is set it may return less characters as requested. With no timeout
         it will block until the requested number of bytes is read.
         """
+        assert type(size) == int
         if self._ftdi_ctrl:
-            return self._serial.read_data(size)
+            # return self._serial.read_data(size) # does not honor timeouts
+            start = time.time()
+            data = bytearray()
+            while (len(data) < size and time.time()-start < self.timeout/1000.0):
+                data +=  bytearray(self._serial.read_data(size - len(data)))
+                time.sleep(0.0001)
+            assert(len(data) <= size)
+            return data
         else:
             return self._serial.read(size=size)
 

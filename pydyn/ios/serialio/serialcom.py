@@ -176,7 +176,6 @@ class SerialCom(object):
                     reports motors that don't exist. This can be mitigated by doing
                     broadcast_ping() twice and using the second result.
         """
-
         timeout_bak = self.sio.timeout
         try:
             self.sio.timeout = 400
@@ -189,10 +188,10 @@ class SerialCom(object):
             motors = []
             for i in range(int(len(data)/6)):
                 packet.StatusPacket(data[6*i:6*(i+1)])
-                motors.append(ord(data[6*i+2]))
+                motors.append(data[6*i+2])
         except (packet.PacketError, AssertionError):
-            #import traceback
-            #traceback.print_exc()
+            import traceback
+            traceback.print_exc()
             raise IOError
         finally:
             self.sio.timeout = timeout_bak
@@ -243,7 +242,7 @@ class SerialCom(object):
                          the same as mids, each sequence shape should
                          match the control.sizes parameter.
         """
-        #print('set({})'.format(control.name))
+        #print('set({}, {}, {})'.format(control.name, mids, valuess))
         assert len(mids) > 0
         if len(mids) > 1 and sum(control.sizes) <= 6:
             self._send_sync_write_packet(control, mids, valuess)
@@ -411,7 +410,7 @@ class SerialCom(object):
         """
         Transform parameters of a status packet in one and two bytes values
         """
-        assert sum(control.sizes) == len(params), "{} should have length {} but has {}".format(list(values), sum(control.sizes), len(values))
+        assert sum(control.sizes) == len(params), "{} should have length {} but has {}".format(list(params), sum(control.sizes), len(params))
         itp, values = params.__iter__(), []
         for s in control.sizes:
             values.append(next(itp))
