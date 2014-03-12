@@ -45,7 +45,7 @@ class DynamixelMemory(object):
         :param memory: if given, initialize the memory with that data.
         """
         if memory is not None:
-            self._memory_data = memory
+            self._memory_data = list(memory)
         else:
             self._memory_data = [None]*74
 

@@ -398,7 +398,7 @@ class SerialCom(object):
                     [mid]+self._to_params(control, values)
                     for mid, values in zip(mids, valuess)))
 
-        sync_write_packet = packet.InstructionPacket(pt.BROADCAST, pt.SYNC_WRITE, [control.addr]+list(params))
+        sync_write_packet = packet.InstructionPacket(pt.BROADCAST, pt.SYNC_WRITE, [control.addr, sum(control.sizes)]+list(params))
         self._send_packet(sync_write_packet, receive=False)
         for mid, values in zip(mids, valuess):
             self._update_memory(control, mid, values)
