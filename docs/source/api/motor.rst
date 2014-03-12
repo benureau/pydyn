@@ -5,7 +5,7 @@
 
 The motor classes all inherit from the :class:`DynamixelMotor` class. The end-user class use multiple inheritance to adapt to the model specificities.
 
-.. autoclass:: DynamixelMotor
+.. autoclass:: Motor
    :members:
    :undoc-members:
    :member-order: bysource
