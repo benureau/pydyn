@@ -73,5 +73,5 @@ if __name__ == '__main__':
     for i in range(256*256):
         mr.append(i)
 
-    print "{:.9f}".format(mr[0][1])
-    print "{:.9f}".format(mr[-1][1])
+    print("{:.9f}".format(mr[0][1]))
+    print("{:.9f}".format(mr[-1][1]))

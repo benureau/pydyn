@@ -1,7 +1,7 @@
 
-import motionctrl
-import tfsingle
-import tftriple
+from . import motionctrl
+from . import tfsingle
+from . import tftriple
 
 from ..import dynamixel
 
