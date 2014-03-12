@@ -1,9 +1,11 @@
 
-from pyftdi.pyftdi.ftdi import *
+from pyftdi.pyftdi import ftdi
 vps=[(0x0403,0x6001)]
-devs=Ftdi.find_all(vps)
+devs=ftdi.Ftdi.find_all(vps)
 print devs
 
-serial = Ftdi()
-serial = serial.open(*devs[0])
+pid, vid, serial_id, interface, description = devs[0]
+
+serial = ftdi.Ftdi()
+serial.open(pid, vid, interface, serial=serial_id, description=description)
 serial.close()

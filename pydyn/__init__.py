@@ -1,4 +1,4 @@
-from . import robot
-from . import dynamixel
-from .dynamixel import enable_vrep
+from . import color
 from .msets import MotorSet
+
+from dynamixel.hub import connect, disconnect, motors, controller

@@ -1,111 +1,62 @@
-import time
-import numpy as np
-
-from .. import dynamixel
+from ..dynamixel import hub
 
 class MotorSet(object):
 
-    def __init__(self, motor_range=(0, 253), verbose=False, serial_id=None):
-        self.dyn  = dynamixel.create_controller(motor_range = motor_range,
-                                                verbose = verbose,
-                                                serial_id=serial_id)
-        self.motors = self.dyn.motors
-        self._angle_ranges = None
-        self.zero_pose = [0.0]*len(self.motors)
+    def __init__(self, motors=None, n=1, **kwargs):
+        """Instanciate a motor set.
 
-    def close(self):
-        pass
+        :param motors:  list of Motor instances. If None, will try to detect
+                        devices, instanciate controllers and load motors.
+        :param n:       the number of controller to instanciate. Has no effect
+                        if ``motors`` is not None.
+        """
+        object.__setattr__(self, 'motors', motors)
+        if self.motors is None:
+            dyn_uid  = hub.connect(**kwargs) # TODO treat n
+            object.__setattr__(self, 'motors', hub.motors(dyn_uid))
 
-    @property
-    def angle_ranges(self):
-        return self._angle_ranges
+    def __getattr__(self, name):
+        if not any(hasattr(m, name) for m in self.motors):
+            raise AttributeError("MotorSet has no attribute '{}'".format(name))
+        return tuple(getattr(m, name) for m in self.motors)
 
-    @angle_ranges.setter
-    def angle_ranges(self, rbounds):
-        assert len(rbounds) == len(self.motors)
-        self._angle_ranges = tuple((min(zp+1, lr), min(299-zp, hr)) for (lr, hr), zp in zip(rbounds, self.zero_pose))
+    def __setattr__(self, name, values):
+        if hasattr(self.__class__, name):
+            object.__setattr__(self, name, values)
+            return
+        if not any(hasattr(m, name) for m in self.motors):
+            raise AttributeError("MotorSet has no attribute '{}'".format(name))
 
-    def _clip(self, pose):
-        if self._angle_ranges is not None:
-            return np.array([max(min(p, zp+hr), zp-lr) for p, zp, (lr, hr) in zip(pose, self.zero_pose, self.angle_ranges)])
-        else:
-            return pose
+        if not hasattr(values, '__iter__'):
+            values = [values for m in self.motors]
+        failcount = 0
+        for m, val in zip(self.motors, values):
+            try:
+                setattr(m, name, val)
+            except AttributeError:
+                failcount += 1
 
-    @property
-    def fps(self):
-        return self.dyn.fps()
-
-    def go_to(self, pose, margin = 1.5, timeout = 10.0):
-        self.pose = pose
-        start = time.time()
-        while max(abs(sp - p) for sp, p in zip(self.pose, pose)) > margin and time.time()-start < timeout:
-            time.sleep(0.01)
-        return np.array([p - sp for sp, p in zip(self.pose, pose)])
-
-    @property
-    def pose(self):
-        return np.array([m.position - zp for m, zp in zip(self.motors, self.zero_pose)])
-
-    @pose.setter
-    def pose(self, _pose):
-        #print("bla" ,np.array(_pose) + self.zero_pose)
-        #print("blu" ,self._clip(np.array(_pose) + self.zero_pose))
-        for m, p in zip(self.motors, self._clip(np.array(_pose) + self.zero_pose)):
-            m.position = p
-
-    @property
-    def max_speed(self):
-        return np.array([m.speed for m in self.motors])
-
-    @max_speed.setter
-    def max_speed(self, _speed):
-        for m in self.motors:
-            m.speed = _speed
-
-    @property
-    def compliant(self):
-        return [m.compliant for m in self.motors]
-
-    @compliant.setter
-    def compliant(self, val):
-        for m in self.motors:
-            m.compliant = val
-
-    @property
-    def torque_limit(self):
-        return [m.torque_limit for m in self.motors]
-
-    @torque_limit.setter
-    def torque_limit(self, val):
-        for m in self.motors:
-            m.torque_limit = val
-
-    @property
-    def max_torque(self):
-        return [m.max_torque for m in self.motors]
-
-    @max_torque.setter
-    def max_torque(self, val):
-        for m in self.motors:
-            m.max_torque = val
-
-    @property
-    def angle_limits(self):
-        return [m.max_torque for m in self.motors]
-
-    @max_torque.setter
-    def angle_limits(self, val):
-        assert len(self.motors) == len(val)
-        for m, v_i in zip(self.motors, val):
-            m.angle_limits = v_i
-
+        if failcount == len(self.motors):
+            raise AttributeError("MotorSet can't set attribute '{}'".format(name))
 
     @property
     def zero_pose(self):
         return self._zero_pose
 
     @zero_pose.setter
-    def zero_pose(self, val):
-        assert all(p>=0 for p in val)
-        self._zero_pose = np.array(val)
+    def zero_pose(self, values):
+        assert len(values) == len(self.motors)
+        if not hasattr(values, '__iter__'):
+            values = [values for m in self.motors]
+        object.__setattr__(self, '_zero_pose', values)
 
+    @property
+    def pose(self):
+        return tuple(m.position - zp for m, zp in zip(self.motors, self.zero_pose))
+
+    @pose.setter
+    def pose(self, values):
+        if not hasattr(values, '__iter__'):
+            values = [values for m in self.motors]
+        for m, zp, p in zip(self.motors, self.zero_pose, values):
+            m.position = p + zp

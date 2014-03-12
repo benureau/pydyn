@@ -1,4 +1,4 @@
-import debugenv # only to debug local (not installed) pydyn version
+import env # only to debug local (not installed) pydyn version
 
 import sys
 

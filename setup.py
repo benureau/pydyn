@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(name='pydyn',
-      version='0.2.0',
-      author=('Haylee Fogg, Olivier Mangin, Matthieu Lapeyre, Pierre Rouanet,'
-              'Fabien Benureau'),
+      version='0.9.1',
+      author=', '.join(['Fabien Benureau', 'Pierre Rouanet', 'Matthieu Lapeyre',
+              'Olivier Mangin', 'Haylee Fogg']
+             ),
       author_email='fabien.benureau+inria@gmail.com',
       url='https://bitbucket.org/humm/pydyn-fork',
       description='Python Library for Robot Control',
-      requires=['serial'],
-      packages = ['pydyn', 'pydyn.robot', 'pydyn.msets', 'pydyn.dynamixel'],
-      )
+      requires=['serial', 'pyftdi',
+                'sphinx_rtd_theme' # for the doc
+               ],
+      packages = find_packages(),
+     )
