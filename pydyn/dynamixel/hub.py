@@ -30,6 +30,7 @@ def disconnect(uid):
 
 def controller(uid):
     """Return the controller with the given uid."""
+    assert type(uid) == int
     try:
         return _controllers[uid]
     except KeyError:
@@ -47,7 +48,8 @@ def connect(device_type = 'USB2Serial',
             verbose     = True,
             motor_range = (0, 253),
             enable_pyftdi = True,
-            start       = True
+            start       = True,
+            latency     = 1
            ):
     """
     Guess interface, scans it and configure controller.
@@ -73,6 +75,7 @@ def connect(device_type = 'USB2Serial',
                                 serial_id=serial_id,
                                  baudrate=baudrate,
                                   timeout=timeout,
+                                  latency=latency,
                             enable_pyftdi=enable_pyftdi)
     except serialio.PortNotFoundError as e:
         if verbose:
@@ -104,7 +107,7 @@ def connect(device_type = 'USB2Serial',
     if len(motor_ids) == 0:
         print ('{}No motor found. Verify connections, power, USB '
                'dongle state, scan range.'.format(FAIL))
-        return ctrl
+        return uid
     else:
         if verbose:
             print(OK + '{} motor(s) found: {}'.format(
