@@ -1,4 +1,4 @@
-import debugenv # only to debug local (not installed) pydyn version
+import env # only to debug local (not installed) pydyn version
 
 import sys, time
 import pydyn.dynamixel as dyn
@@ -14,8 +14,8 @@ print '\nMaking motor compliant... ',
 sys.stdout.flush()
 
 for m in ctrl.motors:
-    #m.request_write('compliant', True)
     m.compliant = True
+    m.torque_limit = 0.0
 
 ctrl.wait(2)
 print 'done'

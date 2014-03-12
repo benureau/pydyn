@@ -7,7 +7,7 @@ from pydyn.ios.serialio import serialio, serialcom
 from pydyn import color
 
 
-sio = serialio.Serial(device_type='USB2Serial', latency=1, timeout=0)
+sio = serialio.Serial(device_type='USB2Serial', latency=1, timeout=2)
 print('I/O open on {}{}{}'.format(color.cyan, sio, color.end))
 mcom = serialcom.SerialCom(sio)
 mid = [mid for mid in range(0, 253) if mcom.ping(mid)][0]
@@ -74,10 +74,10 @@ def test_blackout(writes, dur):
         mcom.get(pt.PRESENT_POS_SPEED_LOAD, [mid])
 
 
-id_def       = mcom.motormems[mid][pt.ID]
-max_temp_def = mcom.motormems[mid][pt.HIGHEST_LIMIT_TEMPERATURE]
-min_volt_def = mcom.motormems[mid][pt.LOWEST_LIMIT_VOLTAGE]
-max_volt_def = mcom.motormems[mid][pt.HIGHEST_LIMIT_VOLTAGE]
+id_def       = mcom.mmems[mid][pt.ID]
+max_temp_def = mcom.mmems[mid][pt.HIGHEST_LIMIT_TEMPERATURE]
+min_volt_def = mcom.mmems[mid][pt.LOWEST_LIMIT_VOLTAGE]
+max_volt_def = mcom.mmems[mid][pt.HIGHEST_LIMIT_VOLTAGE]
 
 testcases = [[(pt.ID, [2], [4])],
              [(pt.CCW_ANGLE_LIMIT, [15], [2])],
