@@ -6,4 +6,4 @@ Reference API
     controller.rst
     motor.rst
     protocol.rst
-    auto.rst
+    hub.rst
