@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>controller – Controller &mdash; pydyn 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:'./',
+        VERSION:'0.1',
+        COLLAPSE_INDEX:false,
+        FILE_SUFFIX:'.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+    <link rel="top" title="pydyn 0.1 documentation" href="index.html"/> 
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="icon icon-home"> pydyn</a>
+        <form class="wy-form" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search docs" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="tuts/highlevel.html">High-level API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tuts/highlevel.html#get-a-working-connection">Get a Working Connection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuts/highlevel.html#accessing-motor-instances">Accessing <tt class="docutils literal"><span class="pre">Motor</span></tt> instances</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tuts/understand_controller.html">Understanding the Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tuts/lowlevel.html">Tinkering with the Low-level Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/reference.html">Reference API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/controller.html"><tt class="docutils literal"><span class="pre">controller</span></tt> &#8211; Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/motor.html"><tt class="docutils literal"><span class="pre">motor</span></tt> &#8211; Motor class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/protocol.html"><tt class="docutils literal"><span class="pre">protocol</span></tt> &#8211; Protocol module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/hub.html"><tt class="docutils literal"><span class="pre">hub</span></tt> &#8211; Discover and Load Motors</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top">
+        <i data-toggle="wy-nav-top" class="icon icon-reorder"></i>
+        <a href="/">pydyn</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <ul class="wy-breadcrumbs">
+  <li><a href="index.html">Docs</a> &raquo;</li>
+  <li><a href=""><tt class="docutils literal"><span class="pre">controller</span></tt> &#8211; Controller</a></li>
+  
+</ul>
+<hr/>
+
+          
+  <div class="section" id="module-pydyn.dynamixel.controller">
+<span id="controller-controller"></span><h1><tt class="xref py py-mod docutils literal"><span class="pre">controller</span></tt> &#8211; Controller<a class="headerlink" href="#module-pydyn.dynamixel.controller" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pydyn.dynamixel.controller.DynamixelController">
+<em class="property">class </em><tt class="descname">DynamixelController</tt><big>(</big><em>motorcom</em>, <em>freq=60</em>, <em>debug=False</em><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></p>
+<p>The Controller is in charge of handling the read and write request of the motors.
+It is not a data conduit, it merely call the io function that update the hardware
+and the motor cached memory. It does not access the content of the motors memory.</p>
+<p>The Controller is also responsible for instanciating Motor instances.</p>
+<p>The Controller is not responsible for instanciating the motor communication object,
+it expects a functionnal instance.</p>
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>motorcom</em>, <em>freq=60</em>, <em>debug=False</em><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>motorcom</strong> &#8211; motor communication object</li>
+<li><strong>freq</strong> &#8211; the target frequence for refreshing values in Hz.</li>
+<li><strong>debug</strong> &#8211; if True, displays debug info on the controller behavior.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.close">
+<tt class="descname">close</tt><big>(</big><em>immediately=True</em><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the serial connection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>immediately</strong> &#8211; if False, wait two additional loops to purge the last orders</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pydyn.dynamixel.controller.DynamixelController.fps">
+<tt class="descname">fps</tt><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.fps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of loop per second over the last 2 seconds</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pydyn.dynamixel.controller.DynamixelController.freq">
+<tt class="descname">freq</tt><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.freq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Target frequence of the loops.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.load_motors">
+<tt class="descname">load_motors</tt><big>(</big><em>motor_ids</em><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.load_motors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instanciate a set of motors</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.pause">
+<tt class="descname">pause</tt><big>(</big><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.pause" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the looping</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pydyn.dynamixel.controller.DynamixelController.period">
+<tt class="descname">period</tt><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as freq, but inverse.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.restart">
+<tt class="descname">restart</tt><big>(</big><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause and resume the looping</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.resume">
+<tt class="descname">resume</tt><big>(</big><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resume the looping after a pause.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the thread after the end of the current loop</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pydyn.dynamixel.controller.DynamixelController.wait">
+<tt class="descname">wait</tt><big>(</big><em>loops</em><big>)</big><a class="headerlink" href="#pydyn.dynamixel.controller.DynamixelController.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait a number of loops. Useful to wait before a change is applied to the motors.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          <footer>
+  
+
+  <hr/>
+
+  <p>
+      &copy; Copyright 2012, Fabien Benureau and Clement Moulin-Frier.
+  </p>
+
+  <a href="https://www.github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="http://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+</body>
+</html>

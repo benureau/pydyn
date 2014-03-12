@@ -1,0 +1,181 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>High-level API &mdash; pydyn 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:'../',
+        VERSION:'0.1',
+        COLLAPSE_INDEX:false,
+        FILE_SUFFIX:'.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+    <link rel="top" title="pydyn 0.1 documentation" href="../index.html"/>
+        <link rel="next" title="Understanding the Controller" href="understand_controller.html"/>
+        <link rel="prev" title="Welcome to the pydyn documentation" href="../index.html"/> 
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../index.html" class="icon icon-home"> pydyn</a>
+        <form class="wy-form" action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search docs" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix">
+        
+        
+            <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">High-level API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#get-a-working-connection">Get a Working Connection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#accessing-motor-instances">Accessing <tt class="docutils literal"><span class="pre">Motor</span></tt> instances</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="understand_controller.html">Understanding the Controller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel.html">Tinkering with the Low-level Communication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/reference.html">Reference API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/controller.html"><tt class="docutils literal"><span class="pre">controller</span></tt> &#8211; Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/motor.html"><tt class="docutils literal"><span class="pre">motor</span></tt> &#8211; Motor class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/protocol.html"><tt class="docutils literal"><span class="pre">protocol</span></tt> &#8211; Protocol module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/hub.html"><tt class="docutils literal"><span class="pre">hub</span></tt> &#8211; Discover and Load Motors</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top">
+        <i data-toggle="wy-nav-top" class="icon icon-reorder"></i>
+        <a href="/">pydyn</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <ul class="wy-breadcrumbs">
+  <li><a href="../index.html">Docs</a> &raquo;</li>
+  <li><a href="">High-level API</a></li>
+  
+</ul>
+<hr/>
+
+          
+  <div class="section" id="high-level-api">
+<span id="id1"></span><h1>High-level API<a class="headerlink" href="#high-level-api" title="Permalink to this headline">¶</a></h1>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pydyn</span>
+<span class="n">mset</span> <span class="o">=</span> <span class="n">pydyn</span><span class="o">.</span><span class="n">MotorSet</span><span class="p">()</span>
+<span class="n">mset</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>In the high-level API, there are only motors and group of motor called <cite>motor sets</cite>. Anything done on a motor set is done on all the motors of the motor set. In the preceding example, we created a motorset that detected and loaded all connected motors, and then increased all the motor positions by 10 degrees.</p>
+<div class="section" id="get-a-working-connection">
+<h2>Get a Working Connection<a class="headerlink" href="#get-a-working-connection" title="Permalink to this headline">¶</a></h2>
+<p>If the previous example worked for you out of the box, you can skip this version. If it does not, read on.</p>
+<p>There are many diverse ways to connect dynamixel servos to motors.</p>
+</div>
+<div class="section" id="accessing-motor-instances">
+<h2>Accessing <tt class="docutils literal"><span class="pre">Motor</span></tt> instances<a class="headerlink" href="#accessing-motor-instances" title="Permalink to this headline">¶</a></h2>
+<p>Given a motor set, we can access the motors directly by <tt class="docutils literal"><span class="pre">mset.motors</span></tt>. We can rewrite the previous script using that:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pydyn</span>
+<span class="n">mset</span> <span class="o">=</span> <span class="n">pydyn</span><span class="o">.</span><span class="n">MotorSet</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">motor</span> <span class="ow">in</span> <span class="n">mset</span><span class="o">.</span><span class="n">motors</span><span class="p">:</span>
+    <span class="n">motor</span><span class="o">.</span><span class="n">position</span> <span class="o">+=</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>To read the status of a motor and send orders to it, we use a simple attribute-based syntax :</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pydyn</span>
+<span class="n">mset</span> <span class="o">=</span> <span class="n">pydyn</span><span class="o">.</span><span class="n">MotorSet</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">motor</span> <span class="ow">in</span> <span class="n">mset</span><span class="o">.</span><span class="n">motors</span><span class="p">:</span>
+    <span class="n">motor</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="c"># we wait for motor to get in position</span>
+<span class="k">for</span> <span class="n">motor</span> <span class="ow">in</span> <span class="n">mset</span><span class="o">.</span><span class="n">motors</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">motor</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          <footer>
+  
+    <div class="rst-footer-buttons">
+      
+        <a href="understand_controller.html" class="btn btn-neutral float-right" title="Understanding the Controller"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral" title="Welcome to the pydyn documentation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <p>
+      &copy; Copyright 2012, Fabien Benureau and Clement Moulin-Frier.
+  </p>
+
+  <a href="https://www.github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="http://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+</body>
+</html>
