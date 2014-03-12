@@ -45,6 +45,7 @@ class MotorSet(object):
 
     @zero_pose.setter
     def zero_pose(self, values):
+        assert len(values) == len(self.motors)
         if not hasattr(values, '__iter__'):
             values = [values for m in self.motors]
         object.__setattr__(self, '_zero_pose', values)
