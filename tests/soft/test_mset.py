@@ -6,7 +6,7 @@ import time
 import env
 from pydyn.ios.fakeio import fakecom
 from pydyn.dynamixel import controller
-from pydyn.msets.mset import MotorSet
+from pydyn.msets.msets import MotorSet
 
 class TestFake(unittest.TestCase):
 
