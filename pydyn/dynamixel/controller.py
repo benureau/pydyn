@@ -26,7 +26,7 @@ class DynamixelController(threading.Thread):
     it expects a functionnal instance.
     """
 
-    def __init__(self, motorcom, freq=60, debug=False):
+    def __init__(self, motorcom, broadcast_ping=False, freq=60, debug=False):
         """
         :arg motorcom:  motor communication object
         :arg freq:      the target frequence for refreshing values in Hz.
@@ -40,6 +40,7 @@ class DynamixelController(threading.Thread):
         self.freq = freq
         self.fps_history = deque(maxlen = 3*freq)
         self.framecount = 0
+        self.broadcast_ping = broadcast_ping
 
         self.com = motorcom
         self.motors = []
@@ -148,12 +149,13 @@ class DynamixelController(threading.Thread):
         self._ctrllock.acquire()
 
         found_ids = []
-        try:
-            found_ids = self.com.ping_broadcast()
-        except (AssertionError, IOError):
-            pass
+        if self.broadcast_ping:
+            try:
+                found_ids = self.com.ping_broadcast()
+            except (AssertionError, IOError):
+                pass
 
-        if True and found_ids == []:
+        if found_ids == []:
             for m_id in motor_ids:
                 if verbose:
                     print('  [{}SCAN{}] Scanning motor ids between {} and {} : {}'.format(color.iblue, color.end,

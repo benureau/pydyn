@@ -108,9 +108,14 @@ class Serial(object):
     Offer a pyserial-like API that switch to pyftdi when the hardware supports it.
     """
 
-    def __init__(self, port_path=None, device_type='Any', serial_id=None,
-                 baudrate=1000000, timeout=20, latency=1,
-                 enable_pyftdi=True, **kwargs):
+    def __init__(self, port_path=None,
+                     device_type='Any',
+                       serial_id=None,
+                        baudrate=1000000,
+                         timeout=20,
+                         latency=1,
+                   enable_pyftdi=True,
+                 **kwargs):
         """
         Create a serial port.
 
@@ -171,6 +176,10 @@ class Serial(object):
                                          timeout=timeout/1000.0, **kwargs)
             self.port = port_desc['port']
 
+        self.purge()
+        time.sleep(0.01)
+        self.purge()
+        time.sleep(0.01)
 
         if device_type in ['USB2Serial+CM-5', 'USB2Serial+CM-510','CM-5', 'CM-510']:
             print('tossmode')
@@ -270,14 +279,17 @@ class Serial(object):
         """
         assert type(size) == int
         if self._ftdi_ctrl:
-            # return self._serial.read_data(size) # does not honor timeouts
-            start = time.time()
-            data = bytearray()
-            while (len(data) < size and time.time()-start < self.timeout/1000.0):
-                data +=  bytearray(self._serial.read_data_bytes(size - len(data)))
-                time.sleep(0.0001)
-            assert(len(data) <= size)
-            return data
+            try:
+                # return self._serial.read_data(size) # does not honor timeouts
+                start = time.time()
+                data = bytearray()
+                while (len(data) < size and time.time()-start < self.timeout/1000.0):
+                    data +=  bytearray(self._serial.read_data_bytes(size - len(data)))
+                    time.sleep(0.0001)
+                assert(len(data) <= size)
+                return data
+            except ftdi.FtdiError: # HACK: probably not a good idea in some cases.
+                pass
         else:
             return self._serial.read(size=size)
 
