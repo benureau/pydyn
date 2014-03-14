@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
+from distutils.core import setup
 
 setup(name='pydyn',
       version='0.9.1',
@@ -13,5 +13,11 @@ setup(name='pydyn',
       requires=['serial', 'pyftdi',
                 'sphinx_rtd_theme' # for the doc
                ],
-      packages = find_packages(),
-     )
+      packages = ['pydyn', 'pydyn.dynamixel',
+                           'pydyn.ios',       'pydyn.ios.fakeio',
+                                              'pydyn.ios.kinio',
+                                              'pydyn.ios.serialio',
+                                              'pydyn.ios.vrepio',
+                            'pydyn.msets',
+                            'pydyn.refs',],
+      )
