@@ -4,6 +4,7 @@ import unittest
 import time
 
 import env
+from pydyn.refs import protocol as pt
 from pydyn.ios.fakeio import fakecom
 from pydyn.dynamixel import controller
 from pydyn.msets.msets import MotorSet
@@ -24,7 +25,8 @@ class TestFake(unittest.TestCase):
 
     def test_get(self):
         ms = MotorSet(motors=self.ctrl.motors)
-        self.assertEqual(len(ms.position), len(self.ctrl.motors), 2)
+        self.assertEqual(len(ms.position), len(self.ctrl.motors))
+        self.assertEqual(len(ms.position), 2)
 
         with self.assertRaises(AttributeError):
             ms.does_not_exist
@@ -47,9 +49,23 @@ class TestFake(unittest.TestCase):
     def test_properties(self):
         ms = MotorSet(motors=self.ctrl.motors)
         ms.zero_pose = -150
+        ms.zero_pose
         ms.pose = 0
+        ms.pose
+
+    def test_motor_properties(self):
+        ms = MotorSet(motors=self.ctrl.motors)
+        ms.moving_speed = 0
+        ms.moving_speed
+
+    def test_functions(self):
+        ms = MotorSet(motors=self.ctrl.motors)
+        ms.request_read(pt.PRESENT_POSITION)
+        ms.request_read("present_speed")
+        ms.request_write(pt.TORQUE_LIMIT, 512)
+        ms.request_write("torque_limit_bytes", 512)
         time.sleep(0.05)
-        self.assertEqual(ms.pose, (0.0, 0.0))
+        #self.assertEqual(ms.pose, (0.0, 0.0))
 
 if __name__ == '__main__':
     unittest.main()
