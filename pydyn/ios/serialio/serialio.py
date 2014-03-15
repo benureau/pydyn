@@ -271,12 +271,14 @@ class Serial(object):
         else:
             return self._serial.write(data)
 
-    def read(self, size):
+    def read(self, size, tries=2):
         """
         Read size bytes from the serial port.
         If a timeout is set it may return less characters as requested. With no timeout
         it will block until the requested number of bytes is read.
         """
+        if tries <= 0:
+            return bytearray()
         assert type(size) == int
         if self._ftdi_ctrl:
             try:
@@ -288,8 +290,8 @@ class Serial(object):
                     time.sleep(0.0001)
                 assert(len(data) <= size)
                 return data
-            except ftdi.FtdiError: # HACK: probably not a good idea in some cases.
-                pass
+            except ftdi.FtdiError: # HACK: fix first packet failing. Need to investigate to understand better.
+                return self.read(size, tries=tries-1)
         else:
             return self._serial.read(size=size)
 
