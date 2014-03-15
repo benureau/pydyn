@@ -44,6 +44,39 @@ class TestKinIO(unittest.TestCase):
         ctrl.load_motors(mids)
         ctrl.start()
         time.sleep(0.3)
+        ctrl.close()
+
+    def test_kinmotor_ctrl(self):
+        _m13 = kinmotor.KinMotor('AX-12', 13)
+        _m17 = kinmotor.KinMotor('AX-12', 17)
+        c = kinio.KinCable(_m13.ports[1], _m17.ports[0])
+
+        self.kio.connect(_m13.ports[0])
+        ctrl = controller.DynamixelController(self.mcom)
+        mids = ctrl.discover_motors(verbose=False)
+        ctrl.load_motors(mids)
+        ctrl.start()
+
+        for motor in ctrl.motors:
+            motor.angle_limits = (-150, 150)
+            motor.max_torque = 50
+            motor.status_return_level = 1
+            motor.torque_limit = 50
+
+        sleep = 0.2
+        for motor in ctrl.motors:
+            motor.position = -10
+
+        time.sleep(sleep)
+        for motor in ctrl.motors:
+            self.assertTrue(-10.2 <= motor.position <= -9.8)
+            motor.position =  10
+
+        time.sleep(sleep)
+        for motor in ctrl.motors:
+            self.assertTrue(9.8 <= motor.position <= 10.2)
+
+        ctrl.close()
 
 
 if __name__ == '__main__':

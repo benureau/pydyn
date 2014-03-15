@@ -13,6 +13,7 @@ import new
 import time
 
 from ...refs import protocol as pt
+from ...refs import conversions as conv
 from ...refs import limits
 from ..serialio import packet
 from ..serialio import serialcom
@@ -51,7 +52,7 @@ class KinMotor(object):
         self.status_port = None
         self._motor_time = time.time()
         self._timestep = 0.001
-        self._present_position = self.motor.mmem[pt.PRESENT_POSITION]
+        self._present_position = self.motor.present_position
 
     def receive(self, port, msg):
         """Receiving a message from a port"""
@@ -126,29 +127,29 @@ class KinMotor(object):
         except KeyError:
             raise NotImplementedError # we don't support custom controls (yet)
         # write data appropriately
-        values = _to_values(control, p.params)
+        values = _to_values(control, p.params[1:])
         offset = 0
         for size, value in zip(control.sizes, values):
             self.motor.mmem[control.addr+offset] = value
             offset += size
         self.motor.mmem.update()
-        if self.motor.return_status_level == 2:
+        if self.motor.status_return_level == 2:
             raise NotImplementedError
 
     def _sync_write(self, p):
         try:
-            control = CTRL_ADDR[(p.addr, p.length)]
+            control = CTRL_ADDR[(p.params[0], p.params[1])]
         except KeyError:
             raise NotImplementedError # we don't support custom controls (yet)
 
-        params, offset = None, 0
+        params, offset = None, 2
         while offset < len(p.params):
             if p.params[offset] == self.motor.id:
                 offset += 1
                 params = p.params[offset:offset+sum(control.sizes)]
                 break
             else:
-                offset += 1 + sum(control.sizes())
+                offset += 1 + sum(control.sizes)
 
         if params is not None:
             values = _to_values(control, params)
@@ -160,13 +161,15 @@ class KinMotor(object):
 
     def _step(self):
         m = self.motor
-        res = limits.POSITION_RANGES[self.motor.modelclass][0]
-        if m.goal_position_bytes > m.present_position_bytes:
-            self._present_position += min((self._timestep*m.moving_speed_bytes/60.0*res), m.goal_position_bytes - m.present_position_bytes)
-            m.mmem[pt.PRESENT_POSITION.addr] = int(self._present_position)
+        max_speed = limits.POSITION_RANGES[self.motor.modelclass][1]
+        speed = m.moving_speed if m.moving_speed != 0 else max_speed
+        if m.goal_position > m.present_position:
+            self._present_position += min((self._timestep*speed), m.goal_position - m.present_position)
         else:
-            self._present_position -= min((self._timestep*m.moving_speed_bytes/60.0*res), abs(m.goal_position_bytes - m.present_position_bytes))
-            m.mmem[pt.PRESENT_POSITION.addr] = int(self._present_position)
+            self._present_position -= min((self._timestep*speed), abs(m.goal_position - m.present_position))
+        m.mmem[pt.PRESENT_POSITION.addr] = conv.CONV[pt.PRESENT_POSITION][0](self._present_position,
+                                                                             modelclass=m.modelclass,
+                                                                                   mode=m.mode)
         self._motor_time += self._timestep
 
     def _update(self):
