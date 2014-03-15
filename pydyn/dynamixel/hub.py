@@ -22,11 +22,15 @@ def disconnect(uid):
     :param uid  the index of the controller
     """
     try:
-        ctrl = _controllers.pop(uid)
+        ctrl = _controllers[uid]
     except KeyError:
         raise KeyError("no controller with index {} was found".format(uid))
     ctrl.close()
     del _controllers[uid]
+
+def close_all():
+    for key in _controllers.keys():
+        disconnect(key)
 
 def controller(uid):
     """Return the controller with the given uid."""
