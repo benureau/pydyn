@@ -5,7 +5,7 @@ import pydyn
 
 from pydyn.refs import protocol as pt
 
-ms = pydyn.MotorSet(timeout=10, latency=10, verbose=True)
+ms = pydyn.MotorSet(timeout=10, latency=1, verbose=True)
 time.sleep(0.01)
 
 sleep = 0.1
