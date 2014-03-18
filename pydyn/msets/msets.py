@@ -69,7 +69,6 @@ class MotorSet(object):
         if not isinstance(values, collections.Iterable):
             values = [values for m in self.motors]
         for m, zp, p in zip(self.motors, self.zero_pose, values):
-            print(p, zp)
             m.position = p + zp
 
     def close_all(self):
