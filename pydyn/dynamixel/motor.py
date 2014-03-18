@@ -300,7 +300,7 @@ class Motor(object):
     def cw_angle_limit_bytes(self, val):
         limits.CHECK_BYTES[pt.CW_ANGLE_LIMIT](val, modelclass=self.modelclass, mode=self.mode)
         if int(val) > int(self.ccw_angle_limit_bytes):
-            raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val[0], self.ccw_angle_limit_bytes))
+            raise ValueError('CW angle limit ({}) should be inferior to CCW angle limit ({})'.format(val, self.ccw_angle_limit_bytes))
         if val != 0 or val != self.ccw_angle_limit_bytes:
             self._joint_angle_limits_bytes = (val, self.ccw_angle_limit_bytes)
         self._register_write(pt.CW_ANGLE_LIMIT, val)

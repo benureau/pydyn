@@ -81,6 +81,7 @@ class TestKinMset(unittest.TestCase):
 
     def test_bundles(self):
         ms = MotorSet(motors=self.ctrl.motors)
+        ms.cw_angle_limit = 150
         ms.angle_limits = (-150, 150)
 
     # def test_functions(self):

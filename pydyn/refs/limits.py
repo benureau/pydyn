@@ -205,7 +205,7 @@ def _def_compliance_margin(desc):
     def _bounds(value, modelclass=None, mode=None):
         max_pos, max_deg = POSITION_RANGES[modelclass]
         max_margin = max_deg*255/max_pos
-        if 0.0 <= value <= max_margin:
+        if not 0.0 <= value <= max_margin:
             raise ValueError('{} value is {} degree, but should be between {} and {}'.format(desc, value, 0.0, max_margin))
     return _bounds
 
