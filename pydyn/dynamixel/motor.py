@@ -370,6 +370,10 @@ class Motor(object):
     status_return_level_bytes = RWByteMotorControl(pt.STATUS_RETURN_LEVEL)
     status_return_level       =     RWMotorControl(pt.STATUS_RETURN_LEVEL)
 
+    # MARK Alarms
+    alarm_led_bytes = RWByteMotorControl(pt.ALARM_LED)
+    alarm_shutdown_bytes = RWByteMotorControl(pt.ALARM_SHUTDOWN)
+
 
     # MARK RAM properties
 
