@@ -26,6 +26,18 @@ class TestFake(unittest.TestCase):
     def tearDown(self):
         self.ctrl.close()
 
+    def test_empty(self):
+        ms = MotorSet(motors=[])
+
+        ms.pose = []
+        with self.assertRaises(AttributeError):
+            ms.punch
+
+        with self.assertRaises(AttributeError):
+            ms.punch = 50
+        ms.punch = []
+        ms.does_not_exist = []
+
     def test_get(self):
         ms = MotorSet(motors=self.ctrl.motors)
         self.assertEqual(len(ms.position), len(self.ctrl.motors))

@@ -26,6 +26,8 @@ class MotorSet(object):
     def __getattr__(self, name):
         if hasattr(self.__class__, name) or name in self.__dict__:
             object.__getattribute__(self, name)
+        if len(self.motors) == 0:
+            raise AttributeError("No motor in motor set")
         if not any(hasattr(m, name) for m in self.motors):
             raise AttributeError("MotorSet has no attribute '{}'".format(name))
         return tuple(getattr(m, name) for m in self.motors)
@@ -34,6 +36,13 @@ class MotorSet(object):
         if hasattr(self.__class__, name) or name in self.__dict__:
             object.__setattr__(self, name, values)
             return
+        if len(self.motors) == 0:
+            try:
+
+                if len(values) == 0:
+                    return
+            except TypeError:
+                raise AttributeError("No motor in motor set")
         if not any(hasattr(m, name) for m in self.motors):
             raise AttributeError("MotorSet has no attribute '{}'".format(name))
 
