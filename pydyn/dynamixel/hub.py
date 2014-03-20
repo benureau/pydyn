@@ -22,11 +22,15 @@ def disconnect(uid):
     :param uid  the index of the controller
     """
     try:
-        ctrl = _controllers.pop(uid)
+        ctrl = _controllers[uid]
     except KeyError:
         raise KeyError("no controller with index {} was found".format(uid))
     ctrl.close()
     del _controllers[uid]
+
+def close_all():
+    for key in _controllers.keys():
+        disconnect(key)
 
 def controller(uid):
     """Return the controller with the given uid."""
@@ -39,17 +43,18 @@ def controller(uid):
 def motors(uid):
     return controller(uid).motors
 
-def connect(device_type = 'USB2Serial',
-            serial_id   = None,
-            port_path   = None,
-            baudrate    = 1000000,
-            timeout     = 50,
-            full_ram    = False,
-            verbose     = True,
-            motor_range = (0, 253),
+def connect(device_type   = 'USB2Serial',
+            serial_id     = None,
+            port_path     = None,
+            baudrate      = 1000000,
+            timeout       = 50,
+            full_ram      = False,
+            verbose       = True,
+            motor_range   = (0, 253),
             enable_pyftdi = True,
-            start       = True,
-            latency     = 1
+            broadcast_ping= False,
+            start         = True,
+            latency       = 1
            ):
     """
     Guess interface, scans it and configure controller.
@@ -76,7 +81,8 @@ def connect(device_type = 'USB2Serial',
                                  baudrate=baudrate,
                                   timeout=timeout,
                                   latency=latency,
-                            enable_pyftdi=enable_pyftdi)
+                            enable_pyftdi=enable_pyftdi,
+                           broadcast_ping=broadcast_ping)
     except serialio.PortNotFoundError as e:
         if verbose:
             print(FAIL + 'No standart port found. If your port has a funny '
@@ -90,7 +96,7 @@ def connect(device_type = 'USB2Serial',
     mcom = serialcom.SerialCom(sio)
 
     ctrl_class = DynamixelControllerFullRam if full_ram else DynamixelController
-    ctrl = ctrl_class(mcom)
+    ctrl = ctrl_class(mcom, broadcast_ping=broadcast_ping)
 
     _controllers[_ctrlcount] = ctrl
     uid = _ctrlcount

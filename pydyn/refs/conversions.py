@@ -416,14 +416,14 @@ CONV[pt.GAINS] = (gains_2bytes, bytes2_gains)
 
 def _def_bytes2_compliance_margin(control):
     def _b2b(value, modelclass=None, mode=None):
-        limits.CHECK_BYTES[control](value)
+        limits.CHECK_BYTES[control](value, modelclass=modelclass, mode=mode)
         max_pos, max_deg = limits.POSITION_RANGES[modelclass]
         return (value / max_pos) * max_deg
     return _b2b
 
 def _def_compliance_margin_2bytes(control):
     def _b2b(value, modelclass=None, mode=None):
-        limits.CHECK[control](value)
+        limits.CHECK[control](value, modelclass=modelclass, mode=mode)
         max_pos, max_deg = limits.POSITION_RANGES[modelclass]
         return int(round((value / max_deg) * max_pos))
     return _b2b

@@ -10,7 +10,6 @@ import atexit
 from .. import color
 
 from ..refs import protocol as pt
-from . import memory
 from . import motor
 
 
@@ -26,7 +25,7 @@ class DynamixelController(threading.Thread):
     it expects a functionnal instance.
     """
 
-    def __init__(self, motorcom, freq=60, debug=False):
+    def __init__(self, motorcom, broadcast_ping=False, freq=60, debug=False):
         """
         :arg motorcom:  motor communication object
         :arg freq:      the target frequence for refreshing values in Hz.
@@ -40,6 +39,7 @@ class DynamixelController(threading.Thread):
         self.freq = freq
         self.fps_history = deque(maxlen = 3*freq)
         self.framecount = 0
+        self.broadcast_ping = broadcast_ping
 
         self.com = motorcom
         self.motors = []
@@ -70,7 +70,7 @@ class DynamixelController(threading.Thread):
         """ Wait a number of loops. Useful to wait before a change is applied to the motors."""
         if self.is_alive():
             frame = self.framecount
-            while(frame + loops >= self.framecount):
+            while frame + loops >= self.framecount:
                 time.sleep(0.001)
 
     def close(self, immediately=True):
@@ -148,16 +148,17 @@ class DynamixelController(threading.Thread):
         self._ctrllock.acquire()
 
         found_ids = []
-        try:
-            found_ids = self.com.ping_broadcast()
-        except (AssertionError, IOError):
-            pass
+        if self.broadcast_ping:
+            try:
+                found_ids = self.com.ping_broadcast()
+            except (AssertionError, IOError):
+                pass
 
-        if True and found_ids == []:
+        if found_ids == []:
             for m_id in motor_ids:
                 if verbose:
                     print('  [{}SCAN{}] Scanning motor ids between {} and {} : {}'.format(color.iblue, color.end,
-                            motor_ids[0], motor_ids[-1], m_id), end='\r'),
+                            motor_ids[0], motor_ids[-1], m_id), end='\r')
                     sys.stdout.flush()
                 if self.com.ping(m_id):
                     found_ids.append(m_id)
@@ -330,7 +331,7 @@ class DynamixelController(threading.Thread):
         for m, requests in zip(self.motors, write_requests):
             for control, values in requests.items():
                 if control == pt.ID:
-                    self.com.change_id(motor.id, value)
+                    self.com.change_id(m.id, values)
                 else:
                     if not hasattr(values, '__iter__'):
                         values = (values,)

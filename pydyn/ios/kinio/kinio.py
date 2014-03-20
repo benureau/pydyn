@@ -12,7 +12,8 @@ class KinSerial(serialio.Serial):
     def connect(self, port):
         self.cable = KinCable(self.port, port)
 
-    def receive(self, msg):
+    def receive(self, port, msg):
+        assert port is self.port
         self._input_buffer += bytearray(msg)
 
     @property
@@ -58,11 +59,13 @@ class KinSerial(serialio.Serial):
 
     def write(self, data):
         """Write data on the serial port"""
-        self.cable.transmit(self.port, data)
+        if self.cable is not None:
+            self.port.send(data)
+        return len(data)
 
     def read(self, size):
-        if size > len(self._input_buffer):
-            raise Warning('insufficient data in input buffer')
+        # if size > len(self._input_buffer):
+        #     raise Warning('insufficient data in input buffer')
         data = self._input_buffer[:size]
         self._input_buffer = self._input_buffer[size:]
         return data

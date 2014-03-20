@@ -7,10 +7,13 @@ are connected in a daisy chain manner much like real motors.
 >>> m1 = KinMotor('AX-12', 1)
 >>> c01 = KinCable(m0.ports[1], m1.ports[0])
 """
+from __future__ import print_function, division
+
 import new
 import time
 
 from ...refs import protocol as pt
+from ...refs import conversions as conv
 from ...refs import limits
 from ..serialio import packet
 from ..serialio import serialcom
@@ -22,7 +25,7 @@ from ...dynamixel import memory
 _to_params = serialcom.SerialCom._to_params
 _to_values = serialcom.SerialCom._to_values
 
-CTRL_ADDR = {(ctrl.addr, sum(ctrl.sizes)): ctrl for ctrl in pt.CTRL_LIST if len(ctrl.sizes) == 1}
+CTRL_ADDR = {(ctrl.addr, sum(ctrl.sizes)): ctrl for ctrl in pt.CTRL_LIST}
 
 def _register_write(self, control, values):
     """Write write request immediately in memory"""
@@ -42,23 +45,26 @@ class KinMotor(object):
         self.motor = motor.MOTOR_MODELS[model](mmem)
         self.motor._register_write = new.instancemethod(_register_write, self.motor, None)
         self.motor.id = mid
+        self.motor.status_return_level = 1
 
         self.ports = (KinPort(self), KinPort(self))
         self.control_port = None
         self.status_port = None
         self._motor_time = time.time()
         self._timestep = 0.001
+        self._present_position = self.motor.present_position
 
     def receive(self, port, msg):
         """Receiving a message from a port"""
         self._update()
+
         # the first message received is from the control port
         if self.control_port is None:
             self.control_port = port
-            self.status_port = self.ports[0] if self.ports[0] == port else self.ports[1]
+            self.status_port = self.ports[1] if self.ports[0] == port else self.ports[0]
 
         if port is self.control_port:
-            p = packet.InstructionPacket(msg)
+            p = packet.StatusPacket(msg) # but it is an InstructionPacket
             if p.mid == self.motor.id or p.mid == pt.BROADCAST:
                 status_msg = self._process_instruction(p)
                 if status_msg is not None:
@@ -78,16 +84,17 @@ class KinMotor(object):
 
     def _process_instruction(self, p):
         assert p.mid == self.motor.id or p.mid == pt.BROADCAST
-        if self.motor.return_status_level == 2:
+        if self.motor.status_return_level == 2:
             raise NotImplementedError
-        if p.instruction == pt.PING:
+        instruction = p.error
+        if instruction == pt.PING:
             msg = self._ping(p)
-        elif p.instruction == pt.WRITE_DATA:
+        elif instruction == pt.WRITE_DATA:
             msg = self._write_data(p)
-        elif p.instruction == pt.READ_DATA:
+        elif instruction == pt.READ_DATA:
             msg = self._read_data(p)
             assert msg is not None
-        elif p.instruction == pt.SYNC_WRITE:
+        elif instruction == pt.SYNC_WRITE:
             msg = self._sync_write(p)
         else:
             raise NotImplementedError
@@ -96,15 +103,13 @@ class KinMotor(object):
 
 
     def _ping(self, p):
-        assert p.instruction == pt.PING
-        status_data = [255, 255, self.motor.id, 2]
-        status_data.append(packet.Packet.checksum(status_data))
+        status_data = [255, 255, self.motor.id, 2, 0]
+        status_data.append(packet.Packet.checksum(status_data[2:]))
         return bytearray(status_data)
 
     def _read_data(self, p):
-        assert p.instruction == pt.READ_DATA
         try:
-            control = CTRL_ADDR[(p.addr, p.length)]
+            control = CTRL_ADDR[(p.params[0], p.params[1])]
         except KeyError:
             raise NotImplementedError # we don't support custom controls (yet)
         values, offset = [], 0
@@ -112,40 +117,39 @@ class KinMotor(object):
             values.append(self.motor.mmem[control.addr+offset])
             offset += size
         params = _to_params(control, values)
-        status_data = [255, 255, self.motor.id, len(params)+2] + list(params)
-        status_data.append(packet.Packet.checksum(status_data))
+        status_data = [255, 255, self.motor.id, len(params)+2, 0] + list(params)
+        status_data.append(packet.Packet.checksum(status_data[2:]))
         return bytearray(status_data)
 
     def _write_data(self, p):
         try:
-            control = CTRL_ADDR[(p.addr, p.length)]
+            control = CTRL_ADDR[(p.params[0], len(p.params)-1)]
         except KeyError:
             raise NotImplementedError # we don't support custom controls (yet)
         # write data appropriately
-        values = _to_values(control, p.params)
+        values = _to_values(control, p.params[1:])
         offset = 0
         for size, value in zip(control.sizes, values):
             self.motor.mmem[control.addr+offset] = value
             offset += size
         self.motor.mmem.update()
-        if self.motor.return_status_level == 2:
+        if self.motor.status_return_level == 2:
             raise NotImplementedError
 
     def _sync_write(self, p):
-        assert p.instruction == pt.SYNC_WRITE
         try:
-            control = CTRL_ADDR[(p.addr, p.length)]
+            control = CTRL_ADDR[(p.params[0], p.params[1])]
         except KeyError:
             raise NotImplementedError # we don't support custom controls (yet)
 
-        params, offset = None, 0
+        params, offset = None, 2
         while offset < len(p.params):
             if p.params[offset] == self.motor.id:
                 offset += 1
                 params = p.params[offset:offset+sum(control.sizes)]
                 break
             else:
-                offset += 1 + sum(control.sizes())
+                offset += 1 + sum(control.sizes)
 
         if params is not None:
             values = _to_values(control, params)
@@ -155,14 +159,17 @@ class KinMotor(object):
                 offset += size
             self.motor.mmem.update()
 
-
     def _step(self):
         m = self.motor
-        res = limits.POSITION_RANGES[self.motor.modelclass]
-        if m.goal_position_bytes > m.present_position_bytes:
-            m[pt.PRESENT_POSITION] += min((self._timestep*m.moving_speed_bytes/60.0*res), m.goal_position_bytes - m.present_position_bytes)
+        max_speed = limits.POSITION_RANGES[self.motor.modelclass][1]
+        speed = m.moving_speed if m.moving_speed != 0 else max_speed
+        if m.goal_position > m.present_position:
+            self._present_position += min((self._timestep*speed), m.goal_position - m.present_position)
         else:
-            m[pt.PRESENT_POSITION] -= min((self._timestep*m.moving_speed_bytes/60.0*res), abs(m.goal_position_bytes - m.present_position_bytes))
+            self._present_position -= min((self._timestep*speed), abs(m.goal_position - m.present_position))
+        m.mmem[pt.PRESENT_POSITION.addr] = conv.CONV[pt.PRESENT_POSITION][0](self._present_position,
+                                                                             modelclass=m.modelclass,
+                                                                                   mode=m.mode)
         self._motor_time += self._timestep
 
     def _update(self):
@@ -195,3 +202,5 @@ class KinCable(object):
     def transmit(self, sender_port, msg):
         if sender_port == self.port1:
             self.port2.receive(msg)
+        else:
+            self.port1.receive(msg)

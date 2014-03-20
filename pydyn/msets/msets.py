@@ -1,4 +1,11 @@
+from __future__ import print_function, division
+
+import collections
+
 from ..dynamixel import hub
+
+def _distribute(functions):
+    pass
 
 class MotorSet(object):
 
@@ -13,21 +20,24 @@ class MotorSet(object):
         object.__setattr__(self, 'motors', motors)
         if self.motors is None:
             dyn_uid  = hub.connect(**kwargs) # TODO treat n
-            object.__setattr__(self, 'motors', hub.motors(dyn_uid))
+            object.__setattr__(self, 'motors', tuple(hub.motors(dyn_uid)))
+        object.__setattr__(self, '_zero_pose', tuple(0.0 for m in self.motors))
 
     def __getattr__(self, name):
+        if hasattr(self.__class__, name) or name in self.__dict__:
+            object.__getattribute__(self, name)
         if not any(hasattr(m, name) for m in self.motors):
             raise AttributeError("MotorSet has no attribute '{}'".format(name))
         return tuple(getattr(m, name) for m in self.motors)
 
     def __setattr__(self, name, values):
-        if hasattr(self.__class__, name):
+        if hasattr(self.__class__, name) or name in self.__dict__:
             object.__setattr__(self, name, values)
             return
         if not any(hasattr(m, name) for m in self.motors):
             raise AttributeError("MotorSet has no attribute '{}'".format(name))
 
-        if not hasattr(values, '__iter__'):
+        if not isinstance(values, collections.Iterable):
             values = [values for m in self.motors]
         failcount = 0
         for m, val in zip(self.motors, values):
@@ -45,9 +55,9 @@ class MotorSet(object):
 
     @zero_pose.setter
     def zero_pose(self, values):
-        assert len(values) == len(self.motors)
-        if not hasattr(values, '__iter__'):
+        if not isinstance(values, collections.Iterable):
             values = [values for m in self.motors]
+        assert len(values) == len(self.motors), 'Expected at least {} values, got {}'.format(len(self.motors), values)
         object.__setattr__(self, '_zero_pose', values)
 
     @property
@@ -56,7 +66,10 @@ class MotorSet(object):
 
     @pose.setter
     def pose(self, values):
-        if not hasattr(values, '__iter__'):
+        if not isinstance(values, collections.Iterable):
             values = [values for m in self.motors]
         for m, zp, p in zip(self.motors, self.zero_pose, values):
             m.position = p + zp
+
+    def close_all(self):
+        hub.close_all()

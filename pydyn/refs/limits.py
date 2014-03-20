@@ -173,7 +173,7 @@ def _moving_speed(value, modelclass=None, mode=None):
     max_speed = SPEED_RANGES[modelclass][1]
     if mode == 'joint':
         if not 0.0 <= value <= max_speed:
-            raise ValueError('moving speed value is {} %, but should be between 0.0 and {} % (joint mode).'.format(value, max_speed))
+            raise ValueError('moving speed value is {} dps, but should be between 0.0 and {} dps (joint mode).'.format(value, max_speed))
     else:
         if modelclass != 'MX' and mode == 'wheel':
             if not -100.0 <= value <= 100.0:
@@ -205,7 +205,7 @@ def _def_compliance_margin(desc):
     def _bounds(value, modelclass=None, mode=None):
         max_pos, max_deg = POSITION_RANGES[modelclass]
         max_margin = max_deg*255/max_pos
-        if 0.0 <= value <= max_margin:
+        if not 0.0 <= value <= max_margin:
             raise ValueError('{} value is {} degree, but should be between {} and {}'.format(desc, value, 0.0, max_margin))
     return _bounds
 
