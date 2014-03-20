@@ -10,7 +10,6 @@ import atexit
 from .. import color
 
 from ..refs import protocol as pt
-from . import memory
 from . import motor
 
 
@@ -71,7 +70,7 @@ class DynamixelController(threading.Thread):
         """ Wait a number of loops. Useful to wait before a change is applied to the motors."""
         if self.is_alive():
             frame = self.framecount
-            while(frame + loops >= self.framecount):
+            while frame + loops >= self.framecount:
                 time.sleep(0.001)
 
     def close(self, immediately=True):
@@ -159,7 +158,7 @@ class DynamixelController(threading.Thread):
             for m_id in motor_ids:
                 if verbose:
                     print('  [{}SCAN{}] Scanning motor ids between {} and {} : {}'.format(color.iblue, color.end,
-                            motor_ids[0], motor_ids[-1], m_id), end='\r'),
+                            motor_ids[0], motor_ids[-1], m_id), end='\r')
                     sys.stdout.flush()
                 if self.com.ping(m_id):
                     found_ids.append(m_id)
@@ -332,7 +331,7 @@ class DynamixelController(threading.Thread):
         for m, requests in zip(self.motors, write_requests):
             for control, values in requests.items():
                 if control == pt.ID:
-                    self.com.change_id(motor.id, value)
+                    self.com.change_id(m.id, values)
                 else:
                     if not hasattr(values, '__iter__'):
                         values = (values,)
