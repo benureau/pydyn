@@ -533,8 +533,8 @@ class Motor(object):
     moving       =     ROMotorControl(pt.MOVING)
 
     # MARK Punch
-    punch_bytes = ROByteMotorControl(pt.PUNCH)
-    punch       =     ROMotorControl(pt.PUNCH)
+    punch_bytes = RWByteMotorControl(pt.PUNCH)
+    punch       =     RWMotorControl(pt.PUNCH)
 
 
     # MARK Printing EEPROM, RAM
