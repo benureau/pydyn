@@ -82,3 +82,10 @@ class MotorSet(object):
 
     def close_all(self):
         hub.close_all()
+
+    def __dir__(self):
+        motor_dir = []
+        for motor in self.motors:
+            motor_dir += dir(motor)
+        return sorted(set(dir(type(self)) +
+                          self.__dict__.keys() + motor_dir))

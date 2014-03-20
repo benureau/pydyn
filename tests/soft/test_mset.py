@@ -26,6 +26,12 @@ class TestFake(unittest.TestCase):
     def tearDown(self):
         self.ctrl.close()
 
+    def test_dir(self):
+        ms = MotorSet(motors=self.ctrl.motors)
+        self.assertTrue('compliant' in dir(ms))
+        self.assertTrue('present_temperature_bytes' in dir(ms))
+        self.assertTrue('request_write' in dir(ms))
+
     def test_empty(self):
         ms = MotorSet(motors=[])
 
