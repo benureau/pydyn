@@ -338,7 +338,7 @@ class SerialCom(object):
                 if status_packet.error != 0:
                     alarms = conv.bytes2_alarm_names(status_packet.error)
                     if len(alarms):
-                        raise MotorError(status_packet.mid, alarms)
+                        raise SerialCom.MotorError(status_packet.mid, alarms)
 
                 return status_packet
 
