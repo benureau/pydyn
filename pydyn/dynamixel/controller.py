@@ -170,7 +170,7 @@ class DynamixelController(threading.Thread):
             found_ids = [mid for mid in found_ids if mid in motor_ids]
 
         except self.com.MotorError as e:
-            for m in self._motors:
+            for m in self.motors:
                 if m.id == e.mid:
                     m._error.append(e)
 
@@ -185,7 +185,7 @@ class DynamixelController(threading.Thread):
         try:
             mmems = self.com.create(motor_ids)
         except self.com.MotorError as e:
-            for m in self._motors:
+            for m in self.motors:
                 if m.id == e.mid:
                     m._error.append(e)
 
