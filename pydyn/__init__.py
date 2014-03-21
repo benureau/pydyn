@@ -1,6 +1,7 @@
 from . import color
 from .msets import MotorSet
 
+from exc import MotorError
 from dynamixel.hub import connect, disconnect, motors, controller
 
 version_info = (0, 9, 3, 'beta1')
