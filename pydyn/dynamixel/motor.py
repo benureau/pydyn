@@ -47,6 +47,7 @@ from .. import color
 from ..refs import protocol as pt
 from ..refs import limits
 from ..refs import conversions as conv
+from ..refs import exc
 
 class ROByteMotorControl(object):
     def __init__(self, control, doc=''):
@@ -88,6 +89,9 @@ class RWMotorControl(ROMotorControl):
 
 
 class Motor(object):
+
+    MotorError = exc.MotorError
+
     def __init__(self, memory):
 
         object.__setattr__(self, 'mmem', memory) # self.mmem = memory
@@ -104,6 +108,9 @@ class Motor(object):
 
         # backing up angle limits to switch between joint and wheel mode
         object.__setattr__(self, '_joint_angle_limits_bytes', self.angle_limits_bytes) # self._joint_angle_limits_bytes = self.angle_limits_bytes
+
+        # if a motor error is detected on the motor, a MotorError instance will be put in this list.
+        object.__setattr__(self, '_error', [])
 
     def __repr__(self):
         return 'M{}'.format(self.id)
@@ -173,11 +180,15 @@ class Motor(object):
 
         :arg name:  the name of the value. See the :py:mod:`protocol <pydyn.refs.protocol>` module for the list of values.
         """
+        for err in self._error:
+            raise err
         control = self._str2ctrl(control, aliases=Motor.aliases_write)
         setattr(self, control, value) # for bound checking, mode handling
 
     def _register_write(self, control, val): # TODO this is a bad name for ACTION/REGISTERED
         """Register the write request for the controller benefit"""
+        for err in self._error:
+            raise err
         self.request_lock.acquire()
         if control in self.write_requests:
             self.write_requests.pop(control) # so that order is kept consistent

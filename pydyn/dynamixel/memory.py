@@ -8,6 +8,7 @@ from ..refs import protocol as pt
 from ..refs.conversions import MODEL_NAMES
 from . import memsave
 
+
 class DynamixelMemory(object):
     """
     This class keeps the last known memory values of a motor.

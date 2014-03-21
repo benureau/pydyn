@@ -144,28 +144,35 @@ class DynamixelController(threading.Thread):
     # MARK Motor discovery and creation
 
     def discover_motors(self, motor_ids=range(0, 253), verbose = False):
+
         self._pinglock.acquire()
         self._ctrllock.acquire()
 
-        found_ids = []
-        if self.broadcast_ping:
-            try:
-                found_ids = self.com.ping_broadcast()
-            except (AssertionError, IOError):
-                pass
+        try:
+            found_ids = []
+            if self.broadcast_ping:
+                try:
+                    found_ids = self.com.ping_broadcast()
+                except (AssertionError, IOError):
+                    pass
 
-        if found_ids == []:
-            for m_id in motor_ids:
-                if verbose:
-                    print('  [{}SCAN{}] Scanning motor ids between {} and {} : {}'.format(color.iblue, color.end,
-                            motor_ids[0], motor_ids[-1], m_id), end='\r')
-                    sys.stdout.flush()
-                if self.com.ping(m_id):
-                    found_ids.append(m_id)
+            if found_ids == []:
+                for m_id in motor_ids:
+                    if verbose:
+                        print('  [{}SCAN{}] Scanning motor ids between {} and {} : {}'.format(color.iblue, color.end,
+                                motor_ids[0], motor_ids[-1], m_id), end='\r')
+                        sys.stdout.flush()
+                    if self.com.ping(m_id):
+                        found_ids.append(m_id)
 
-        def in_mids(a):
-            return a in motor_ids
-        found_ids = [mid for mid in found_ids if mid in motor_ids]
+            def in_mids(a):
+                return a in motor_ids
+            found_ids = [mid for mid in found_ids if mid in motor_ids]
+
+        except self.com.MotorError as e:
+            for m in self._motors:
+                if m.id == e.mid:
+                    m._error.append(e)
 
         self._pinglock.release()
         self._ctrllock.release()
@@ -175,7 +182,12 @@ class DynamixelController(threading.Thread):
     def load_motors(self, motor_ids):
         """Instanciate a set of motors"""
         motor_ids = sorted(set(motor_ids)) # eliminating doublons.
-        mmems = self.com.create(motor_ids)
+        try:
+            mmems = self.com.create(motor_ids)
+        except self.com.MotorError as e:
+            for m in self._motors:
+                if m.id == e.mid:
+                    m._error.append(e)
 
         for mmem in mmems:
             m = motor.MOTOR_MODELS[mmem.model](mmem)
@@ -195,7 +207,6 @@ class DynamixelController(threading.Thread):
                 if True or self.debug:
                     print(e)
                 self.com.purge()
-
 
 
         # TODO: error policy class
@@ -371,6 +382,12 @@ class DynamixelController(threading.Thread):
                 self._handle_all_read_rq(read_requests)
             except self.com.CommunicationError:
                 print("error ignored")
+
+            except self.com.MotorError as e:
+                for m in self.motors:
+                    if m.id == e.mid:
+                        m._error.append(e)
+                self.stop()
 
             self._ctrllock.release()
             time.sleep(0.0001) # timeout to allow lock acquiring by other party

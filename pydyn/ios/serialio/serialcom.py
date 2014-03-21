@@ -17,6 +17,7 @@ import itertools
 
 from ...refs import protocol as pt
 from ...refs import alarms as conv # the only conversion needed in I/O
+from ...refs import exc
 from ...dynamixel import memory
 from . import packet
 
@@ -42,22 +43,10 @@ class TimeoutError(Exception):
     (eg. ping non-existent motor), it is never good to get corrupted data.
     """
     def __init__(self, inst_packet):
-        self.inst_packet    = inst_packet
+        self.inst_packet = inst_packet
 
     def __str__(self):
         return "TimemoutError({})".format(list(self.inst_packet.data))
-
-
-class MotorError(Exception):
-    def __init__(self, mid, alarms):
-        self.mid = mid
-        self.alarms = alarms
-
-    def __str__(self):
-        return 'Motor {} triggered alarm{}: {}'.format(self.mid,
-                    's' if len(self.alarms) > 1 else '',
-                    self.alarms if len(self.alarms) > 1 else self.alarms[0])
-
 
 # MARK: - SerialCom class
 
@@ -98,7 +87,7 @@ class SerialCom(object):
     """
     CommunicationError = CommunicationError
     TimeoutError = TimeoutError
-    MotorError = MotorError
+    MotorError = exc.MotorError
 
     # __open_ports = [] # TODO: unified interface
 
