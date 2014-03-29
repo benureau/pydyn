@@ -18,11 +18,15 @@ class MotorSet(object):
         :param n:       the number of controller to instanciate. Has no effect
                         if ``motors`` is not None.
         """
-        object.__setattr__(self, 'motors', motors)
+        object.__setattr__(self, '_motors', tuple(motors))
         if self.motors is None:
             dyn_uid  = hub.connect(**kwargs) # TODO treat n
             object.__setattr__(self, 'motors', tuple(hub.motors(dyn_uid)))
         object.__setattr__(self, '_zero_pose', tuple(0.0 for m in self.motors))
+
+    @property
+    def motors(self):
+        return self._motors    
 
     def __getattr__(self, name):
         if hasattr(self.__class__, name) or name in self.__dict__:
