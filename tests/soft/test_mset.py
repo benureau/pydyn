@@ -32,6 +32,10 @@ class TestFake(unittest.TestCase):
         self.assertTrue('present_temperature_bytes' in dir(ms))
         self.assertTrue('request_write' in dir(ms))
 
+    def test_iadd(self):
+        ms = MotorSet(motors=self.ctrl.motors)
+        ms.position += 10
+
     def test_empty(self):
         ms = MotorSet(motors=[])
 

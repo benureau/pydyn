@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 
 import collections
+import numpy as np
 
 from ..dynamixel import hub
 
@@ -30,7 +31,7 @@ class MotorSet(object):
             raise AttributeError("No motor in motor set")
         if not any(hasattr(m, name) for m in self.motors):
             raise AttributeError("MotorSet has no attribute '{}'".format(name))
-        return tuple(getattr(m, name) for m in self.motors)
+        return np.array([getattr(m, name) for m in self.motors]) # FIXME innefficient
 
     def __setattr__(self, name, values):
         if hasattr(self.__class__, name) or name in self.__dict__:
@@ -38,7 +39,6 @@ class MotorSet(object):
             return
         if len(self.motors) == 0:
             try:
-
                 if len(values) == 0:
                     return
             except TypeError:
@@ -71,7 +71,7 @@ class MotorSet(object):
 
     @property
     def pose(self):
-        return tuple(m.position - zp for m, zp in zip(self.motors, self.zero_pose))
+        return np.array([m.position - zp for m, zp in zip(self.motors, self.zero_pose)])
 
     @pose.setter
     def pose(self, values):
