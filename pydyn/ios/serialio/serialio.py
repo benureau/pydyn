@@ -112,7 +112,7 @@ class Serial(object):
                      device_type='Any',
                        serial_id=None,
                         baudrate=1000000,
-                         timeout=20,
+                         timeout=10,
                          latency=1,
                    enable_pyftdi=True,
                  **kwargs):
