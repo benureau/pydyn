@@ -28,6 +28,18 @@ class MotorSet(object):
     def motors(self):
         return self._motors    
 
+    def _expand_values(self, name, values):
+        # is it an iterable for each motor, or for one motor ?
+        if (    isinstance(values,    collections.Iterable) and 
+            not isinstance(values[0], collections.Iterable)):
+            for m in self.motors:
+                 if hasattr(m, name):
+                    exhibit_a = m 
+            v_m = getattr(m, name)
+            if not isinstance(v_m, collections.Iterable):
+                return values
+        return [values for m in self.motors]
+            
     def __getattr__(self, name):
         if hasattr(self.__class__, name) or name in self.__dict__:
             object.__getattribute__(self, name)
@@ -50,8 +62,8 @@ class MotorSet(object):
         if not any(hasattr(m, name) for m in self.motors):
             raise AttributeError("MotorSet has no attribute '{}'".format(name))
 
-        if not isinstance(values, collections.Iterable):
-            values = [values for m in self.motors]
+        values = self._expand_values(name, values)
+
         failcount = 0
         for m, val in zip(self.motors, values):
             try:
