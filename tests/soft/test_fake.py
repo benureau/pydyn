@@ -1,7 +1,8 @@
 """Test the code using the fake com module"""
-
+from __future__ import print_function, division
 import unittest
 import time
+import copy
 
 import env
 from pydyn.ios.fakeio import fakecom
@@ -72,6 +73,16 @@ class TestFake(unittest.TestCase):
         self.assertEqual(m.present_position, m.position)
 
         ctrl.stop()
+
+    def test_copy_motor(self):
+        ctrl = controller.DynamixelController(self.mcom)
+        mids = ctrl.discover_motors(verbose=False)
+        ctrl.load_motors(mids)
+
+        with self.assertRaises(RuntimeError):
+            m = copy.copy(ctrl.motors[0])
+        with self.assertRaises(RuntimeError):
+            m = copy.deepcopy(ctrl.motors[0])
 
 
 if __name__ == '__main__':

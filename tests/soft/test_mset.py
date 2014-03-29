@@ -1,5 +1,5 @@
 """Test the code of MotorSet"""
-
+from __future__ import print_function, division
 import unittest
 import time
 

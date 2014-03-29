@@ -147,6 +147,12 @@ class Motor(object):
         'speed'           : 'moving_speed',
     }
 
+    def __copy__(self):
+        raise RuntimeError("Motor instances can't be copied")
+
+    def __deepcopy__(self, memo=None):
+        raise RuntimeError("Motor instances can't be copied")
+
     def _str2ctrl(self, control, aliases=()):
         """\
         Return the Control instance corresponding to the string.
