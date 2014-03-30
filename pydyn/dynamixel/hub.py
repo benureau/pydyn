@@ -52,7 +52,7 @@ def connect(device_type   = 'USB2Serial',
             verbose       = True,
             motor_range   = (0, 253),
             enable_pyftdi = True,
-            broadcast_ping= False,
+            broadcast_ping= True,
             start         = True,
             latency       = 1
            ):

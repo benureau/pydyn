@@ -76,8 +76,7 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
 
     if serial_id is not None:
         ports = [port for port in ports if 'iSerial' in port and port['iSerial'] == serial_id]
-        print(ports)
-
+        
     if port_path is None and serial_id is None:
 
         if plat == 'Darwin':
@@ -179,8 +178,6 @@ class Serial(object):
 
         self.purge()
         time.sleep(0.1)
-        # self.purge()
-        # time.sleep(0.1)
 
         if device_type in ['USB2Serial+CM-5', 'USB2Serial+CM-510','CM-5', 'CM-510']:
             print('tossmode')

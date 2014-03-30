@@ -152,8 +152,8 @@ class DynamixelController(threading.Thread):
             found_ids = []
             if self.broadcast_ping:
                 try:
-                    found_ids = self.com.ping_broadcast()
-                except (AssertionError, IOError):
+                    found_ids = self.com.robust_ping_broadcast()
+                except IOError:
                     pass
 
             if found_ids == []:

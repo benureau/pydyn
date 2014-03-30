@@ -154,6 +154,29 @@ class SerialCom(object):
                     print('warning: {}'.format(e.msg))
             return False
 
+    def robust_ping_broadcast(self, tries=3):
+        """\
+        If a ping broadcast finds motors, redo the ping broadcast to check.
+        If no differences, then pings each found motors individually.
+        If no motors are founds or errors are found, restart the operation.
+
+        :param tries:  the number of times to restart.
+        """
+        while tries > 0:
+            try:
+                motors = self.ping_broadcast()
+                if len(motors) != 0:
+                    motors_check = self.ping_broadcast()
+                    print('check', motors_check)
+                    if motors == motors_check:
+                        if all(ping(mid) for mid in motors):
+                            return motors
+            except IOError:
+                pass
+            tries -=1
+        return []
+
+
     def ping_broadcast(self):
         """Do a ping on the broadcast id.
 
@@ -165,14 +188,14 @@ class SerialCom(object):
                     reports motors that don't exist. This can be mitigated by doing
                     broadcast_ping() twice and using the second result.
         """
-        timeout_bak = self.sio.timeout
+        old_timeout = self.sio.timeout
         try:
-            self.sio.timeout = 400
+            self.sio.timeout = 50
 
             ping_packet = packet.InstructionPacket(pt.BROADCAST, pt.PING)
             self._send_packet(ping_packet, receive=False)
 
-            data = self.sio.read(6*253) # We get that ourselves
+            data = self.sio.read(6*253)
             assert len(data) % 6 == 0, "broadcast_ping data is of lenght {}".format(len(data))
             motors = []
             for i in range(int(len(data)/6)):
@@ -183,7 +206,7 @@ class SerialCom(object):
             traceback.print_exc()
             raise IOError
         finally:
-            self.sio.timeout = timeout_bak
+            self.sio.timeout = old_timeout
 
         return motors
 
