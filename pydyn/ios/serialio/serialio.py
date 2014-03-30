@@ -27,8 +27,8 @@ class PortNotFoundError(Exception):
         self.serial_id = serial_id
 
 USB_DEVICES    = {'USB2Serial', 'USB2Dynamixel', 'USB2AX', 'CM-513', 'CM-700',
-                  'CM-900', 'OpenCM9.04', 'CM-100', 'CM-100A', 'USB2Serial+CM-5', 'USB2Serial+CM-510'}
-SERIAL_DEVICES = {'SerialPort', 'CM-5', 'CM-510'}
+                  'CM-900', 'OpenCM9.04', 'CM-100', 'CM-100A', 'USB2Serial+CM-5', 'USB2Serial+CM-510', 'Any'}
+SERIAL_DEVICES = {'SerialPort', 'CM-5', 'CM-510', 'Any'}
 
 FTDI_VIDPID = ((0x0403, 0x6001), # ft232am, ft232bm, ft232r
                (0x0403, 0x6014), # ft232h,
@@ -59,7 +59,7 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
         if the device is a CM-5 or CM-510 controller:
             /dev/ttyS*
         else, the device is assumed to be a usb/serial adaptater.
-            /dev/ttyACM* and /dev/ttyUSB*
+            /dev/ttyACM*, /dev/ttyUSB* and usbftdi:*
     * OS X:
         no serial port, only usb/serial adaptaters.
         /dev/cu.usbserial and /dev/tty.usbserial-*
@@ -67,7 +67,7 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
         not tested.
     """
     plat = platform.system()
-
+    
     # looking for a specific port
     if port_path is not None:
         port_path = os.path.abspath(port_path)
@@ -89,11 +89,12 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
             pass
 
         else: # POSIX
-            regex = re.compile('/dev/ttyS.*')
+            regex_serial = re.compile('/dev/ttyS[0-9]*')
+            regex_usb    = re.compile('(/dev/ttyACM[0-9]*)|(/dev/ttyUSB[0-9]*)|(usbftdi:.*)')
             if device_type in SERIAL_DEVICES:
-                ports = [port for port in ports if regex.search(port[0]) is not None]
+                ports = [port for port in ports if regex_serial.search(port['port']) is not None]
             elif device_type in USB_DEVICES:
-                ports = [port for port in ports if regex.search(port[0]) is None]
+                ports = [port for port in ports if regex_usb.search(port['port']) is not None]
 
     ports = list({port['port']:port for port in ports}.values())
     return ports
