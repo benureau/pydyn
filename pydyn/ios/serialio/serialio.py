@@ -178,9 +178,9 @@ class Serial(object):
             self.port = port_desc['port']
 
         self.purge()
-        time.sleep(0.01)
-        self.purge()
-        time.sleep(0.01)
+        time.sleep(0.1)
+        # self.purge()
+        # time.sleep(0.1)
 
         if device_type in ['USB2Serial+CM-5', 'USB2Serial+CM-510','CM-5', 'CM-510']:
             print('tossmode')
