@@ -83,6 +83,14 @@ class TestFake(unittest.TestCase):
         ms.moving_speed = 0
         ms.moving_speed
 
+    def test_expand_values(self):
+        ms = MotorSet(motors=self.ctrl.motors)
+        ms.moving_speed = 0
+        ms.moving_speed = [0, 10]
+        ms.angle_limits = [0, 10]
+        ms.angle_limits = [[-100, 100], [-150, 150]]
+        ms.angle_limits = (-150, 150)
+
 
 class TestKinMset(unittest.TestCase):
 

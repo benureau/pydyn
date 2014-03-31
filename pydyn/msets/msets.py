@@ -29,15 +29,17 @@ class MotorSet(object):
         return self._motors    
 
     def _expand_values(self, name, values):
-        # is it an iterable for each motor, or for one motor ?
-        if (    isinstance(values,    collections.Iterable) and 
-            not isinstance(values[0], collections.Iterable)):
-            for m in self.motors:
-                 if hasattr(m, name):
-                    exhibit_a = m 
-            v_m = getattr(m, name)
-            if not isinstance(v_m, collections.Iterable):
-                return values
+        if (isinstance(values,    collections.Iterable)):
+            if  isinstance(values[0], collections.Iterable):
+                return values # can't be more than two level (so far)
+            else: # is it an iterable for each motor, or for one motor ?
+                for m in self.motors:
+                     if hasattr(m, name):
+                        exhibit_a = m
+                        break
+                v_m = getattr(m, name)
+                if not isinstance(v_m, collections.Iterable):
+                    return values
         return [values for m in self.motors]
             
     def __getattr__(self, name):
