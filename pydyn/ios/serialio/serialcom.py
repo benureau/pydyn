@@ -167,7 +167,6 @@ class SerialCom(object):
                 motors = self.ping_broadcast()
                 if len(motors) != 0:
                     motors_check = self.ping_broadcast()
-                    print('check', motors_check)
                     if motors == motors_check:
                         if all(ping(mid) for mid in motors):
                             return motors
