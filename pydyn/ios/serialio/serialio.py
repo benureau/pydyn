@@ -173,7 +173,7 @@ class Serial(object):
 
         if not self._ftdi_ctrl: # pyftdi didn't succeed, trying pyserial
             self._serial = serial.Serial(port_desc['port'], baudrate=baudrate,
-                                         timeout=timeout/1000.0, **kwargs)
+                                         timeout=timeout/1000.0)
             self.port = port_desc['port']
 
         self.purge()
