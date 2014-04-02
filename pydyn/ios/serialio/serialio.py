@@ -291,7 +291,7 @@ class Serial(object):
             except ftdi.FtdiError: # HACK: fix first packet failing. Need to investigate to understand better.
                 return self.read(size, tries=tries-1)
         else:
-            return self._serial.read(size=size)
+            return bytearray(self._serial.read(size=size))
 
     def close(self):
         """Close the serial port
