@@ -22,11 +22,16 @@ class MotorSet(object):
         if self.motors is None:
             dyn_uid  = hub.connect(**kwargs) # TODO treat n
             object.__setattr__(self, '_motors', tuple(hub.motors(dyn_uid)))
+        object.__setattr__(self, '_motormap', {m.id: m for m in self._motors})
         object.__setattr__(self, '_zero_pose', tuple(0.0 for m in self.motors))
 
     @property
     def motors(self):
-        return self._motors    
+        return self._motors
+
+    @property
+    def motormap(self):
+        return self._motormap
 
     def _expand_values(self, name, values):
         if (isinstance(values,    collections.Iterable)):
@@ -41,7 +46,7 @@ class MotorSet(object):
                 if not isinstance(v_m, collections.Iterable):
                     return values
         return [values for m in self.motors]
-            
+
     def __getattr__(self, name):
         if hasattr(self.__class__, name) or name in self.__dict__:
             object.__getattribute__(self, name)
