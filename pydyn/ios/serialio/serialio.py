@@ -67,7 +67,7 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
         not tested.
     """
     plat = platform.system()
-    
+
     # looking for a specific port
     if port_path is not None:
         port_path = os.path.abspath(port_path)
@@ -76,7 +76,7 @@ def filter_ports(ports, device_type='Any', port_path=None, serial_id=None):
 
     if serial_id is not None:
         ports = [port for port in ports if 'iSerial' in port and port['iSerial'] == serial_id]
-        
+
     if port_path is None and serial_id is None:
 
         if plat == 'Darwin':
@@ -157,6 +157,7 @@ class Serial(object):
 
         self._ftdi_ctrl = False
         if enable_pyftdi and _pyftdi_available:
+            print('Trying pyftdi')
             try:
                 self._serial = ftdi.Ftdi()
                 self._serial.open(port_desc['VID'], port_desc['PID'], port_desc['interface'],

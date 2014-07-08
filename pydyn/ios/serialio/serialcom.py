@@ -30,6 +30,7 @@ class CommunicationError(Exception):
     def __init__(self, msg, inst_packet, status_packet):
         self.msg = msg
         self.inst_packet    = inst_packet
+        self.mid = self.inst_packet.mid
         self.status_packet = status_packet
 
     def __str__(self):
@@ -44,6 +45,7 @@ class TimeoutError(Exception):
     """
     def __init__(self, inst_packet):
         self.inst_packet = inst_packet
+        self.mid = self.inst_packet.mid
 
     def __str__(self):
         return "TimemoutError({})".format(list(self.inst_packet.data))

@@ -175,9 +175,13 @@ class Motor(object):
         control = self._str2ctrl(control, aliases=Motor.aliases_read)
 
         self.request_lock.acquire()
-        if control in self.read_requests:
-            self.read_requests.pop(control) # so that order is kept consistent
-        self.read_requests[control] = True
+        try:
+            if control in self.read_requests:
+                self.read_requests.pop(control) # so that order is kept consistent
+            self.read_requests[control] = True
+        except Exception as e:
+            self.request_lock.release()
+            raise e
         self.request_lock.release()
 
     def request_write(self, control, value):
@@ -196,10 +200,15 @@ class Motor(object):
         for err in self._error:
             raise err
         self.request_lock.acquire()
-        if control in self.write_requests:
-            self.write_requests.pop(control) # so that order is kept consistent
-        self.write_requests[control] = val
+        try:
+            if control in self.write_requests:
+                self.write_requests.pop(control) # so that order is kept consistent
+            self.write_requests[control] = val
+        except BaseException as e:
+            self.request_lock.release()
+            raise e
         self.request_lock.release()
+
 
     def requested_read(self, control):
         """\
@@ -209,7 +218,11 @@ class Motor(object):
         control = self._str2ctrl(control, aliases=Motor.aliases_read)
 
         self.request_lock.acquire()
-        value = self.read_requests.get(control, False)
+        try:
+            value = self.read_requests.get(control, False)
+        except BaseException as e:
+            self.request_lock.release()
+            raise e
         self.request_lock.release()
         return value
 

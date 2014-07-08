@@ -204,10 +204,8 @@ class DynamixelController(threading.Thread):
             try:
                 self.com.get(pt.PRESENT_POS_SPEED_LOAD, [m.id for m in self.motors if self._mtimeouts.get(m.id, now) <= now])
             except self.com.TimeoutError as e:
-                if True or self.debug:
-                    print(e)
                 self.com.purge()
-
+                raise e
 
         # TODO: error policy class
         # if self.com == 'USB2DXL':
@@ -380,8 +378,11 @@ class DynamixelController(threading.Thread):
                 self._handle_write_requests(write_requests)
                 self._handle_all_pst_requests(write_pst_requests)
                 self._handle_all_read_rq(read_requests)
-            except self.com.CommunicationError:
-                print("error ignored")
+            except (self.com.CommunicationError, self.com.TimeoutError) as e:
+                for m in self.motors:
+                    if m.id == e.mid:
+                        m._error.append(e)
+                self.stop()
 
             except self.com.MotorError as e:
                 for m in self.motors:
