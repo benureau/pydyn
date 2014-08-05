@@ -41,6 +41,12 @@ class RawPacket(object):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, list(self.data))
 
+    def __eq__(self, p):
+        return self.data == p.data
+
+    def __ne__(self, p):
+        return self.data != p.data
+
 
 class Packet(RawPacket):
 

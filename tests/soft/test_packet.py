@@ -26,5 +26,13 @@ class TestPackets(unittest.TestCase):
         p = packet.InstructionPacket(4, pt.WRITE_DATA, [pt.ANGLE_LIMITS.addr, 34, 0, 68, 0])
         self.assertEqual(list(p.data), [255, 255, 4, 7, 3, 6, 34, 0, 68, 0, 133])
 
+    def test_equality(self):
+        p  = packet.InstructionPacket(4, pt.WRITE_DATA, [pt.ANGLE_LIMITS.addr, 34, 0, 68, 0])
+        p2 = packet.InstructionPacket(4, pt.WRITE_DATA, [pt.ANGLE_LIMITS.addr, 34, 0, 68, 0])
+
+        self.assertEqual(p.data, p2.data)
+        self.assertEqual(p, p2)
+        self.assertTrue(not p != p2)
+
 if __name__ == '__main__':
     unittest.main()

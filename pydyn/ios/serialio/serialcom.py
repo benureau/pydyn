@@ -36,6 +36,12 @@ class CommunicationError(Exception):
     def __str__(self):
         return "CommunicationError('{}', {}, {})".format(self.msg, list(self.inst_packet.data), self.status_packet)
 
+    def __reduce__(self):
+        return (self.__class__, (self.msg, self.inst_packet, self.status_packet))
+
+    def __eq__(self, exc):
+        return self.__class__ == exc.__class__ and self.msg == exc.msg and self.inst_packet == exc.inst_packet and self.status_packet == exc.status_packet
+
 class TimeoutError(Exception):
     """Thrown when no status packet has arrived when timeout kicks in.
 
@@ -49,6 +55,10 @@ class TimeoutError(Exception):
 
     def __str__(self):
         return "TimemoutError({})".format(list(self.inst_packet.data))
+
+    def __reduce__(self):
+        return (self.__class__, (self.inst_packet,))
+
 
 # MARK: - SerialCom class
 
@@ -103,6 +113,7 @@ class SerialCom(object):
         #     raise IOError('Port already used (%s)!' % (port))
 
         self.sio = sio
+        self.sio.purge()
         self.verbose = verbose
         # self.__open_ports.append(port)
 
