@@ -74,7 +74,8 @@ class MotorSet(object):
         failcount = 0
         for m, val in zip(self.motors, values):
             try:
-                setattr(m, name, val)
+                if val is not None:
+                    setattr(m, name, val)
             except AttributeError:
                 failcount += 1
 
@@ -101,7 +102,8 @@ class MotorSet(object):
         if not isinstance(values, collections.Iterable):
             values = [values for m in self.motors]
         for m, zp, p in zip(self.motors, self.zero_pose, values):
-            m.position = p + zp
+            if p is not None:
+                m.position = p + zp
 
     def close_all(self):
         hub.close_all()
@@ -111,4 +113,4 @@ class MotorSet(object):
         for motor in self.motors:
             motor_dir += dir(motor)
         return sorted(set(dir(type(self)) +
-                          self.__dict__.keys() + motor_dir))
+                          list(self.__dict__.keys()) + motor_dir))

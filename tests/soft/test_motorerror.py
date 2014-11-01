@@ -3,7 +3,6 @@ from __future__ import print_function, division
 
 import unittest
 import time
-import new
 
 import env
 from pydyn.refs import protocol as pt
@@ -24,7 +23,7 @@ class TestKinMset(unittest.TestCase):
     def setUp(self):
         self.kio = kinio.KinSerial()
         self.mcom = serialcom.SerialCom(self.kio)
-        self.mcom.set = new.instancemethod(_set, self.mcom, None)
+        self.mcom.set = _set.__get__(self.mcom, self.mcom.__class__)
 
         m13 = kinmotor.KinMotor('AX-12', 13)
         m17 = kinmotor.KinMotor('AX-12', 17)

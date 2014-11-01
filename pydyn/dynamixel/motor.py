@@ -599,7 +599,7 @@ class Motor(object):
               '{} Torque Enable         : {}'.format(*self._mem_desc(24, self.torque_enable)),
               '{} LED                   : {}'.format(*self._mem_desc(25, self.led)),
              ]
-        #s += self._pid_ram_desc() # PID or Margin/Slopes
+        s += self._pid_ram_desc() # PID or Margin/Slopes
         s += [
               '{} Goal Position         : {}'.format(*self._mem_desc(30,  '{:6.2f} degrees'.format(self.goal_position))),
               '{} Moving Speed          : {}'.format(*self._mem_desc(32,  '{:6.1f} dps'.format(self.moving_speed))),
@@ -644,6 +644,14 @@ class ComplianceMarginSlopeExtra(object):
     compliance_slopes_bytes     = RWByteMotorControl(pt.COMPLIANCE_SLOPES)
     compliance_slopes           =     RWMotorControl(pt.COMPLIANCE_SLOPES)
 
+    def _pid_ram_desc(self): # PID or Margin/Slopes
+        s = ['{} CW  Compliance Margin : {}'.format(*self._mem_desc(26,  '{:6.2f} degrees'.format(self.cw_compliance_margin))),
+             '{} CCW Compliance Margin : {}'.format(*self._mem_desc(27,  '{:6.2f} degrees'.format(self.ccw_compliance_margin))),
+             '{} CW  Compliance Slope  : {}'.format(*self._mem_desc(28,  '{:6.0f} th step'.format(self.cw_compliance_slope))),
+             '{} CCW Compliance Slope  : {}'.format(*self._mem_desc(29,  '{:6.0f} th step'.format(self.ccw_compliance_slope))),
+            ]
+        return s
+
 
 class PIDExtra(object):
 
@@ -660,6 +668,8 @@ class PIDExtra(object):
     gains_bytes      = RWByteMotorControl(pt.GAINS)
     gains            =     RWMotorControl(pt.GAINS)
 
+    def _pid_ram_desc(self):
+        return [] # TODO
 
 class SensedCurrentExtra(object):
 

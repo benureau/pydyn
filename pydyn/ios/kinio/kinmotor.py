@@ -9,7 +9,7 @@ are connected in a daisy chain manner much like real motors.
 """
 from __future__ import print_function, division
 
-import new
+#import new
 import time
 
 from ...refs import protocol as pt
@@ -43,7 +43,7 @@ class KinMotor(object):
         fakemem = fakememory.MODELS[model]
         mmem = memory.DynamixelMemory(mid, save=False, memory=fakemem)
         self.motor = motor.MOTOR_MODELS[model](mmem)
-        self.motor._register_write = new.instancemethod(_register_write, self.motor, None)
+        self.motor._register_write = _register_write.__get__(self.motor, self.motor.__class__) # new.instancemethod(_register_write, self.motor, None)
         self.motor.id = mid
         self.motor.status_return_level = 1
 
